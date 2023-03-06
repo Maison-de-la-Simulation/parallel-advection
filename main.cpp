@@ -10,7 +10,7 @@ double static constexpr dx       = 1;     //espacement physique entre 2 cellules
 double static constexpr dvx      = 1;
 double static constexpr minRealx  = 0;
 double static constexpr maxRealx  = Nx*dx + minRealx;
-double static constexpr minRealvx = -10;
+double static constexpr minRealvx = 1;
 
 double static constexpr inv_dx      = 1/dx;  // inverse de dx
 double static constexpr realWidthx  = maxRealx - minRealx;
@@ -81,12 +81,12 @@ int main(int, char**) {
    /* Buffer for the distribution function containing the probabilities of 
    having a particle for a particular speed and position */
    sycl::buffer<double, 2> buff_fdistrib(sycl::range<2>(NVx, Nx));
-   sycl::buffer<double, 2> buff_fdistrib_p1(sycl::range<2>(NVx, Nx));
+   // sycl::buffer<double, 2> buff_fdistrib_p1(sycl::range<2>(NVx, Nx));
 
    sycl::queue Q;
 
    fill_buffer(Q, buff_fdistrib);
-   fill_buffer(Q, buff_fdistrib_p1);
+   // fill_buffer(Q, buff_fdistrib_p1);
    std::cout << "Fdist :" << std::endl;
    print_buffer(buff_fdistrib);
 
@@ -96,8 +96,9 @@ int main(int, char**) {
 
     Q.submit([&](sycl::handler& cgh){
 
-      auto fdist    = buff_fdistrib.get_access<sycl::access::mode::read>(cgh);
-      auto fdist_p1    = buff_fdistrib_p1.get_access<sycl::access::mode::write>(cgh);
+      auto fdist_write    = buff_fdistrib.get_access<sycl::access::mode::write>(cgh);
+      auto fdist_read     = buff_fdistrib.get_access<sycl::access::mode::read>(cgh);
+      // auto fdist_p1    = buff_fdistrib_p1.get_access<sycl::access::mode::write>(cgh);
 
       cgh.single_task([=](){
 
@@ -105,6 +106,13 @@ int main(int, char**) {
          for(int ivx = 0; ivx < NVx; ++ivx){
 
             // std::array<double, Nx> ftmp{};
+
+            // double* x_slice = sycl::malloc_device(sizeof(double)*Nx,);
+
+            // Problem here is that with thie method 
+            // we have to set the accessor in read_write mode instead of 2 accessors, one in read, one in write
+            double slice_x[Nx];
+            memcpy(slice_x, fdist_read.get_pointer()+ivx*Nx, Nx*sizeof(double));
 
             //For each x with regards to current Vx
             for(int ix = 0; ix < Nx; ++ix){
@@ -114,8 +122,9 @@ int main(int, char**) {
                const int leftDiscreteCell = sycl::floor((xFootCoord-minRealx) * inv_dx);
          
                //d_prev1 : dist entre premier point utilisé pour l'interpolation et xFootCoord (dans l'espace de coord discret, même si double)
+
+               /* Percentage of the distance inside the cell ???? TODO : Find better var name */
                const double d_prev1 = LAG_OFFSET + inv_dx * (xFootCoord - (minRealx + leftDiscreteCell * dx));
-               
 
                double coef[LAG_PTS];
                lag_basis(d_prev1, coef);
@@ -123,15 +132,18 @@ int main(int, char**) {
                const int ipos1 = leftDiscreteCell - LAG_OFFSET;
                double ftmp = 0.;
                for(int k=0; k<=LAG_ORDER; k++) {
-                  int idx_ipos1 = (Nx + ipos1 + k) % Nx; //penser à essayer de retirer ce modulo
+                  int idx_ipos1 = (Nx + ipos1 + k) % Nx; //penser à essayer de retirer ce modulo. Possible si on a une distance max on alloue un tableau avec cette distance max en plus des deux côtés
+
+
+                  //Pour faire in place il faut utiliser un buffer de taille Nx. Soit on s'en sert en buffer d'input pour la lecture et on met la valeur directement dans fdist
+                  // soit on s'en sert en buffer output : on stocke le résultat dedans puis on copie tout ce buffer dans la ligne correspondante dans fdist
+
+                  ftmp += coef[k] * slice_x[idx_ipos1];
                   // ftmp += coef[k] * fdist[ivx][idx_ipos1];
-                  // ftmp += coef[k] * ftmp_input[idx_ipos1];
-                  ftmp += coef[k] * fdist[ivx][idx_ipos1];
+                  // ftmp += coef[k] * fdist[ivx][idx_ipos1];
                }
 
-               // memcpy();
-               //avec ftmp un array de la taille de x,
-               fdist_p1[ivx][ix] = ftmp; 
+               fdist_write[ivx][ix] = ftmp; 
             } // end for X
 
          } // end for Vx
@@ -139,20 +151,21 @@ int main(int, char**) {
     }).wait_and_throw(); // Q.submit
 
 
-      Q.submit([&](sycl::handler& cgh){
-         auto FDIST    = buff_fdistrib.get_access<sycl::access::mode::write>(cgh);
-         auto FDIST_p1 = buff_fdistrib_p1.get_access<sycl::access::mode::read>(cgh);
+      // /* Copying dist_p1 into dist to keep the resolution with fdist */
+      // Q.submit([&](sycl::handler& cgh){
+      //    auto FDIST    = buff_fdistrib.get_access<sycl::access::mode::write>(cgh);
+      //    auto FDIST_p1 = buff_fdistrib_p1.get_access<sycl::access::mode::read>(cgh);
 
-         cgh.copy(FDIST_p1, FDIST);
-         // cgh.copy(FDIST_p1, FDIST);
-      }).wait_and_throw();
+      //    cgh.copy(FDIST_p1, FDIST);
+      //    // cgh.copy(FDIST_p1, FDIST);
+      // }).wait_and_throw();
    } // end for t < T
 
-   // std::cout << "Fdist :" << std::endl;
-   // print_buffer(buff_fdistrib);
 
+   // std::cout << "Fdist :" << std::endl;
    std::cout << "\nFdist_p1 :" << std::endl;
-   print_buffer(buff_fdistrib_p1);
+   print_buffer(buff_fdistrib);
+   // print_buffer(buff_fdistrib_p1);
 
    return 0;
 }
