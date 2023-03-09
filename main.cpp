@@ -2,7 +2,7 @@
 #include <sycl/sycl.hpp>
 
 int    static constexpr Nx       = 4;
-int    static constexpr NVx      = 2;
+int    static constexpr NVx      = 1;
 
 int    static constexpr T        = 4;     //nombre total d'iterations
 double static constexpr dt       = 0.125; //durée réelle d'une iteration
@@ -61,11 +61,7 @@ void fill_buffer(sycl::queue &q, sycl::buffer<double, 2> &fdist){
       double x = itm[1];
       //Init les données avec sinus
       FDIST[0][itm[1]] = sycl::sin(x);
-      FDIST[1][itm[1]] = -sycl::sin(x);
-      // FDIST[0][itm[1]] = itm[1];
-      // FDIST[1][itm[1]] = 4.5;
-      // FDIST[2][itm[1]] = 5.5;
-      // FDIST[3][itm[1]] = 6.5;
+      // FDIST[1][itm[1]] = -sycl::sin(x);
     });
   }).wait(); // end q.submit
 }
@@ -109,7 +105,6 @@ int main(int, char**) {
          for(int ivx = 0; ivx < NVx; ++ivx){
 
             // std::array<double, Nx> ftmp{};
-
             // double* x_slice = sycl::malloc_device(sizeof(double)*Nx,);
 
             // Problem here is that with thie method 
@@ -158,21 +153,10 @@ int main(int, char**) {
       }); // end cgh.single_task()
     }).wait_and_throw(); // Q.submit
 
-
-      // /* Copying dist_p1 into dist to keep the resolution with fdist */
-      // Q.submit([&](sycl::handler& cgh){
-      //    auto FDIST    = buff_fdistrib.get_access<sycl::access::mode::write>(cgh);
-      //    auto FDIST_p1 = buff_fdistrib_p1.get_access<sycl::access::mode::read>(cgh);
-
-      //    cgh.copy(FDIST_p1, FDIST);
-      //    // cgh.copy(FDIST_p1, FDIST);
-      // }).wait_and_throw();
    } // end for t < T
 
-   // std::cout << "Fdist :" << std::endl;
-   std::cout << "\nFdist_p1 :" << std::endl;
+   std::cout << "\nFdist_p" << T << " :" << std::endl;
    print_buffer(buff_fdistrib);
-   // print_buffer(buff_fdistrib_p1);
 
 
    /***************************************************************************/
