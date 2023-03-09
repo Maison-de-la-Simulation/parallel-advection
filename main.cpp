@@ -2,12 +2,12 @@
 #include <sycl/sycl.hpp>
 
 int    static constexpr Nx       = 4;
-int    static constexpr NVx      = 1;
+int    static constexpr NVx      = 2;
 
-int    static constexpr T        = 1;     //nombre total d'iterations
+int    static constexpr T        = 4;     //nombre total d'iterations
 double static constexpr dt       = 0.125; //durée réelle d'une iteration
 double static constexpr dx       = 1;     //espacement physique entre 2 cellules du maillage
-double static constexpr dvx      = 1;
+double static constexpr dvx      = 0.5;
 double static constexpr minRealx  = 0;
 double static constexpr maxRealx  = Nx*dx + minRealx;
 double static constexpr minRealvx = 1;
@@ -57,6 +57,7 @@ void fill_buffer(sycl::queue &q, sycl::buffer<double, 2> &fdist){
       double x = itm[1];
       //Init les données avec sinus
       FDIST[0][itm[1]] = sycl::sin(x);
+      FDIST[1][itm[1]] = -sycl::sin(x);
       // FDIST[0][itm[1]] = itm[1];
       // FDIST[1][itm[1]] = 4.5;
       // FDIST[2][itm[1]] = 5.5;
@@ -77,15 +78,13 @@ void print_buffer(sycl::buffer<double, 2> &fdist){
 }
 
 int main(int, char**) {
+   sycl::queue Q;
 
    /* Buffer for the distribution function containing the probabilities of 
    having a particle for a particular speed and position */
    sycl::buffer<double, 2> buff_fdistrib(sycl::range<2>(NVx, Nx));
-   // sycl::buffer<double, 2> buff_fdistrib_p1(sycl::range<2>(NVx, Nx));
-
-   sycl::queue Q;
-
    fill_buffer(Q, buff_fdistrib);
+   
    // fill_buffer(Q, buff_fdistrib_p1);
    std::cout << "Fdist :" << std::endl;
    print_buffer(buff_fdistrib);
@@ -134,15 +133,20 @@ int main(int, char**) {
                for(int k=0; k<=LAG_ORDER; k++) {
                   int idx_ipos1 = (Nx + ipos1 + k) % Nx; //penser à essayer de retirer ce modulo. Possible si on a une distance max on alloue un tableau avec cette distance max en plus des deux côtés
 
-
                   //Pour faire in place il faut utiliser un buffer de taille Nx. Soit on s'en sert en buffer d'input pour la lecture et on met la valeur directement dans fdist
                   // soit on s'en sert en buffer output : on stocke le résultat dedans puis on copie tout ce buffer dans la ligne correspondante dans fdist
 
+                  /* Ici en utilisant fdist en lecture */
+                  // ftmp += coef[k] * fdist[ivx][idx_ipos1];
+
+                  /* Ici en utilisant slice_x as an input */
                   ftmp += coef[k] * slice_x[idx_ipos1];
-                  // ftmp += coef[k] * fdist[ivx][idx_ipos1];
-                  // ftmp += coef[k] * fdist[ivx][idx_ipos1];
+
+                  /*  */
+                  // ftmp[idx_pos1] += coef[k] * fdist[ivx][idx_ipos1];
                }
 
+               // fdist_write[ivx][ix] = ftmp; 
                fdist_write[ivx][ix] = ftmp; 
             } // end for X
 
@@ -161,11 +165,67 @@ int main(int, char**) {
       // }).wait_and_throw();
    } // end for t < T
 
-
    // std::cout << "Fdist :" << std::endl;
    std::cout << "\nFdist_p1 :" << std::endl;
    print_buffer(buff_fdistrib);
    // print_buffer(buff_fdistrib_p1);
+
+
+   /* Fill a buffer the same way we filled fdist at init */
+   sycl::buffer<double, 2> buff_init(sycl::range<2>(NVx, Nx));
+   fill_buffer(Q, buff_init);
+   std::cout << "\nFdist_init :" << std::endl;
+   print_buffer(buff_init);
+
+   /* Check norm of difference, should be 0 */
+   sycl::buffer<double, 2> buff_res(buff_init.get_range());
+   Q.submit([&](sycl::handler& cgh){
+      auto A = buff_init.get_access<sycl::access::mode::read>(cgh);
+      auto B = buff_fdistrib.get_access<sycl::access::mode::read>(cgh);
+      sycl::accessor C(buff_res, cgh, sycl::write_only, sycl::no_init);
+
+      cgh.parallel_for(buff_init.get_range(), [=](auto itm){
+         C[itm] = A[itm] - B[itm];
+         C[itm] *= C[itm]; // We square each elements
+      });
+   }).wait_and_throw();
+
+   std::cout << "\nDIfference BUffer :" << std::endl;
+   print_buffer(buff_res);
+
+
+   // sycl::host_accessor tab(buff_res, sycl::read_only);
+   // double s = 0;
+   // for(int iv = 0; iv < NVx; ++iv){
+   //    for(int ix = 0; ix < Nx; ++ix){
+   //       s += tab[iv][ix];
+   //    }
+   // }
+   // std::cout << "\nSum : " << s << std::endl;
+
+
+   double sumResult = -5;
+   {
+      sycl::buffer<double> buff_sum { &sumResult, 1 };
+
+      Q.submit([&](sycl::handler& cgh) {
+      // Input values to reductions are standard accessors
+      auto inputValues = buff_res.get_access<sycl::access_mode::read>(cgh);
+      auto sumAcc = buff_sum.get_access<sycl::access_mode::write>(cgh);
+
+      auto sumReduction = sycl::reduction(sumAcc, sycl::plus<double>());
+
+      cgh.parallel_for(buff_res.get_range(), sumReduction,
+         [=](auto idx, auto& sum) {
+            // plus<>() corresponds to += operator, so sum can be
+            // updated via += or combine()
+            sum += inputValues[idx];
+         });
+      }).wait_and_throw();
+   }
+
+
+   std::cout << "\nSum : " << std::sqrt(sumResult) << std::endl;
 
    return 0;
 }
