@@ -21,18 +21,22 @@ int    static constexpr LAG_PTS    = 6;
 int    static constexpr LAG_OFFSET = 2;
 
 /* Computes the coefficient for semi lagrangian interp of order 5 */
-inline void lag_basis(double px, double *coef) {
-  constexpr double loc[] = { -1. / 24, 1. / 24., -1. / 12., 1. / 12., -1. / 24., 1. / 24. };
-  const double pxm2 = px - 2.;
-  const double sqrpxm2 = pxm2 * pxm2;
-  const double pxm2_01 = pxm2 * (pxm2 - 1.);
+inline void
+lag_basis(double px, double *coef) {
+    constexpr double loc[] = {-1. / 24, 1. / 24.,  -1. / 12.,
+                              1. / 12., -1. / 24., 1. / 24.};
+    const double pxm2 = px - 2.;
+    const double sqrpxm2 = pxm2 * pxm2;
+    const double pxm2_01 = pxm2 * (pxm2 - 1.);
 
-  coef[0] = loc[0] * pxm2_01 * (pxm2 + 1.) * (pxm2 - 2.) * (pxm2 - 1.);
-  coef[1] = loc[1] * pxm2_01 * (pxm2 - 2.) * (5 * sqrpxm2 + pxm2 - 8.);
-  coef[2] = loc[2] * (pxm2 - 1.) * (pxm2 - 2.) * (pxm2 + 1.) * (5 * sqrpxm2 - 3 * pxm2 - 6.);
-  coef[3] = loc[3] * pxm2 * (pxm2 + 1.) * (pxm2 - 2.) * (5 * sqrpxm2 - 7 * pxm2 - 4.);
-  coef[4] = loc[4] * pxm2_01 * (pxm2 + 1.) * (5 * sqrpxm2 - 11 * pxm2 - 2.);
-  coef[5] = loc[5] * pxm2_01 * pxm2 * (pxm2 + 1.) * (pxm2 - 2.);
+    coef[0] = loc[0] * pxm2_01 * (pxm2 + 1.) * (pxm2 - 2.) * (pxm2 - 1.);
+    coef[1] = loc[1] * pxm2_01 * (pxm2 - 2.) * (5 * sqrpxm2 + pxm2 - 8.);
+    coef[2] = loc[2] * (pxm2 - 1.) * (pxm2 - 2.) * (pxm2 + 1.) *
+              (5 * sqrpxm2 - 3 * pxm2 - 6.);
+    coef[3] = loc[3] * pxm2 * (pxm2 + 1.) * (pxm2 - 2.) *
+              (5 * sqrpxm2 - 7 * pxm2 - 4.);
+    coef[4] = loc[4] * pxm2_01 * (pxm2 + 1.) * (5 * sqrpxm2 - 11 * pxm2 - 2.);
+    coef[5] = loc[5] * pxm2_01 * pxm2 * (pxm2 + 1.) * (pxm2 - 2.);
 }
 
 /* Computes the covered distance by x during dt and returns the feet coord */
@@ -171,6 +175,11 @@ int main(int, char**) {
    // print_buffer(buff_fdistrib_p1);
 
 
+   /***************************************************************************/
+   /***************************************************************************/
+   /* RESULTS VALIDATION */
+   /***************************************************************************/
+
    /* Fill a buffer the same way we filled fdist at init */
    sycl::buffer<double, 2> buff_init(sycl::range<2>(NVx, Nx));
    fill_buffer(Q, buff_init);
@@ -190,19 +199,8 @@ int main(int, char**) {
       });
    }).wait_and_throw();
 
-   std::cout << "\nDIfference BUffer :" << std::endl;
+   std::cout << "\nDifference Buffer :" << std::endl;
    print_buffer(buff_res);
-
-
-   // sycl::host_accessor tab(buff_res, sycl::read_only);
-   // double s = 0;
-   // for(int iv = 0; iv < NVx; ++iv){
-   //    for(int ix = 0; ix < Nx; ++ix){
-   //       s += tab[iv][ix];
-   //    }
-   // }
-   // std::cout << "\nSum : " << s << std::endl;
-
 
    double sumResult = -5;
    {
@@ -224,8 +222,7 @@ int main(int, char**) {
       }).wait_and_throw();
    }
 
-
-   std::cout << "\nSum : " << std::sqrt(sumResult) << std::endl;
+   std::cout << "\nSqrt sum : " << std::sqrt(sumResult) << std::endl;
 
    return 0;
 }
