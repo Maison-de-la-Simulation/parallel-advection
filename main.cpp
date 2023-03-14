@@ -1,10 +1,10 @@
 #include <iostream>
 #include <sycl/sycl.hpp>
 
-int    static constexpr Nx       = 4;
-int    static constexpr NVx      = 1;
+int    static constexpr Nx       = 16;
+int    static constexpr NVx      = 4;
 
-int    static constexpr T        = 4;     //nombre total d'iterations
+int    static constexpr T        = Nx;     //nombre total d'iterations
 double static constexpr dt       = 0.125; //durée réelle d'une iteration
 double static constexpr dx       = 1;     //espacement physique entre 2 cellules du maillage
 double static constexpr dvx      = 0.5;
@@ -59,9 +59,9 @@ void fill_buffer(sycl::queue &q, sycl::buffer<double, 2> &fdist){
     cgh.parallel_for(fdist.get_range(), [=](sycl::id<2> itm)
     {
       double x = itm[1];
-      //Init les données avec sinus
-      FDIST[0][itm[1]] = sycl::sin(x);
-      // FDIST[1][itm[1]] = -sycl::sin(x);
+      for(int ivx = 0; ivx < NVx; ++ivx){
+         FDIST[ivx][itm[1]] = ivx % 2 == 0 ? std::sin(x) : std::cos(x);
+      }
     });
   }).wait(); // end q.submit
 }
