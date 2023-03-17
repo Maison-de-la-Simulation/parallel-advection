@@ -2,8 +2,6 @@ cmake_minimum_required (VERSION 3.21)
 
 set(CMAKE_BUILD_TYPE RelWithDebInfo)
 
-set(CMAKE_CXX_COMPILER /local/home/am273028/source/hipSYCL/build/install/bin/syclcc) 
-
 project(SYCL-Advection LANGUAGES CXX)
 
 
