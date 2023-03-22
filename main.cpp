@@ -1,16 +1,17 @@
 #include <iostream>
 #include <sycl/sycl.hpp>
+bool static constexpr _DEBUG = false;
 
-int    static constexpr Nx       = 16;
-int    static constexpr NVx      = 4;
+size_t    static constexpr Nx       = 512;
+size_t    static constexpr NVx      = 4;
 
-int    static constexpr T        = Nx;     //nombre total d'iterations
-double static constexpr dt       = 0.125; //durée réelle d'une iteration
+size_t    static constexpr T        = Nx/2;     //nombre total d'iterations
+double static constexpr dt       = 1; //durée réelle d'une iteration
 double static constexpr dx       = 1;     //espacement physique entre 2 cellules du maillage
-double static constexpr dvx      = 0.5;
+double static constexpr dvx      = 1;
 double static constexpr minRealx  = 0;
 double static constexpr maxRealx  = Nx*dx + minRealx;
-double static constexpr minRealvx = 1;
+double static constexpr minRealvx = 0;
 
 double static constexpr inv_dx      = 1/dx;  // inverse de dx
 double static constexpr realWidthx  = maxRealx - minRealx;
@@ -20,9 +21,11 @@ int    static constexpr LAG_ORDER  = 5;
 int    static constexpr LAG_PTS    = 6;
 int    static constexpr LAG_OFFSET = 2;
 
+// ==========================================
+// ==========================================
 /* Computes the coefficient for semi lagrangian interp of order 5 */
-inline void
-lag_basis(double px, double *coef) {
+void
+lag_basis(const double &px, double* coef){
     constexpr double loc[] = {-1. / 24, 1. / 24.,  -1. / 12.,
                               1. / 12., -1. / 24., 1. / 24.};
     const double pxm2 = px - 2.;
@@ -37,10 +40,13 @@ lag_basis(double px, double *coef) {
               (5 * sqrpxm2 - 7 * pxm2 - 4.);
     coef[4] = loc[4] * pxm2_01 * (pxm2 + 1.) * (5 * sqrpxm2 - 11 * pxm2 - 2.);
     coef[5] = loc[5] * pxm2_01 * pxm2 * (pxm2 + 1.) * (pxm2 - 2.);
-}
+} // end lag_basis
 
+// ==========================================
+// ==========================================
 /* Computes the covered distance by x during dt and returns the feet coord */
-inline int displ(const int &ix, const int &ivx ){
+int
+displ(const int &ix, const int &ivx ){
    const double x    = minRealx  + ix * dx; //real coordinate of particles at ix
    const double vx   = minRealvx + ivx * dvx; //real speed of particles at ivx
    const double displx = dt * vx;
@@ -49,10 +55,12 @@ inline int displ(const int &ix, const int &ivx ){
       minRealx + sycl::fmod(realWidthx + x - displx - minRealx, realWidthx);
 
    return xstar;
-}
+} // end displ
 
-/* Fills a f distrib sycl buffer */
-void fill_buffer(sycl::queue &q, sycl::buffer<double, 2> &fdist){
+// ==========================================
+// ==========================================
+void
+fill_buffer(sycl::queue &q, sycl::buffer<double, 2> &fdist){
   q.submit([&](sycl::handler &cgh){
     sycl::accessor FDIST(fdist, cgh, sycl::write_only, sycl::no_init);
 
@@ -60,13 +68,16 @@ void fill_buffer(sycl::queue &q, sycl::buffer<double, 2> &fdist){
     {
       double x = itm[1];
       for(int ivx = 0; ivx < NVx; ++ivx){
-         FDIST[ivx][itm[1]] = ivx % 2 == 0 ? std::sin(x) : std::cos(x);
+         FDIST[ivx][itm[1]] = ivx % 2 == 0 ? sycl::sin(x) : sycl::cos(x);
       }
     });
   }).wait(); // end q.submit
 }
 
-void print_buffer(sycl::buffer<double, 2> &fdist){
+// ==========================================
+// ==========================================
+void
+print_buffer(sycl::buffer<double, 2> &fdist){
   sycl::host_accessor tab(fdist, sycl::read_only);
 
    for(int iv = 0; iv < NVx; ++iv){
@@ -75,20 +86,75 @@ void print_buffer(sycl::buffer<double, 2> &fdist){
       }
       std::cout << std::endl;
    }
-}
+} // end print_buffer
 
-int main(int, char**) {
-   sycl::queue Q;
+// ==========================================
+// ==========================================
+double
+check_result(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib){
+   /* Fill a buffer the same way we filled fdist at init */
+   sycl::buffer<double, 2> buff_init(sycl::range<2>(NVx, Nx));
+   fill_buffer(Q, buff_init);
 
-   /* Buffer for the distribution function containing the probabilities of 
-   having a particle for a particular speed and position */
-   sycl::buffer<double, 2> buff_fdistrib(sycl::range<2>(NVx, Nx));
-   fill_buffer(Q, buff_fdistrib);
-   
-   // fill_buffer(Q, buff_fdistrib_p1);
-   std::cout << "Fdist :" << std::endl;
-   print_buffer(buff_fdistrib);
+   if(_DEBUG){
+      std::cout << "\nFdist_init :" << std::endl;
+      print_buffer(buff_init);
+   }
 
+   /* Check norm of difference, should be 0 */
+   sycl::buffer<double, 2> buff_res(buff_init.get_range());
+   Q.submit([&](sycl::handler& cgh){
+      auto A = buff_init.get_access<sycl::access::mode::read>(cgh);
+      auto B = buff_fdistrib.get_access<sycl::access::mode::read>(cgh);
+      sycl::accessor C(buff_res, cgh, sycl::write_only, sycl::no_init);
+
+      cgh.parallel_for(buff_init.get_range(), [=](auto itm){
+         C[itm] = A[itm] - B[itm];
+         C[itm] *= C[itm]; // We square each elements
+      });
+   }).wait_and_throw();
+
+   if(_DEBUG){
+      std::cout << "\nDifference Buffer :" << std::endl;
+      print_buffer(buff_res);
+   }
+
+   double sumResult = 0;
+   {
+      sycl::buffer<double> buff_sum { &sumResult, 1 };
+
+      Q.submit([&](sycl::handler& cgh) {
+      // Input values to reductions are standard accessors
+      auto inputValues = buff_res.get_access<sycl::access_mode::read>(cgh);
+
+#ifdef __INTEL_LLVM_COMPILER //for DPCPP
+      auto sumReduction = sycl::reduction(buff_sum, cgh, sycl::plus<>());
+#else //for openSYCL
+      auto sumAcc = buff_sum.get_access<sycl::access_mode::write>(cgh);
+      auto sumReduction = sycl::reduction(sumAcc, sycl::plus<double>());
+#endif
+      cgh.parallel_for(buff_res.get_range(), sumReduction,
+         [=](auto idx, auto& sum) {
+            // plus<>() corresponds to += operator, so sum can be
+            // updated via += or combine()
+            sum += inputValues[idx];
+         });
+      }).wait_and_throw();
+   }
+
+   return std::sqrt(sumResult);
+} // end check_result
+
+// ==========================================
+// ==========================================
+void advection(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib){
+
+   const sycl::range<1> nb_wg{NVx};
+   const sycl::range<1> wg_size{Nx};
+
+   /* Cannot use local memory with basic range parallel_for so I use a global
+   buffer of size NVx * Nx*/
+   sycl::buffer<double, 2> global_buff_ftmp(sycl::range<2>(NVx, Nx));
 
    // Time loop, cannot parallelize this
    for(int t=0; t<T; ++t){
@@ -151,62 +217,53 @@ int main(int, char**) {
 
          } // end for Vx
       }); // end cgh.single_task()
-    }).wait_and_throw(); // Q.submit
+    }).wait_and_throw(); // end Q.submit
 
+    if(_DEBUG){
+        std::cout << "\nFdist_p" << t << " :" << std::endl;
+        print_buffer(buff_fdistrib);
+    }
    } // end for t < T
+} // end advection
 
-   std::cout << "\nFdist_p" << T << " :" << std::endl;
-   print_buffer(buff_fdistrib);
+// ==========================================
+// ==========================================
+int main(int, char**) {
+#ifdef __INTEL_LLVM_COMPILER
+   std::cout << "Running with DPCPP" << std::endl;
+   /* Double not supported on IntelGraphics so we choose the CPU
+   if not with OpenSYCL */
+   sycl::queue Q{sycl::cpu_selector_v};
+#else //__HIPSYCL__
+   // std::cout << "Running with OpenSYCL" << std::endl;
+   sycl::queue Q;
+#endif
 
+   std::cout << "Running on "
+                << Q.get_device().get_info<sycl::info::device::name>()
+                << "\n";
 
-   /***************************************************************************/
-   /***************************************************************************/
-   /* RESULTS VALIDATION */
-   /***************************************************************************/
-
-   /* Fill a buffer the same way we filled fdist at init */
-   sycl::buffer<double, 2> buff_init(sycl::range<2>(NVx, Nx));
-   fill_buffer(Q, buff_init);
-   std::cout << "\nFdist_init :" << std::endl;
-   print_buffer(buff_init);
-
-   /* Check norm of difference, should be 0 */
-   sycl::buffer<double, 2> buff_res(buff_init.get_range());
-   Q.submit([&](sycl::handler& cgh){
-      auto A = buff_init.get_access<sycl::access::mode::read>(cgh);
-      auto B = buff_fdistrib.get_access<sycl::access::mode::read>(cgh);
-      sycl::accessor C(buff_res, cgh, sycl::write_only, sycl::no_init);
-
-      cgh.parallel_for(buff_init.get_range(), [=](auto itm){
-         C[itm] = A[itm] - B[itm];
-         C[itm] *= C[itm]; // We square each elements
-      });
-   }).wait_and_throw();
-
-   std::cout << "\nDifference Buffer :" << std::endl;
-   print_buffer(buff_res);
-
-   double sumResult = -5;
-   {
-      sycl::buffer<double> buff_sum { &sumResult, 1 };
-
-      Q.submit([&](sycl::handler& cgh) {
-      // Input values to reductions are standard accessors
-      auto inputValues = buff_res.get_access<sycl::access_mode::read>(cgh);
-      auto sumAcc = buff_sum.get_access<sycl::access_mode::write>(cgh);
-
-      auto sumReduction = sycl::reduction(sumAcc, sycl::plus<double>());
-
-      cgh.parallel_for(buff_res.get_range(), sumReduction,
-         [=](auto idx, auto& sum) {
-            // plus<>() corresponds to += operator, so sum can be
-            // updated via += or combine()
-            sum += inputValues[idx];
-         });
-      }).wait_and_throw();
+   /* Buffer for the distribution function containing the probabilities of 
+   having a particle for a particular speed and position */
+   sycl::buffer<double, 2> buff_fdistrib(sycl::range<2>(NVx, Nx));
+   fill_buffer(Q, buff_fdistrib);
+   
+   if(_DEBUG){
+      std::cout << "Fdist:" << std::endl;
+      print_buffer(buff_fdistrib);
    }
 
-   std::cout << "\nSqrt sum : " << std::sqrt(sumResult) << std::endl;
+   auto start = std::chrono::high_resolution_clock::now();
+   advection(Q, buff_fdistrib);
+   auto end = std::chrono::high_resolution_clock::now();
+
+   auto res = check_result(Q, buff_fdistrib);
+   std::cout << "\nSqrt sum: " << res << std::endl;
+
+   std::chrono::duration<double> elapsed_seconds = end-start;
+   std::cout << "elapsed_time: " << elapsed_seconds.count() << "s\n";
+   std::cout << "upd_cells_per_sec: "
+        << ((NVx*Nx*T)/elapsed_seconds.count())/1e3 << " Kcells/sec\n";
 
    return 0;
 }
