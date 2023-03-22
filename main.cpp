@@ -2,20 +2,6 @@
 #include <sycl/sycl.hpp>
 bool static constexpr _DEBUG = false;
 
-size_t    static constexpr Nx       = 512;
-size_t    static constexpr NVx      = 4;
-
-size_t    static constexpr T        = Nx/2;     //nombre total d'iterations
-double static constexpr dt       = 1; //durée réelle d'une iteration
-double static constexpr dx       = 1;     //espacement physique entre 2 cellules du maillage
-double static constexpr dvx      = 1;
-double static constexpr minRealx  = 0;
-double static constexpr maxRealx  = Nx*dx + minRealx;
-double static constexpr minRealvx = 0;
-
-double static constexpr inv_dx      = 1/dx;  // inverse de dx
-double static constexpr realWidthx  = maxRealx - minRealx;
-
 /* Lagrange variables, order, number of points, offset from the current point */
 int    static constexpr LAG_ORDER  = 5;
 int    static constexpr LAG_PTS    = 6;
@@ -263,7 +249,7 @@ int main(int, char**) {
    std::chrono::duration<double> elapsed_seconds = end-start;
    std::cout << "elapsed_time: " << elapsed_seconds.count() << "s\n";
    std::cout << "upd_cells_per_sec: "
-        << ((NVx*Nx*T)/elapsed_seconds.count())/1e3 << " Kcells/sec\n";
+        << ((NVx*Nx*T)/elapsed_seconds.count())/1e6 << " Mcells/sec\n";
 
    return 0;
 }
