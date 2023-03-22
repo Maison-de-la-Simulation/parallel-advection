@@ -6,52 +6,30 @@
  */
 struct ADVParams {
 
-  //! dimension : 2 or 3
-  static const int dim = 2;
+  // Number of iterations
+  size_t maxIter;
 
-  //! number of populations (of distribution functions)
-  static const int npop = 9;
+  // Number of points for positions (x)
+  size_t nx;
 
-  //! run parameters
-  int maxIter;
+  // Number of points for speeds (Vx)
+  size_t nVx;
 
-  //! geometry : number of nodes along X axis
-  int nx;
+  // Deltas : taille physique d'une cellule discrète (en x, vx, t)
+  double dt;
+  double dx;
+  double dVx;
 
-  //! geometry : number of nodes along Y axis
-  int ny;
+  double inv_dx; // precompute inverse of dx
 
-  //! physical domain sizes (in lattice units) along X axis
-  double lx;
+  // Min/max physical values of x (i.e., x[0] and x[-1])
+  double minRealx;
+  double maxRealx;
+  double realWidthx;
 
-  //! physical domain sizes (in lattice units) along Y axis
-  double ly;
+  // Min physical value of Vx
+  double minRealVx;//we only need min since we perform advection in x only
 
-  // cylinder obstacle (center coordinates, radius)
-
-  //! x coordinates of cylinder center
-  double cx;
-
-  //! y coordinates of cylinder center
-  double cy;
-
-  //! cylinder radius
-  double r;
-
-  //! initial velocity
-  double uLB;
-
-  /*
-   * fluid parameters
-   */
-  //! Reynolds number
-  double Re;
-  
-  //! viscosity in lattice units
-  double nuLB;
-  
-  //! relaxation parameter
-  double omega;
 
   //! setup / initialization
   void setup(const ConfigMap& configMap); 

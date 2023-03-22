@@ -38,14 +38,14 @@ ConfigMap::~ConfigMap()
 
 // =======================================================
 // =======================================================
-float ConfigMap::getFloat(std::string section, std::string name, float default_value) const
+double ConfigMap::getFloat(std::string section, std::string name, float default_value) const
 {
   std::string valstr = getString(section, name, "");
   const char* value = valstr.c_str();
   char* end;
   // This parses "1234" (decimal) and also "0x4D2" (hex)
   float valFloat = strtof(value, &end);
-  return end > value ? valFloat : default_value;
+  return end > value ? static_cast<double>(valFloat) : static_cast<double>(default_value);
 } // ConfigMap::getFloat
 
 // =======================================================

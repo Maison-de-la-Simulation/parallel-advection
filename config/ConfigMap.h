@@ -26,7 +26,7 @@ public:
   ~ConfigMap();
 
   //! Get a floating point value from the map.
-  float getFloat(std::string section, std::string name, float default_value) const;
+  double getFloat(std::string section, std::string name, float default_value) const;
   
   //! Set a floating point value to a section/name.
   void setFloat(std::string section, std::string name, float value);

@@ -1,3 +1,4 @@
 .vscode
 build*
 main_copy.cpp
+.clang-format
