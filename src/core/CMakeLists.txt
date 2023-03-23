@@ -8,7 +8,7 @@ target_sources(core
 
 target_include_directories(core
   PUBLIC
-  ${CMAKE_SOURCE_DIR}/src/advection
+  ${CMAKE_SOURCE_DIR}/src/core
   ${CMAKE_SOURCE_DIR}/src/config
   ) 
 

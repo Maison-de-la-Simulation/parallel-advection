@@ -1,5 +1,5 @@
 add_subdirectory(config)
-add_subdirectory(advection)
+add_subdirectory(core)
 
 ################################################
 #            SYCL Compiler options             #
@@ -19,8 +19,8 @@ endif()
 ################################################
 #                  Executables                 #
 ################################################
-add_executable(main main.cpp utils.h)
-target_link_libraries(main PUBLIC compiler_wrapper adv1d::config adv1d::core)
+add_executable(advection main.cpp utils.h)
+target_link_libraries(advection PUBLIC compiler_wrapper adv1d::config adv1d::core)
 
 configure_file(advection.ini advection.ini COPYONLY)
 

@@ -71,10 +71,10 @@ int main(int argc, char** argv) {
    auto end = std::chrono::high_resolution_clock::now();
 
    auto res = check_result(Q, buff_fdistrib, params, _DEBUG);
-   std::cout << "\nSqrt sum: " << res << std::endl;
+   std::cout << "\nSqrt_sum: " << res << std::endl;
 
    std::chrono::duration<double> elapsed_seconds = end-start;
-   std::cout << "elapsed_time: " << elapsed_seconds.count() << "s\n";
+   std::cout << "elapsed_time: " << elapsed_seconds.count() << " s\n";
    std::cout << "upd_cells_per_sec: "
         << ((nVx*nx*maxIter)/elapsed_seconds.count())/1e6 << " Mcells/sec\n";
 
