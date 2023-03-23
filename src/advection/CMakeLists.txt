@@ -2,8 +2,8 @@ add_library(core "")
 
 target_sources(core
   PRIVATE
-  i_advection.hpp
-  advection_impl.cpp
+  i_advector_x.hpp
+  advector_impl.cpp
 )
 
 target_include_directories(core
