@@ -1,16 +1,16 @@
 #!/bin/bash
 
-if [ "$#" != "1" ]; then
-  echo "you must provide the paths to the run log files"
-  echo "usage : ./parse LOG_PATH"
+if [ "$#" != "2" ]; then
+  echo "you must provide the paths to the run log files and the output filename"
+  echo "usage : ./parse LOG_PATH OUT_FILENAME"
   exit
 fi
 
 LOG_PATH=$1
+OUT_FILENAME=$2
 
 FILES="${LOG_PATH}/run*"
-CSV_OUT="${LOG_PATH}/perfs.csv"
-
+CSV_OUT="${LOG_PATH}/${OUT_FILENAME}.csv"
 
 echo "Parsing outputs..."
 
