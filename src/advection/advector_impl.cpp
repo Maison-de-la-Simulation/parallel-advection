@@ -1,4 +1,4 @@
-#include "advector_impl.hpp"
+#include "advector_impl.h"
 
 sycl::event AdvectorX::operator()(
     sycl::queue &Q,

@@ -2,7 +2,7 @@ add_library(core "")
 
 target_sources(core
   PRIVATE
-  i_advector_x.hpp
+  i_advector_x.h
   advector_impl.cpp
 )
 

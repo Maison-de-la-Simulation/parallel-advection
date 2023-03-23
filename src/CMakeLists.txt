@@ -19,8 +19,8 @@ endif()
 ################################################
 #                  Executables                 #
 ################################################
-add_executable(main main.cpp)
-target_link_libraries(main PUBLIC compiler_wrapper adv1d::config)
+add_executable(main main.cpp utils.h)
+target_link_libraries(main PUBLIC compiler_wrapper adv1d::config adv1d::core)
 
 configure_file(advection.ini advection.ini COPYONLY)
 
