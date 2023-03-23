@@ -18,7 +18,7 @@ void advection(
    // Time loop, cannot parallelize this
    for(int t=0; t<params.maxIter; ++t){
 
-      advector(Q, buff_fdistrib, params);
+      advector(Q, buff_fdistrib, params).wait_and_throw();
 
       if(_DEBUG){
          std::cout << "\nFdist_p" << t << " :" << std::endl;
