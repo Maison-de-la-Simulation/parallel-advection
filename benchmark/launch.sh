@@ -19,6 +19,7 @@ module load llvm/13.0.0/gcc-11.2.0 cuda/11.5.0/gcc-11.2.0 cmake/3.21.4/gcc-11.2.
 ./script/run $EXECUTABLE $INI_FILE $LOG_PATH $NB_RUNS
 
 # call parse scripts with log_path parameter
+./script/parse $LOG_PATH
 
 # call python script
 # ...

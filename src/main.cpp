@@ -77,6 +77,6 @@ int main(int argc, char** argv) {
    std::cout << "elapsed_time: " << elapsed_seconds.count() << " s\n";
    std::cout << "upd_cells_per_sec: "
         << ((nVx*nx*maxIter)/elapsed_seconds.count())/1e6 << " Mcells/sec\n";
-
+   std::cout << "parsing;" << nVx*nx << ";" << nx << ";" << nVx << std::endl;
    return 0;
 }
