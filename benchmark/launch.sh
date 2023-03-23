@@ -26,6 +26,3 @@ module load llvm/13.0.0/gcc-11.2.0 cuda/11.5.0/gcc-11.2.0 cmake/3.21.4/gcc-11.2.
 
 # call parse scripts with log_path and out_filename parameters
 ./script/parse $LOG_PATH $OUT_FILENAME
-
-# call python script
-# ...
