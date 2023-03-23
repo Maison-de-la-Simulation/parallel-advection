@@ -4,134 +4,100 @@
 
 bool static constexpr _DEBUG = false;
 
-/* Lagrange variables, order, number of points, offset from the current point */
-int    static constexpr LAG_ORDER  = 5;
-int    static constexpr LAG_PTS    = 6;
-int    static constexpr LAG_OFFSET = 2;
+// ==========================================
+// ==========================================
+void fill_buffer(
+   sycl::queue &q, sycl::buffer<double, 2> &fdist,
+   const ADVParams &params)
+{
+    q.submit([&](sycl::handler &cgh){
+         sycl::accessor FDIST(fdist, cgh, sycl::write_only, sycl::no_init);
 
-// // ==========================================
-// // ==========================================
-// /* Computes the coefficient for semi lagrangian interp of order 5 */
-// void
-// lag_basis(const double &px, double* coef){
-//     constexpr double loc[] = {-1. / 24, 1. / 24.,  -1. / 12.,
-//                               1. / 12., -1. / 24., 1. / 24.};
-//     const double pxm2 = px - 2.;
-//     const double sqrpxm2 = pxm2 * pxm2;
-//     const double pxm2_01 = pxm2 * (pxm2 - 1.);
+         cgh.parallel_for(fdist.get_range(), [=](sycl::id<2> itm) {
+             double x = itm[1];
+             for (int ivx = 0; ivx < params.nVx; ++ivx) {
+                 FDIST[ivx][itm[1]] =
+                     ivx % 2 == 0 ? sycl::sin(x) : sycl::cos(x);
+             }
+         });
+     }).wait();   // end q.submit
+}
 
-//     coef[0] = loc[0] * pxm2_01 * (pxm2 + 1.) * (pxm2 - 2.) * (pxm2 - 1.);
-//     coef[1] = loc[1] * pxm2_01 * (pxm2 - 2.) * (5 * sqrpxm2 + pxm2 - 8.);
-//     coef[2] = loc[2] * (pxm2 - 1.) * (pxm2 - 2.) * (pxm2 + 1.) *
-//               (5 * sqrpxm2 - 3 * pxm2 - 6.);
-//     coef[3] = loc[3] * pxm2 * (pxm2 + 1.) * (pxm2 - 2.) *
-//               (5 * sqrpxm2 - 7 * pxm2 - 4.);
-//     coef[4] = loc[4] * pxm2_01 * (pxm2 + 1.) * (5 * sqrpxm2 - 11 * pxm2 - 2.);
-//     coef[5] = loc[5] * pxm2_01 * pxm2 * (pxm2 + 1.) * (pxm2 - 2.);
-// } // end lag_basis
+// ==========================================
+// ==========================================
+void print_buffer(
+   sycl::buffer<double, 2> &fdist,
+   const ADVParams &params)
+{
+   sycl::host_accessor tab(fdist, sycl::read_only);
 
-// // ==========================================
-// // ==========================================
-// /* Computes the covered distance by x during dt and returns the feet coord */
-// int
-// displ(const int &ix, const int &ivx ){
-//    const double x    = minRealx  + ix * dx; //real coordinate of particles at ix
-//    const double vx   = minRealvx + ivx * dvx; //real speed of particles at ivx
-//    const double displx = dt * vx;
+   for(int iv = 0; iv < params.nVx; ++iv){
+      for(int ix = 0; ix < params.nx; ++ix){
+         std::cout << tab[iv][ix] << " ";
+      }
+      std::cout << std::endl;
+   }
+} // end print_buffer
 
-//    const double xstar =
-//       minRealx + sycl::fmod(realWidthx + x - displx - minRealx, realWidthx);
+// ==========================================
+// ==========================================
+double check_result(
+   sycl::queue &Q,
+   sycl::buffer<double, 2> &buff_fdistrib,
+   const ADVParams &params)
+{
+   /* Fill a buffer the same way we filled fdist at init */
+   sycl::buffer<double, 2> buff_init(sycl::range<2>(params.nVx, params.nx));
+   fill_buffer(Q, buff_init, params);
 
-//    return xstar;
-// } // end displ
+   if(_DEBUG){
+      std::cout << "\nFdist_init :" << std::endl;
+      print_buffer(buff_init, params);
+   }
 
-// // ==========================================
-// // ==========================================
-// void
-// fill_buffer(sycl::queue &q, sycl::buffer<double, 2> &fdist){
-//   q.submit([&](sycl::handler &cgh){
-//     sycl::accessor FDIST(fdist, cgh, sycl::write_only, sycl::no_init);
+   /* Check norm of difference, should be 0 */
+   sycl::buffer<double, 2> buff_res(buff_init.get_range());
+   Q.submit([&](sycl::handler& cgh){
+      auto A = buff_init.get_access<sycl::access::mode::read>(cgh);
+      auto B = buff_fdistrib.get_access<sycl::access::mode::read>(cgh);
+      sycl::accessor C(buff_res, cgh, sycl::write_only, sycl::no_init);
 
-//     cgh.parallel_for(fdist.get_range(), [=](sycl::id<2> itm)
-//     {
-//       double x = itm[1];
-//       for(int ivx = 0; ivx < NVx; ++ivx){
-//          FDIST[ivx][itm[1]] = ivx % 2 == 0 ? sycl::sin(x) : sycl::cos(x);
-//       }
-//     });
-//   }).wait(); // end q.submit
-// }
+      cgh.parallel_for(buff_init.get_range(), [=](auto itm){
+         C[itm] = A[itm] - B[itm];
+         C[itm] *= C[itm]; // We square each elements
+      });
+   }).wait_and_throw();
 
-// // ==========================================
-// // ==========================================
-// void
-// print_buffer(sycl::buffer<double, 2> &fdist){
-//   sycl::host_accessor tab(fdist, sycl::read_only);
+   if(_DEBUG){
+      std::cout << "\nDifference Buffer :" << std::endl;
+      print_buffer(buff_res, params);
+   }
 
-//    for(int iv = 0; iv < NVx; ++iv){
-//       for(int ix = 0; ix < Nx; ++ix){
-//          std::cout << tab[iv][ix] << " ";
-//       }
-//       std::cout << std::endl;
-//    }
-// } // end print_buffer
+   double sumResult = 0;
+   {
+      sycl::buffer<double> buff_sum { &sumResult, 1 };
 
-// // ==========================================
-// // ==========================================
-// double
-// check_result(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib){
-//    /* Fill a buffer the same way we filled fdist at init */
-//    sycl::buffer<double, 2> buff_init(sycl::range<2>(NVx, Nx));
-//    fill_buffer(Q, buff_init);
+      Q.submit([&](sycl::handler& cgh) {
+      // Input values to reductions are standard accessors
+      auto inputValues = buff_res.get_access<sycl::access_mode::read>(cgh);
 
-//    if(_DEBUG){
-//       std::cout << "\nFdist_init :" << std::endl;
-//       print_buffer(buff_init);
-//    }
+#ifdef __INTEL_LLVM_COMPILER //for DPCPP
+      auto sumReduction = sycl::reduction(buff_sum, cgh, sycl::plus<>());
+#else //for openSYCL
+      auto sumAcc = buff_sum.get_access<sycl::access_mode::write>(cgh);
+      auto sumReduction = sycl::reduction(sumAcc, sycl::plus<double>());
+#endif
+      cgh.parallel_for(buff_res.get_range(), sumReduction,
+         [=](auto idx, auto& sum) {
+            // plus<>() corresponds to += operator, so sum can be
+            // updated via += or combine()
+            sum += inputValues[idx];
+         });
+      }).wait_and_throw();
+   }
 
-//    /* Check norm of difference, should be 0 */
-//    sycl::buffer<double, 2> buff_res(buff_init.get_range());
-//    Q.submit([&](sycl::handler& cgh){
-//       auto A = buff_init.get_access<sycl::access::mode::read>(cgh);
-//       auto B = buff_fdistrib.get_access<sycl::access::mode::read>(cgh);
-//       sycl::accessor C(buff_res, cgh, sycl::write_only, sycl::no_init);
-
-//       cgh.parallel_for(buff_init.get_range(), [=](auto itm){
-//          C[itm] = A[itm] - B[itm];
-//          C[itm] *= C[itm]; // We square each elements
-//       });
-//    }).wait_and_throw();
-
-//    if(_DEBUG){
-//       std::cout << "\nDifference Buffer :" << std::endl;
-//       print_buffer(buff_res);
-//    }
-
-//    double sumResult = 0;
-//    {
-//       sycl::buffer<double> buff_sum { &sumResult, 1 };
-
-//       Q.submit([&](sycl::handler& cgh) {
-//       // Input values to reductions are standard accessors
-//       auto inputValues = buff_res.get_access<sycl::access_mode::read>(cgh);
-
-// #ifdef __INTEL_LLVM_COMPILER //for DPCPP
-//       auto sumReduction = sycl::reduction(buff_sum, cgh, sycl::plus<>());
-// #else //for openSYCL
-//       auto sumAcc = buff_sum.get_access<sycl::access_mode::write>(cgh);
-//       auto sumReduction = sycl::reduction(sumAcc, sycl::plus<double>());
-// #endif
-//       cgh.parallel_for(buff_res.get_range(), sumReduction,
-//          [=](auto idx, auto& sum) {
-//             // plus<>() corresponds to += operator, so sum can be
-//             // updated via += or combine()
-//             sum += inputValues[idx];
-//          });
-//       }).wait_and_throw();
-//    }
-
-//    return std::sqrt(sumResult);
-// } // end check_result
+   return std::sqrt(sumResult);
+} // end check_result
 
 // // ==========================================
 // // ==========================================
