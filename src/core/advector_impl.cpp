@@ -1,73 +1,66 @@
 #include "advector_impl.h"
 
-sycl::event AdvectorX::operator()(
-    sycl::queue &Q,
-    sycl::buffer<double, 2> &buff_fdistrib,
-    const ADVParams &params) const
-{
-    auto const nx  = params.nx;
+sycl::event
+AdvectorX::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
+                      const ADVParams &params) const {
+    auto const nx = params.nx;
     auto const nVx = params.nVx;
     auto const minRealx = params.minRealx;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    return Q.submit([&](sycl::handler& cgh){
+    /* Cannot use local memory with basic range parallel_for so I use a global
+    buffer of size NVx * Nx*/
+    sycl::buffer<double, 2> global_buff_ftmp(sycl::range<2>(nVx, nx));
 
-      auto fdist_write    = buff_fdistrib.get_access<sycl::access::mode::write>(cgh);
-      auto fdist_read     = buff_fdistrib.get_access<sycl::access::mode::read>(cgh);
-      // auto fdist_p1    = buff_fdistrib_p1.get_access<sycl::access::mode::write>(cgh);
+    Q.submit([&](sycl::handler &cgh) {
+         auto fdist = buff_fdistrib.get_access<sycl::access::mode::read>(cgh);
 
-      cgh.single_task([=](){
+         auto ftmp =
+             global_buff_ftmp.get_access<sycl::access::mode::write>(cgh);
 
-         //For each Vx
-         for(int ivx = 0; ivx < nVx; ++ivx){
+         cgh.parallel_for(buff_fdistrib.get_range(), [=](sycl::id<2> itm) {
+             const int ix = itm[1];
+             const int ivx = itm[0];
 
-            // std::array<double, Nx> ftmp{};
-            // double* x_slice = sycl::malloc_device(sizeof(double)*Nx,);
+             double const xFootCoord = displ(ix, ivx, params);
 
-            // Problem here is that with thie method 
-            // we have to set the accessor in read_write mode instead of 2 accessors, one in read, one in write
-            double slice_x[nx];
-            memcpy(slice_x, fdist_read.get_pointer()+ivx*nx, nx*sizeof(double));
+             // Corresponds to the index of the cell to the left of footCoord
+             const int leftDiscreteCell =
+                 sycl::floor((xFootCoord - minRealx) * inv_dx);
 
-            //For each x with regards to current Vx
-            for(int ix = 0; ix < nx; ++ix){
-               double const xFootCoord = displ(ix, ivx, params);
+             const double d_prev1 =
+                 LAG_OFFSET +
+                 inv_dx * (xFootCoord - (minRealx + leftDiscreteCell * dx));
 
-               // Corresponds to the index of the cell to the left of footCoord
-               const int leftDiscreteCell = sycl::floor((xFootCoord-minRealx) * inv_dx);
-         
-               //d_prev1 : dist entre premier point utilisé pour l'interpolation et xFootCoord (dans l'espace de coord discret, même si double)
+             double coef[LAG_PTS];
+             lag_basis(d_prev1, coef);
 
-               /* Percentage of the distance inside the cell ???? TODO : Find better var name */
-               const double d_prev1 = LAG_OFFSET + inv_dx * (xFootCoord - (minRealx + leftDiscreteCell * dx));
+             const int ipos1 = leftDiscreteCell - LAG_OFFSET;
 
-               double coef[LAG_PTS];
-               lag_basis(d_prev1, coef);
+             ftmp[ivx][ix] = 0;   // initializing slice for each work item
+             for (int k = 0; k <= LAG_ORDER; k++) {
+                 int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-               const int ipos1 = leftDiscreteCell - LAG_OFFSET;
-               double ftmp = 0.;
-               for(int k=0; k<=LAG_ORDER; k++) {
-                  int idx_ipos1 = (nx + ipos1 + k) % nx; //penser à essayer de retirer ce modulo. Possible si on a une distance max on alloue un tableau avec cette distance max en plus des deux côtés
+                 ftmp[ivx][ix] += coef[k] * fdist[ivx][idx_ipos1];
+             }
 
-                  //Pour faire in place il faut utiliser un buffer de taille Nx. Soit on s'en sert en buffer d'input pour la lecture et on met la valeur directement dans fdist
-                  // soit on s'en sert en buffer output : on stocke le résultat dedans puis on copie tout ce buffer dans la ligne correspondante dans fdist
+             // barrier
+         });                // end parallel_for
+     }).wait_and_throw();   // end Q.submit
 
-                  /* Ici en utilisant fdist en lecture */
-                  // ftmp += coef[k] * fdist[ivx][idx_ipos1];
+    // With basic range I have to submit 2 kernels in order to have a barrier
+    // this means I cannot use a local accessor in the previous kernel
+    return Q.submit([&](sycl::handler &cgh) {
+        auto fdist = buff_fdistrib.get_access<sycl::access::mode::write>(cgh);
+        auto ftmp = global_buff_ftmp.get_access<sycl::access::mode::read>(cgh);
 
-                  /* Ici en utilisant slice_x as an input */
-                  ftmp += coef[k] * slice_x[idx_ipos1];
+        cgh.parallel_for(sycl::range<1>(nVx), [=](sycl::id<1> itm) {
+            const int ivx = itm[0];
 
-                  /*  */
-                  // ftmp[idx_pos1] += coef[k] * fdist[ivx][idx_ipos1];
-               }
-
-               // fdist_write[ivx][ix] = ftmp; 
-               fdist_write[ivx][ix] = ftmp; 
-            } // end for X
-
-         } // end for Vx
-      }); // end cgh.single_task()
-    }); // end Q.submit
+            for (int i = 0; i < nx; ++i) {
+                fdist[ivx][i] = ftmp[ivx][i];
+            }
+        });   // end parallel_for
+    });       // end Q.submit
 }
