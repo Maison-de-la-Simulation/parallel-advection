@@ -16,8 +16,8 @@ AdvectorX::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
     Q.submit([&](sycl::handler &cgh) {
          auto fdist = buff_fdistrib.get_access<sycl::access::mode::read>(cgh);
 
-         auto ftmp =
-             global_buff_ftmp.get_access<sycl::access::mode::write>(cgh);
+         sycl::accessor ftmp(global_buff_ftmp, cgh, sycl::write_only,
+                             sycl::no_init);
 
          cgh.parallel_for(buff_fdistrib.get_range(), [=](sycl::id<2> itm) {
              const int ix = itm[1];
