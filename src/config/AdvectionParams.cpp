@@ -11,6 +11,7 @@ void ADVParams::setup(const ConfigMap& configMap)
 
   // run parameters
   maxIter = configMap.getInteger("run", "maxIter", nx/2);
+  gpu = configMap.getBool("run", "gpu", false);
 
   // discretization parameters
   dt  = configMap.getFloat("discretization", "dt" , 1.0);
@@ -32,6 +33,7 @@ void ADVParams::print()
   printf( "##########################\n");
   printf( "Simulation run parameters:\n");
   printf( "##########################\n");
+  printf( "gpu        : %d\n", gpu);
   printf( "maxIter    : %zu\n", maxIter);
   printf( "nx         : %zu\n", nx);
   printf( "nVx        : %zu\n", nVx);

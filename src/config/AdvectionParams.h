@@ -6,6 +6,9 @@
  */
 struct ADVParams {
 
+  // Running on the GPU (false = CPU)
+  bool gpu;
+
   // Number of iterations
   size_t maxIter;
 

@@ -39,6 +39,8 @@ int main(int argc, char** argv) {
     const auto nx = params.nx;
     const auto nVx = params.nVx;
     const auto maxIter = params.maxIter;
+    
+    const auto run_on_gpu = params.gpu;
 
     /* Use different queues depending on SYCL implem */
 #ifdef __INTEL_LLVM_COMPILER
@@ -48,11 +50,18 @@ int main(int argc, char** argv) {
    sycl::queue Q{sycl::cpu_selector_v};
 #else //__HIPSYCL__
    std::cout << "Running with OpenSYCL (hipSYCL)" << std::endl;
-   sycl::queue Q;
+
+   sycl::device d;
+   if(run_on_gpu)
+      d = sycl::device{sycl::gpu_selector_v};
+   else
+      d = sycl::device{sycl::cpu_selector_v};
+      
+      sycl::queue Q{d};
 #endif
 
     /* Display infos on current device */
-   std::cout << "Running on "
+   std::cout << "Using device: "
                 << Q.get_device().get_info<sycl::info::device::name>()
                 << "\n";
 
