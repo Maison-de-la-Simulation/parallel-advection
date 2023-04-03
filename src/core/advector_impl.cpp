@@ -47,20 +47,21 @@ AdvectorX::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
 
              // barrier
          });                // end parallel_for
-     }).wait_and_throw();   // end Q.submit
-
+     });   // end Q.submit
+    
     // With basic range I have to submit 2 kernels in order to have a barrier
     // this means I cannot use a local accessor in the previous kernel
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist = buff_fdistrib.get_access<sycl::access::mode::write>(cgh);
         auto ftmp = global_buff_ftmp.get_access<sycl::access::mode::read>(cgh);
+        cgh.copy(ftmp, fdist);
 
-        cgh.parallel_for(sycl::range<1>(nVx), [=](sycl::id<1> itm) {
-            const int ivx = itm[0];
+        // cgh.parallel_for(sycl::range<1>(nVx), [=](sycl::id<1> itm) {
+        //     const int ivx = itm[0];
 
-            for (int i = 0; i < nx; ++i) {
-                fdist[ivx][i] = ftmp[ivx][i];
-            }
-        });   // end parallel_for
+        //     for (int i = 0; i < nx; ++i) {
+        //         fdist[ivx][i] = ftmp[ivx][i];
+        //     }
+        // });   // end parallel_for
     });       // end Q.submit
 }
