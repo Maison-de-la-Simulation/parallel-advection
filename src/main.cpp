@@ -8,23 +8,31 @@ bool static constexpr _DEBUG = false;
 
 // ==========================================
 // ==========================================
-void advection(
+sycl::event advection(
    sycl::queue &Q,
    sycl::buffer<double, 2> &buff_fdistrib,
    const ADVParams &params)
 {
    AdvectorX advector;
 
+   int static const maxIter = params.maxIter;
+ 
    // Time loop, cannot parallelize this
-   for(int t=0; t<params.maxIter; ++t){
+   for(int t=0; t < maxIter; ++t){
+
+      if(t == maxIter-1) //If it's last iteration, we return an event to wait
+         return advector(Q, buff_fdistrib, params);
 
       advector(Q, buff_fdistrib, params);
-
+      
       if(_DEBUG){
          std::cout << "\nFdist_p" << t << " :" << std::endl;
          print_buffer(buff_fdistrib, params);
       }
    } // end for t < T
+
+   //unused code, here to remove warning about non-void function not returning
+   return advection(Q, buff_fdistrib, params);
 } // end advection
 
 // ==========================================
@@ -76,7 +84,7 @@ int main(int argc, char** argv) {
    }
 
    auto start = std::chrono::high_resolution_clock::now();
-   advection(Q, buff_fdistrib, params);
+   advection(Q, buff_fdistrib, params).wait_and_throw();
    auto end = std::chrono::high_resolution_clock::now();
 
    auto res = check_result(Q, buff_fdistrib, params, _DEBUG);
