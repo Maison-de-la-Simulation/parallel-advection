@@ -1,9 +1,9 @@
-#include "BasicRangeAdvector.h"
+#include "advectors.h"
 
 sycl::event
-BasicRangeAdvector::operator()(sycl::queue &Q,
-                               sycl::buffer<double, 2> &buff_fdistrib,
-                               const ADVParams &params) const {
+AdvX::BasicRange::operator()(sycl::queue &Q,
+                             sycl::buffer<double, 2> &buff_fdistrib,
+                             const ADVParams &params) const {
   auto const nx = params.nx;
   auto const nVx = params.nVx;
   auto const minRealx = params.minRealx;

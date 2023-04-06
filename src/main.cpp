@@ -2,7 +2,7 @@
 #include <sycl/sycl.hpp>
 #include <AdvectionParams.h>
 #include "utils.h"
-#include "advector_impl.h"
+#include <advectors.h>
 
 bool static constexpr _DEBUG = false;
 
@@ -13,7 +13,7 @@ sycl::event advection(
    sycl::buffer<double, 2> &buff_fdistrib,
    const ADVParams &params)
 {
-   AdvectorX advector;
+   AdvX::BasicRange advector;
 
    int static const maxIter = params.maxIter;
  

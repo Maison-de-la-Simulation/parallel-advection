@@ -1,7 +1,7 @@
-#include "SequentialAdvector.h"
+#include "advectors.h"
 
 sycl::event
-SequentialAdvector::operator()(
+AdvX::Sequential::operator()(
     sycl::queue &Q,
     sycl::buffer<double, 2> &buff_fdistrib,
     const ADVParams &params) const

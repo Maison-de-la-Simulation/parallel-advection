@@ -2,8 +2,9 @@ add_library(core "")
 
 target_sources(core
   PRIVATE
-  i_advector_x.h
-  advector_impl.cpp
+  IAdvectorX.h
+  impl/Sequential.cpp
+  impl/BasicRange.cpp
 )
 
 target_include_directories(core
