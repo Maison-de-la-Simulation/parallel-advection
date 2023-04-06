@@ -7,6 +7,8 @@ sycl::event
 AdvX::MultiDevice::operator()([[maybe_unused]] sycl::queue &Q,
                               sycl::buffer<double, 2> &buff_fdistrib,
                               const ADVParams &params) const {
+
+    //Actually this cannot target multiple devices in the same node
     sycl::queue multiDeviceQ;
 
     if (params.gpu)
