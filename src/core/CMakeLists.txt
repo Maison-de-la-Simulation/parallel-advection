@@ -5,6 +5,7 @@ target_sources(core
   IAdvectorX.h
   impl/Sequential.cpp
   impl/BasicRange.cpp
+  impl/Hierarchical.cpp
 )
 
 target_include_directories(core
