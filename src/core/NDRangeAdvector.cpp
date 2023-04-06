@@ -1,7 +1,7 @@
-#include "advector_impl.h"
+#include "NDRangeAdvector.h"
 
 sycl::event
-AdvectorX::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
+NDRangeAdvector::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
                       const ADVParams &params) const {
     auto const nx = params.nx;
     auto const nVx = params.nVx;
