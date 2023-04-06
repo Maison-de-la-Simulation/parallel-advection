@@ -15,7 +15,8 @@ sycl::event advection(
 {
    // AdvX::BasicRange advector;
    // AdvX::Hierarchical advector;
-   AdvX::NDRange advector;
+   // AdvX::NDRange advector;
+   AdvX::Scoped advector;
 
    int static const maxIter = params.maxIter;
  

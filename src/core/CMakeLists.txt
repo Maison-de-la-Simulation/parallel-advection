@@ -7,6 +7,7 @@ target_sources(core
   impl/BasicRange.cpp
   impl/Hierarchical.cpp
   impl/NDRange.cpp
+  impl/Scoped.cpp
 )
 
 target_include_directories(core
