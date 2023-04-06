@@ -13,8 +13,9 @@ sycl::event advection(
    sycl::buffer<double, 2> &buff_fdistrib,
    const ADVParams &params)
 {
-   AdvX::BasicRange advector;
+   // AdvX::BasicRange advector;
    // AdvX::Hierarchical advector;
+   AdvX::NDRange advector;
 
    int static const maxIter = params.maxIter;
  

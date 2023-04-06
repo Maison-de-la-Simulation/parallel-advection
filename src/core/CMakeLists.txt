@@ -6,6 +6,7 @@ target_sources(core
   impl/Sequential.cpp
   impl/BasicRange.cpp
   impl/Hierarchical.cpp
+  impl/NDRange.cpp
 )
 
 target_include_directories(core
