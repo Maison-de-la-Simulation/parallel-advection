@@ -21,6 +21,14 @@ class BasicRange : IAdvectorX {
       const ADVParams &params) const;
 };
 
+class BasicRange1D : IAdvectorX {
+  public:
+    sycl::event operator()(
+      sycl::queue &Q,
+      sycl::buffer<double, 2> &buff_fdistrib,
+      const ADVParams &params) const;
+};
+
 class Hierarchical : IAdvectorX {
   public:
     sycl::event operator()(

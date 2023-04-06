@@ -5,6 +5,7 @@ target_sources(core
   IAdvectorX.h
   impl/Sequential.cpp
   impl/BasicRange.cpp
+  impl/BasicRange1D.cpp
   impl/Hierarchical.cpp
   impl/NDRange.cpp
   impl/Scoped.cpp
