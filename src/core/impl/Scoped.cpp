@@ -63,5 +63,5 @@ AdvX::Scoped::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
 //       //    }
 //       // });
 //     });   // end parallel_for_work_group
-  });     // end Q.submit
+//   });     // end Q.submit
 }
