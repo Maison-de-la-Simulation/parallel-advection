@@ -14,7 +14,8 @@ sycl::event advection(
    const ADVParams &params)
 {
    // AdvX::BasicRange advector;
-   AdvX::BasicRange1D advector;
+   // AdvX::BasicRange1D advector;
+   AdvX::MultiDevice advector;
    // AdvX::Hierarchical advector;
    // AdvX::NDRange advector;
    // AdvX::Scoped advector;
