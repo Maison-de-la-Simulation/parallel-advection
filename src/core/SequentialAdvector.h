@@ -1,7 +1,7 @@
 #pragma once
 #include "i_advector_x.h"
 
-class AdvectorX : IAdvectorX {
+class SequentialAdvector : IAdvectorX {
   public:
     sycl::event operator()(
       sycl::queue &Q,
