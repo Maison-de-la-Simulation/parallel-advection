@@ -98,9 +98,11 @@ main(int argc, char **argv) {
 
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::cout << "elapsed_time: " << elapsed_seconds.count() << " s\n";
-    std::cout << "upd_cells_per_sec: "
-              << ((nVx * nx * maxIter) / elapsed_seconds.count()) / 1e6
-              << " Mcells/sec\n";
+
+    auto gcells = ((nVx * nx * maxIter) / elapsed_seconds.count()) / 1e9;
+    std::cout << "upd_cells_per_sec: " << gcells << " Gcell/sec\n";
+    std::cout << "estimated_throughput: " << gcells * sizeof(double) * 2
+              << " GB/s" << std::endl;
     std::cout << "parsing;" << nVx * nx << ";" << nx << ";" << nVx << std::endl;
     return 0;
 }
