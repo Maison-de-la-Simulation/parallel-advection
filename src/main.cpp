@@ -13,12 +13,7 @@ sycl::event advection(
    sycl::buffer<double, 2> &buff_fdistrib,
    const ADVParams &params)
 {
-   // AdvX::BasicRange advector;
-   // AdvX::BasicRange1D advector;
-   AdvX::MultiDevice advector;
-   // AdvX::Hierarchical advector;
-   // AdvX::NDRange advector;
-   // AdvX::Scoped advector;
+   auto advector = getKernelImpl(params.kernelImpl);
 
    int static const maxIter = params.maxIter;
  
@@ -26,9 +21,9 @@ sycl::event advection(
    for(int t=0; t < maxIter; ++t){
 
       if(t == maxIter-1) //If it's last iteration, we return an event to wait
-         return advector(Q, buff_fdistrib, params);
+         return advector->operator()(Q, buff_fdistrib, params);
 
-      advector(Q, buff_fdistrib, params);
+      advector->operator()(Q, buff_fdistrib, params);
       
       if(_DEBUG){
          std::cout << "\nFdist_p" << t << " :" << std::endl;
@@ -37,7 +32,7 @@ sycl::event advection(
    } // end for t < T
 
    //unused code, here to remove warning about non-void function not returning
-   return advection(Q, buff_fdistrib, params);
+   // return advector->operator()(Q, buff_fdistrib, params);
 } // end advection
 
 // ==========================================

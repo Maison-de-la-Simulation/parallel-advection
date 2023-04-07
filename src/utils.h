@@ -1,7 +1,37 @@
 #include <iostream>
 #include <sycl/sycl.hpp>
 #include <AdvectionParams.h>
+#include <advectors.h>
 
+// // ==========================================
+// // ==========================================
+std::unique_ptr<IAdvectorX>
+getKernelImpl(KernelImpl_t k) {
+    switch (k) {
+    case KernelImpl_t::Sequential:
+        return std::unique_ptr<IAdvectorX>(new AdvX::Sequential());
+        break;
+    case KernelImpl_t::BasicRange:
+        return std::unique_ptr<IAdvectorX>(new AdvX::BasicRange());
+        break;
+    case KernelImpl_t::BasicRange1D:
+        return std::unique_ptr<IAdvectorX>(new AdvX::BasicRange1D());
+        break;
+    case KernelImpl_t::Hierarchical:
+        return std::unique_ptr<IAdvectorX>(new AdvX::Hierarchical());
+        break;
+    case KernelImpl_t::NDRange:
+        return std::unique_ptr<IAdvectorX>(new AdvX::NDRange());
+        break;
+    case KernelImpl_t::Scoped:
+        return std::unique_ptr<IAdvectorX>(new AdvX::Scoped());
+        break;
+    case KernelImpl_t::MultiDevice:
+        return std::unique_ptr<IAdvectorX>(new AdvX::MultiDevice());
+        break;
+    }
+    return nullptr;
+}
 
 // ==========================================
 // ==========================================

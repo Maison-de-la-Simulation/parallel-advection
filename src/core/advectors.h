@@ -5,7 +5,7 @@
 namespace AdvX
 {
 
-class Sequential : IAdvectorX {
+class Sequential : public IAdvectorX {
   public:
     sycl::event operator()(
       sycl::queue &Q,
@@ -13,7 +13,7 @@ class Sequential : IAdvectorX {
       const ADVParams &params) const;
 };
 
-class BasicRange : IAdvectorX {
+class BasicRange : public IAdvectorX {
   public:
     sycl::event operator()(
       sycl::queue &Q,
@@ -21,7 +21,7 @@ class BasicRange : IAdvectorX {
       const ADVParams &params) const;
 };
 
-class BasicRange1D : IAdvectorX {
+class BasicRange1D : public IAdvectorX {
   public:
     sycl::event operator()(
       sycl::queue &Q,
@@ -29,7 +29,7 @@ class BasicRange1D : IAdvectorX {
       const ADVParams &params) const;
 };
 
-class Hierarchical : IAdvectorX {
+class Hierarchical : public IAdvectorX {
   public:
     sycl::event operator()(
       sycl::queue &Q,
@@ -37,7 +37,7 @@ class Hierarchical : IAdvectorX {
       const ADVParams &params) const;
 };
 
-class NDRange : IAdvectorX {
+class NDRange : public IAdvectorX {
   public:
     sycl::event operator()(
       sycl::queue &Q,
@@ -45,7 +45,7 @@ class NDRange : IAdvectorX {
       const ADVParams &params) const;
 };
 
-class Scoped : IAdvectorX {
+class Scoped : public IAdvectorX {
   public:
     sycl::event operator()(
       sycl::queue &Q,
@@ -53,7 +53,7 @@ class Scoped : IAdvectorX {
       const ADVParams &params) const;
 };
 
-class MultiDevice : IAdvectorX {
+class MultiDevice : public IAdvectorX {
   public:
     sycl::event operator()(
       sycl::queue &Q,

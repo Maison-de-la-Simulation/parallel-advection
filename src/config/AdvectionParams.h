@@ -22,7 +22,6 @@ struct ADVParams {
   bool gpu;
 
   //The implementation of the kernel, correspond to core/impl cpp files
-  std::string strKernelImpl;
   KernelImpl_t kernelImpl;
   // Number of iterations
   size_t maxIter;
@@ -48,6 +47,15 @@ struct ADVParams {
   // Min physical value of Vx
   double minRealVx;//we only need min since we perform advection in x only
 
+  //! setup / initialization
+  void setup(const ConfigMap& configMap); 
+
+  //! print parameters on screen
+  void print();
+
+private:
+  std::string strKernelImpl;
+
   std::unordered_map<std::string, KernelImpl_t> enumMap = 
   {
       {"Sequential", KernelImpl_t::Sequential},
@@ -58,12 +66,5 @@ struct ADVParams {
       {"Scoped", KernelImpl_t::Scoped},
       {"MultiDevice", KernelImpl_t::MultiDevice},
   };
-
-  //! setup / initialization
-  void setup(const ConfigMap& configMap); 
-
-  //! print parameters on screen
-  void print();
-
 }; // struct ADVParams
 
