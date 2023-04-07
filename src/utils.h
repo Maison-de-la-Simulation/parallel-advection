@@ -54,9 +54,9 @@ fill_buffer(sycl::queue &q, sycl::buffer<double, 2> &fdist,
          sycl::accessor FDIST(fdist, cgh, sycl::write_only, sycl::no_init);
 
          cgh.parallel_for(fdist.get_range(), [=](sycl::id<2> itm) {
-             double x = itm[1];
+             double x = itm[0];
              for (int ivx = 0; ivx < params.nVx; ++ivx) {
-                 FDIST[ivx][itm[1]] =
+                 FDIST[x][ivx] =
                      ivx % 2 == 0 ? sycl::sin(x) : sycl::cos(x);
              }
          });
@@ -83,7 +83,7 @@ double
 check_result(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
              const ADVParams &params, const bool _DEBUG) {
     /* Fill a buffer the same way we filled fdist at init */
-    sycl::buffer<double, 2> buff_init(sycl::range<2>(params.nVx, params.nx));
+    sycl::buffer<double, 2> buff_init(sycl::range<2>(params.nx, params.nVx));
     fill_buffer(Q, buff_init, params);
 
     if (_DEBUG) {
