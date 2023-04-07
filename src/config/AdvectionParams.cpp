@@ -12,14 +12,15 @@ void ADVParams::setup(const ConfigMap& configMap)
   maxIter = configMap.getInteger("run", "maxIter", nx/2);
   gpu = configMap.getBool("run", "gpu", false);
 
-  strKernelImpl = configMap.getString("run", "kernelImpl", "BasicRange");
+  kernelImpl = configMap.getString("run", "kernelImpl", "BasicRange");
+  // strKernelImpl = configMap.getString("run", "kernelImpl", "BasicRange");
 
-  if (enumMap.find(strKernelImpl) != enumMap.end()) {
-      kernelImpl = enumMap[strKernelImpl];
-  } else {
-      auto str = strKernelImpl + " is not a valid kernel name.\n" + error_str;
-      throw std::runtime_error(str);
-  }
+  // if (enumMap.find(strKernelImpl) != enumMap.end()) {
+  //     kernelImpl = enumMap[strKernelImpl];
+  // } else {
+  //     auto str = strKernelImpl + " is not a valid kernel name.\n" + error_str;
+  //     throw std::runtime_error(str);
+  // }
 
   // discretization parameters
   dt  = configMap.getFloat("discretization", "dt" , 1.0);
@@ -41,7 +42,7 @@ void ADVParams::print()
   printf( "##########################\n");
   printf( "Simulation run parameters:\n");
   printf( "##########################\n");
-  std::cout << "kernelImpl : " << strKernelImpl << std::endl;
+  std::cout << "kernelImpl : " << kernelImpl << std::endl;
   printf( "gpu        : %d\n", gpu);
   printf( "maxIter    : %zu\n", maxIter);
   printf( "nx         : %zu\n", nx);
