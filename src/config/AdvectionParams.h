@@ -14,6 +14,10 @@ enum class KernelImpl_t
   MultiDevice,
 };
 
+static constexpr auto error_str = "Should be one of: {Sequential, BasicRange, "
+                                  "BasicRange1D, Hierarchical, NDRange, "
+                                  "Scoped, MultiDevice}";
+
 /**
  * Advection Parameters (declaration)
  */

@@ -17,7 +17,7 @@ void ADVParams::setup(const ConfigMap& configMap)
   if (enumMap.find(strKernelImpl) != enumMap.end()) {
       kernelImpl = enumMap[strKernelImpl];
   } else {
-      auto str = strKernelImpl + " is not a valid kernel name.";
+      auto str = strKernelImpl + " is not a valid kernel name.\n" + error_str;
       throw std::runtime_error(str);
   }
 
