@@ -62,8 +62,6 @@ int main(int argc, char** argv) {
    if not with OpenSYCL */
    sycl::queue Q{sycl::cpu_selector_v};
 #else //__HIPSYCL__
-   std::cout << "Running with OpenSYCL (hipSYCL)" << std::endl;
-
    sycl::device d;
    if(run_on_gpu)
       d = sycl::device{sycl::gpu_selector_v};
