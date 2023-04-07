@@ -19,25 +19,25 @@ std::unique_ptr<IAdvectorX>
 getKernelImpl(std::string k) {
     switch (str2int(k.data())) {
     case str2int("Sequential"):
-        return std::unique_ptr<IAdvectorX>(new AdvX::Sequential());
+        return std::make_unique<AdvX::Sequential>();
         break;
     case str2int("BasicRange"):
-        return std::unique_ptr<IAdvectorX>(new AdvX::BasicRange());
+        return std::make_unique<AdvX::BasicRange>();
         break;
     case str2int("BasicRange1D"):
-        return std::unique_ptr<IAdvectorX>(new AdvX::BasicRange1D());
+        return std::make_unique<AdvX::BasicRange1D>();
         break;
     case str2int("Hierarchical"):
-        return std::unique_ptr<IAdvectorX>(new AdvX::Hierarchical());
+        return std::make_unique<AdvX::Hierarchical>();
         break;
     case str2int("NDRange"):
-        return std::unique_ptr<IAdvectorX>(new AdvX::NDRange());
+        return std::make_unique<AdvX::NDRange>();
         break;
     case str2int("Scoped"):
-        return std::unique_ptr<IAdvectorX>(new AdvX::Scoped());
+        return std::make_unique<AdvX::Scoped>();
         break;
     case str2int("MultiDevice"):
-        return std::unique_ptr<IAdvectorX>(new AdvX::MultiDevice());
+        return std::make_unique<AdvX::MultiDevice>();
         break;
     }
     auto str = k + " is not a valid kernel name.\n" + error_str;

@@ -43,4 +43,3 @@ struct ADVParams {
   //! print parameters on screen
   void print();
 }; // struct ADVParams
-
