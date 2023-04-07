@@ -81,7 +81,7 @@ main(int argc, char **argv) {
     
     /* Buffer for the distribution function containing the probabilities of
     having a particle at a particular speed and position */
-    sycl::buffer<double, 2> buff_fdistrib(sycl::range<2>(nVx, nx));
+    sycl::buffer<double, 2> buff_fdistrib(sycl::range<2>(nx, nVx));
     fill_buffer(Q, buff_fdistrib, params);
 
     if (_DEBUG) {

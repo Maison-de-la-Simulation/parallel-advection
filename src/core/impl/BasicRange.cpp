@@ -12,7 +12,7 @@ AdvX::BasicRange::operator()(sycl::queue &Q,
 
   /* Cannot use local memory with basic range parallel_for so I use a global
   buffer of size NVx * Nx*/
-  sycl::buffer<double, 2> global_buff_ftmp(sycl::range<2>(nVx, nx));
+  sycl::buffer<double, 2> global_buff_ftmp(sycl::range<2>(nx, nVx));
 
   Q.submit([&](sycl::handler &cgh) {
     auto fdist = buff_fdistrib.get_access<sycl::access::mode::read>(cgh);
@@ -20,8 +20,8 @@ AdvX::BasicRange::operator()(sycl::queue &Q,
     sycl::accessor ftmp(global_buff_ftmp, cgh, sycl::write_only, sycl::no_init);
 
     cgh.parallel_for(buff_fdistrib.get_range(), [=](sycl::id<2> itm) {
-      const int ix = itm[1];
-      const int ivx = itm[0];
+      const int ix = itm[0];
+      const int ivx = itm[1];
 
       double const xFootCoord = displ(ix, ivx, params);
 
@@ -38,11 +38,11 @@ AdvX::BasicRange::operator()(sycl::queue &Q,
 
       const int ipos1 = leftDiscreteCell - LAG_OFFSET;
 
-      ftmp[ivx][ix] = 0;   // initializing slice for each work item
+      ftmp[ix][ivx] = 0;   // initializing slice for each work item
       for (int k = 0; k <= LAG_ORDER; k++) {
         int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-        ftmp[ivx][ix] += coef[k] * fdist[ivx][idx_ipos1];
+        ftmp[ix][ivx] += coef[k] * fdist[idx_ipos1][ivx];
       }
 
       // barrier
