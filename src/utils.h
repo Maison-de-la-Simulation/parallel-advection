@@ -56,8 +56,8 @@ fill_buffer(sycl::queue &q, sycl::buffer<double, 2> &fdist,
          cgh.parallel_for(fdist.get_range(), [=](sycl::id<2> itm) {
              double x = itm[0];
              for (int ivx = 0; ivx < params.nVx; ++ivx) {
-                 FDIST[x][ivx] =
-                     ivx % 2 == 0 ? sycl::sin(x) : sycl::cos(x);
+                 FDIST[x][ivx] = sycl::sin(x);
+                    //  ivx % 2 == 0 ? sycl::sin(x) : sycl::cos(x);
              }
          });
      }).wait();   // end q.submit
@@ -76,6 +76,31 @@ print_buffer(sycl::buffer<double, 2> &fdist, const ADVParams &params) {
         std::cout << std::endl;
     }
 }   // end print_buffer
+
+// ==========================================
+// ==========================================
+void
+validate_result(
+    sycl::queue &Q,
+    sycl::buffer<double, 2> &buff_fdistrib,
+    const ADVParams &params){
+
+    Q.submit([&](sycl::handler &cgh) {
+         auto fdist = buff_fdistrib.get_access<sycl::access::mode::read>(cgh);
+
+         cgh.parallel_for(buff_fdistrib.get_range(), [=](auto itm) {
+            auto ix = itm[0];
+            auto ivx = itm[1];
+            auto f = fdist[itm];
+
+            double const x = params.minRealx + ix * params.dx;
+            double const v = params.minRealVx + ivx * params.dVx;
+
+            auto value = sycl::sin(x - v*params.maxIter);
+            assert(f - value < 10e-4);
+         });
+     }).wait_and_throw();
+}
 
 // ==========================================
 // ==========================================

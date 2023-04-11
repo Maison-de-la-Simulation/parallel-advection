@@ -96,6 +96,9 @@ main(int argc, char **argv) {
     auto res = check_result(Q, buff_fdistrib, params, _DEBUG);
     std::cout << "\nSqrt_sum: " << res << std::endl;
 
+    std::cout << "\nCHECK_RESULTS_SUM" << std::endl;
+    validate_result(Q, buff_fdistrib, params);
+
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::cout << "elapsed_time: " << elapsed_seconds.count() << " s\n";
 

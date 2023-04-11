@@ -19,7 +19,7 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
             buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
 
         sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>{512}, cgh);
-
+        // double slice_ftmp[512];
         cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<2> g) {
             g.parallel_for_work_item([&](sycl::h_item<2> it) {
                 const int ix = g.get_group_id(0);
@@ -54,11 +54,11 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
             });   // end parallel_for_work_item --> Implicit barrier
 
             // fdist[g.get_group_id(0)][] = ftmp;
+            g.parallel_for_work_item([&](sycl::h_item<2> it) {
+                fdist[g.get_group_id(0)][it.get_local_id(1)] = slice_ftmp[it.get_local_id(1)];
+            });
 
             //code executed only once
-            for (int i = 0; i < 512; ++i) {
-                fdist[g.get_group_id(0)][i] = slice_ftmp[i];
-            }
         });   // end parallel_for_work_group
     });       // end Q.submit
 }
