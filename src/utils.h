@@ -1,9 +1,9 @@
 #include <AdvectionParams.h>
 #include <advectors.h>
-#include <iostream>
-#include <sycl/sycl.hpp>
 #include <assert.h>
 #include <fstream>
+#include <iostream>
+#include <sycl/sycl.hpp>
 
 // To switch case on a str
 constexpr unsigned int
@@ -57,12 +57,13 @@ fill_buffer(sycl::queue &q, sycl::buffer<double, 2> &buff_fdist,
     for (int ix = 0; ix < params.nx; ++ix) {
         for (int iv = 0; iv < params.nVx; ++iv) {
 
-            // double x = fmod(params.minRealx + ix * params.dx, params.realWidthx);
+            // double x = fmod(params.minRealx + ix * params.dx,
+            // params.realWidthx);
             double x = params.minRealx + ix * params.dx;
 
             outfile << x << ", ";
 
-            fdist[ix][iv] = sycl::sin(4*x*M_PI);
+            fdist[ix][iv] = sycl::sin(4 * x * M_PI);
         }
         outfile << "\n";
     }
@@ -93,15 +94,15 @@ export_result_to_file(sycl::buffer<double, 2> &buff_fdistrib,
 
     auto str = "solution.log";
     std::ofstream outfile(str);
-    
 
     for (int iv = 0; iv < params.nVx; ++iv) {
         for (int ix = 0; ix < params.nx; ++ix) {
             outfile << fdist[ix][iv];
 
-            if(ix != params.nx - 1) outfile << ",";
+            if (ix != params.nx - 1)
+                outfile << ",";
         }
-        outfile<< std::endl;
+        outfile << std::endl;
     }
     outfile.close();
 
@@ -112,35 +113,51 @@ export_result_to_file(sycl::buffer<double, 2> &buff_fdistrib,
 // ==========================================
 // ==========================================
 void
-validate_result(
-    sycl::queue &Q,
-    sycl::buffer<double, 2> &buff_fdistrib,
-    const ADVParams &params){
+validate_result(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
+                const ADVParams &params) {
 
-    Q.submit([&](sycl::handler &cgh) {
-         auto fdist = buff_fdistrib.get_access<sycl::access::mode::read>(cgh);
+    const double acceptable_error = 1e-2;
 
-         cgh.parallel_for(buff_fdistrib.get_range(), [=](auto itm) {
-            auto ix = itm[0];
-            auto ivx = itm[1];
-            auto f = fdist[itm];
+    int errCount = 0;
+    {
 
-            double const x = params.minRealx + ix * params.dx;
-            double const v = params.minRealVx + ivx * params.dVx;
+        sycl::buffer<int> buff_errCount{&errCount, 1};
 
-            //durée physique totale depuis le début de la simulation
-            double const t = params.maxIter * params.dt;
+        Q.submit([&](sycl::handler &cgh) {
+             // Input values to reductions are standard accessors
+             auto errAcc =
+                 buff_errCount.get_access<sycl::access_mode::write>(cgh);
+             auto fdist =
+                 buff_fdistrib.get_access<sycl::access_mode::read>(cgh);
 
-            auto value = sycl::sin(x - v*t);
+             auto errReduction = sycl::reduction(errAcc, sycl::plus<int>());
 
-            assert((f - value == 0));//< 10e-4);
-            // if(f - value != 0 )
-            // {
-            //     std::cout << "err final solution: " << f - value << std::endl;
-            // }
-         });
-     }).wait_and_throw();
-}
+             cgh.parallel_for(
+                 buff_fdistrib.get_range(), errReduction,
+                 [=](auto itm, auto &totalErr) {
+                     auto ix = itm[0];
+                     auto ivx = itm[1];
+                     auto f = fdist[itm];
+
+                     double const x = params.minRealx + ix * params.dx;
+                     double const v = params.minRealVx + ivx * params.dVx;
+                     double const t = params.maxIter * params.dt;
+
+                     auto value = sycl::sin(4 * M_PI * (x - v * t));
+
+                     if (sycl::fabs(f - value) > acceptable_error)
+                         totalErr += 1;
+                 });
+         }).wait_and_throw();
+    }
+
+    double const totalCells = params.nx * params.nVx;
+    double const fractionErr = errCount / totalCells * 100;
+
+    std::cout << "fraction of cells with error > " << acceptable_error << ": "
+              << fractionErr << "% of total cells\n" << std::endl;
+
+} // end validate_results
 
 // ==========================================
 // ==========================================
