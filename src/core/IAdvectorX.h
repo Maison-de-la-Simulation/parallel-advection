@@ -61,6 +61,12 @@ public:
             minRealx +
             sycl::fmod(realWidthx + x - displx - minRealx, realWidthx);
 
+        // if(ivx ==0){
+        //     std::cout << "xstar - x:";
+        //     std::cout << xstar - x << std::endl;
+
+        // }
+
         return xstar;
     }   // end displ
 };

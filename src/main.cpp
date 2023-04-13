@@ -100,7 +100,6 @@ main(int argc, char **argv) {
     std::cout << "\nSqrt_sum: " << res << std::endl;
 
     std::cout << "\nCHECK_RESULTS_SUM" << std::endl;
-    print_buffer(buff_fdistrib, params);
     validate_result(Q, buff_fdistrib, params);
     export_result_to_file(buff_fdistrib, params);
 

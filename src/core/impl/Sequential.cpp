@@ -43,6 +43,7 @@ AdvX::Sequential::operator()([[maybe_unused]] sycl::queue &Q,
                     const int ipos1 = leftDiscreteCell - LAG_OFFSET;
                     double ftmp = 0.;
                     for (int k = 0; k <= LAG_ORDER; k++) {
+                        // int idx_ipos1 = (nx + ipos1 + k) % nx;
                         int idx_ipos1 = (nx + ipos1 + k) % nx;
                         ftmp += coef[k] * slice_x[idx_ipos1];
                     }
