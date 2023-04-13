@@ -53,12 +53,4 @@ class Scoped : public IAdvectorX {
       const ADVParams &params) const;
 };
 
-class MultiDevice : public IAdvectorX {
-  public:
-    sycl::event operator()(
-      sycl::queue &Q,
-      sycl::buffer<double, 2> &buff_fdistrib,
-      const ADVParams &params) const;
-};
-
 }

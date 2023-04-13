@@ -42,7 +42,7 @@ public:
     // ==========================================
     /* Computes the covered distance by x during dt and returns the feet coord
      */
-    inline int displ(const int &ix, const int &ivx,
+    inline double displ(const int &ix, const int &ivx,
                      const ADVParams &params) const {
         auto const minRealx = params.minRealx;
         auto const minRealVx = params.minRealVx;

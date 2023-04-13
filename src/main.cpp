@@ -84,6 +84,9 @@ main(int argc, char **argv) {
     sycl::buffer<double, 2> buff_fdistrib(sycl::range<2>(nx, nVx));
     fill_buffer(Q, buff_fdistrib, params);
 
+    // print_buffer(buff_fdistrib, params);
+    // return 0;
+
     if (_DEBUG) {
         std::cout << "Fdist:" << std::endl;
         print_buffer(buff_fdistrib, params);
@@ -97,7 +100,9 @@ main(int argc, char **argv) {
     std::cout << "\nSqrt_sum: " << res << std::endl;
 
     std::cout << "\nCHECK_RESULTS_SUM" << std::endl;
+    print_buffer(buff_fdistrib, params);
     validate_result(Q, buff_fdistrib, params);
+    export_result_to_file(buff_fdistrib, params);
 
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::cout << "elapsed_time: " << elapsed_seconds.count() << " s\n";

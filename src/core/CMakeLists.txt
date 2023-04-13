@@ -9,7 +9,6 @@ target_sources(core
   impl/Hierarchical.cpp
   impl/NDRange.cpp
   impl/Scoped.cpp
-  impl/MultiDevice.cpp
 )
 
 target_include_directories(core

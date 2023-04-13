@@ -24,14 +24,14 @@ void ADVParams::setup(const ConfigMap& configMap)
 
   // discretization parameters
   dt  = configMap.getFloat("discretization", "dt" , 1.0);
-  dx  = configMap.getFloat("discretization", "dx" , 1.0);
   dVx = configMap.getFloat("discretization", "dvx", 1.0);
 
   minRealx = configMap.getFloat("discretization", "minRealx", 0);
-  maxRealx = configMap.getFloat("discretization", "maxRealx", nx*dx + minRealx);
+  maxRealx = configMap.getFloat("discretization", "maxRealx", 10);
   minRealVx= configMap.getFloat("discretization", "minRealVx", 0);
-  
+
   realWidthx = maxRealx - minRealx;
+  dx = realWidthx / nx;
   inv_dx     = 1/dx;
 } // ADVParams::setup
 

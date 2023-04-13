@@ -2,6 +2,8 @@
 #include <advectors.h>
 #include <iostream>
 #include <sycl/sycl.hpp>
+#include <assert.h>
+#include <fstream>
 
 // To switch case on a str
 constexpr unsigned int
@@ -11,7 +13,7 @@ str2int(const char *str, int h = 0) {
 
 static constexpr auto error_str = "Should be one of: {Sequential, BasicRange, "
                                   "BasicRange1D, Hierarchical, NDRange, "
-                                  "Scoped, MultiDevice}";
+                                  "Scoped}";
 
 // // ==========================================
 // // ==========================================
@@ -36,9 +38,6 @@ getKernelImpl(std::string k) {
     case str2int("Scoped"):
         return std::make_unique<AdvX::Scoped>();
         break;
-    case str2int("MultiDevice"):
-        return std::make_unique<AdvX::MultiDevice>();
-        break;
     }
     auto str = k + " is not a valid kernel name.\n" + error_str;
     throw std::runtime_error(str);
@@ -48,19 +47,26 @@ getKernelImpl(std::string k) {
 // ==========================================
 // ==========================================
 void
-fill_buffer(sycl::queue &q, sycl::buffer<double, 2> &fdist,
+fill_buffer(sycl::queue &q, sycl::buffer<double, 2> &buff_fdist,
             const ADVParams &params) {
-    q.submit([&](sycl::handler &cgh) {
-         sycl::accessor FDIST(fdist, cgh, sycl::write_only, sycl::no_init);
 
-         cgh.parallel_for(fdist.get_range(), [=](sycl::id<2> itm) {
-             double x = itm[0];
-             for (int ivx = 0; ivx < params.nVx; ++ivx) {
-                 FDIST[x][ivx] = sycl::sin(x);
-                    //  ivx % 2 == 0 ? sycl::sin(x) : sycl::cos(x);
-             }
-         });
-     }).wait();   // end q.submit
+    sycl::host_accessor fdist(buff_fdist, sycl::write_only, sycl::no_init);
+    auto str = "x.log";
+    std::ofstream outfile(str);
+
+    for (int ix = 0; ix < params.nx; ++ix) {
+        for (int iv = 0; iv < params.nVx; ++iv) {
+
+            // double x = fmod(params.minRealx + ix * params.dx, params.realWidthx);
+            double x = params.minRealx + ix * params.dx;
+
+            outfile << x << ", ";
+
+            fdist[ix][iv] = sycl::sin(x);
+        }
+        outfile << "\n";
+    }
+    outfile.close();
 }
 
 // ==========================================
@@ -69,13 +75,39 @@ void
 print_buffer(sycl::buffer<double, 2> &fdist, const ADVParams &params) {
     sycl::host_accessor tab(fdist, sycl::read_only);
 
-    for (int iv = 0; iv < params.nVx; ++iv) {
-        for (int ix = 0; ix < params.nx; ++ix) {
-            std::cout << tab[iv][ix] << " ";
+    for (int ix = 0; ix < params.nx; ++ix) {
+        for (int iv = 0; iv < params.nVx; ++iv) {
+            std::cout << tab[ix][iv] << " ";
         }
         std::cout << std::endl;
     }
 }   // end print_buffer
+
+// ==========================================
+// ==========================================
+void
+export_result_to_file(sycl::buffer<double, 2> &buff_fdistrib,
+                      const ADVParams &params) {
+
+    sycl::host_accessor fdist(buff_fdistrib, sycl::read_only);
+
+    auto str = "solution.log";
+    std::ofstream outfile(str);
+    
+
+    for (int iv = 0; iv < params.nVx; ++iv) {
+        for (int ix = 0; ix < params.nx; ++ix) {
+            outfile << fdist[ix][iv];
+
+            if(ix != params.nx - 1) outfile << ",";
+        }
+        outfile<< std::endl;
+    }
+    outfile.close();
+
+    // myfile << "This is a line.\n";
+    // myfile << "This is another line.\n";
+}
 
 // ==========================================
 // ==========================================
@@ -96,8 +128,16 @@ validate_result(
             double const x = params.minRealx + ix * params.dx;
             double const v = params.minRealVx + ivx * params.dVx;
 
-            auto value = sycl::sin(x - v*params.maxIter);
-            assert(f - value < 10e-4);
+            //durée physique totale depuis le début de la simulation
+            double const t = params.maxIter * params.dt;
+
+            auto value = sycl::sin(x - v*t);
+
+            assert((f - value == 0));//< 10e-4);
+            // if(f - value != 0 )
+            // {
+            //     std::cout << "err final solution: " << f - value << std::endl;
+            // }
          });
      }).wait_and_throw();
 }
