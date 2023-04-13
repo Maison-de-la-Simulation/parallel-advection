@@ -84,25 +84,18 @@ main(int argc, char **argv) {
     sycl::buffer<double, 2> buff_fdistrib(sycl::range<2>(nx, nVx));
     fill_buffer(Q, buff_fdistrib, params);
 
-    // print_buffer(buff_fdistrib, params);
-    // return 0;
-
-    if (_DEBUG) {
-        std::cout << "Fdist:" << std::endl;
-        print_buffer(buff_fdistrib, params);
-    }
-
     auto start = std::chrono::high_resolution_clock::now();
     advection(Q, buff_fdistrib, params);
     auto end = std::chrono::high_resolution_clock::now();
 
-    auto res = check_result(Q, buff_fdistrib, params, _DEBUG);
-    std::cout << "\nSqrt_sum: " << res << std::endl;
+    // auto res = check_result(Q, buff_fdistrib, params, _DEBUG);
+    // std::cout << "\nSqrt_sum: " << res << std::endl;
 
-    std::cout << "\nCHECK_RESULTS_SUM" << std::endl;
+    std::cout << "\nRESULTS_VALIDATION:" << std::endl;
     validate_result(Q, buff_fdistrib, params);
     export_result_to_file(buff_fdistrib, params);
 
+    std::cout << "PERF_DIAGS:" << std::endl;
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::cout << "elapsed_time: " << elapsed_seconds.count() << " s\n";
 
