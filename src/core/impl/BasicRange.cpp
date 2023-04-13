@@ -43,6 +43,7 @@ AdvX::BasicRange::operator()(sycl::queue &Q,
         int idx_ipos1 = (nx + ipos1 + k) % nx;
 
         ftmp[ix][ivx] += coef[k] * fdist[idx_ipos1][ivx];
+        // ftmp[ix][ivx] += 1/5 * fdist[idx_ipos1][ivx];   // <--- this does the same as previous line ???
       }
 
       // barrier

@@ -62,7 +62,7 @@ fill_buffer(sycl::queue &q, sycl::buffer<double, 2> &buff_fdist,
 
             outfile << x << ", ";
 
-            fdist[ix][iv] = sycl::sin(x);
+            fdist[ix][iv] = sycl::sin(4*x*M_PI);
         }
         outfile << "\n";
     }

@@ -16,17 +16,20 @@ AdvX::Sequential::operator()([[maybe_unused]] sycl::queue &Q,
 
         cgh.single_task([=]() {
 
-            double slice_x[nx];
+            // double slice_x[nx];
+            double slice_ftmp[nx];
 
             for (auto iv = 0; iv < nVx; ++iv) {
 
                 // Memcopy slice x in contiguous memory
                 for (int iix = 0; iix < nx; ++iix) {
-                    slice_x[iix] = fdist[iix][iv];
+                    // slice_x[iix] = fdist[iix][iv];
+                    slice_ftmp[iix] = 0;
                 }
 
                 // For each x with regards to current Vx
-                for (int ix = 0; ix < nx; ++ix) {
+                for (auto ix = 0; ix < nx; ++ix) {
+
                     double const xFootCoord = displ(ix, iv, params);
 
                     const int leftDiscreteCell =
@@ -41,15 +44,20 @@ AdvX::Sequential::operator()([[maybe_unused]] sycl::queue &Q,
                     lag_basis(d_prev1, coef);
 
                     const int ipos1 = leftDiscreteCell - LAG_OFFSET;
-                    double ftmp = 0.;
-                    for (int k = 0; k <= LAG_ORDER; k++) {
-                        // int idx_ipos1 = (nx + ipos1 + k) % nx;
+                    // double ftmp = 0.;
+                    for (auto k = 0; k <= LAG_ORDER; k++) {
                         int idx_ipos1 = (nx + ipos1 + k) % nx;
-                        ftmp += coef[k] * slice_x[idx_ipos1];
+                        // ftmp += coef[k] * slice_x[idx_ipos1];
+                        slice_ftmp[ix] += coef[k] * fdist[idx_ipos1][iv];
                     }
 
-                    fdist[ix][iv] = ftmp;
+                    // fdist[ix][iv] = ftmp;
                 }   // end for X
+
+                for (int iix = 0; iix < nx; ++iix) {
+                    fdist[iix][iv] = slice_ftmp[iix];
+                }
+
             }       // end for Vx
         });         // end single_task
     });             // end Q.submit

@@ -52,14 +52,16 @@ public:
         auto const realWidthx = params.realWidthx;
 
         double const x =
-            minRealx + ix * dx;   // real coordinate of particles at ix
+             minRealx + ix * dx;   // real coordinate of particles at ix
         double const vx =
             minRealVx + ivx * dVx;   // real speed of particles at ivx
         double const displx = dt * vx;
 
-        double const xstar =
-            minRealx +
-            sycl::fmod(realWidthx + x - displx - minRealx, realWidthx);
+        return minRealx +
+               sycl::fmod(realWidthx + x - displx - minRealx, realWidthx);
+        // double const xstar =
+        //     minRealx +
+        //     sycl::fmod(realWidthx + x - displx - minRealx, realWidthx);
 
         // if(ivx ==0){
         //     std::cout << "xstar - x:";
@@ -67,6 +69,6 @@ public:
 
         // }
 
-        return xstar;
+        // return xstar;
     }   // end displ
 };
