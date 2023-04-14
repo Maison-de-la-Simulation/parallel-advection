@@ -11,8 +11,8 @@ AdvX::Scoped::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
 
 //   const sycl::range<2> nb_wg{1, nVx/4};
 //   const sycl::range<2> wg_size{nx, 4};
-  const sycl::range<2> nb_wg{1, nVx};
-  const sycl::range<2> wg_size{nx, 1};
+  const sycl::range<2> nb_wg{64, nVx/512};
+  const sycl::range<2> wg_size{nx/64, 512};
 
   return Q.submit([&](sycl::handler &cgh) {
     auto fdist = buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
