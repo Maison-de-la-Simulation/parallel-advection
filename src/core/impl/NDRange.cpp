@@ -51,9 +51,10 @@ AdvX::NDRange::operator()(sycl::queue &Q,
 
           sycl::group_barrier(itm.get_group());
           // fdist[ix][ivx] = ftmp;
-          for (int i = 0; i < nx; ++i) {
-            fdist[i][ivx] = slice_ftmp[i];
-          }
+          // for (int i = 0; i < nx; ++i) {
+          fdist[ix][ivx] = slice_ftmp[ix];
+            // fdist[i][ivx] = slice_ftmp[i];
+          // }
         }   // end lambda in parallel_for
     );      // end parallel_for nd_range
   });       // end Q.submit

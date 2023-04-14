@@ -51,8 +51,8 @@ fill_buffer(sycl::queue &q, sycl::buffer<double, 2> &buff_fdist,
             const ADVParams &params) {
 
     sycl::host_accessor fdist(buff_fdist, sycl::write_only, sycl::no_init);
-    auto str = "x.log";
-    std::ofstream outfile(str);
+    // auto str = "x.log";
+    // std::ofstream outfile(str);
 
     for (int ix = 0; ix < params.nx; ++ix) {
         for (int iv = 0; iv < params.nVx; ++iv) {
@@ -61,13 +61,13 @@ fill_buffer(sycl::queue &q, sycl::buffer<double, 2> &buff_fdist,
             // params.realWidthx);
             double x = params.minRealx + ix * params.dx;
 
-            outfile << x << ", ";
+            // outfile << x << ", ";
 
             fdist[ix][iv] = sycl::sin(4 * x * M_PI);
         }
-        outfile << "\n";
+        // outfile << "\n";
     }
-    outfile.close();
+    // outfile.close();
 }
 
 // ==========================================
