@@ -14,10 +14,12 @@ AdvX::Sequential::operator()([[maybe_unused]] sycl::queue &Q,
     return Q.submit([&](sycl::handler &cgh) {
         sycl::accessor fdist(buff_fdistrib, cgh, sycl::read_write);
 
+        sycl::local_accessor<double, 1> slice_ftmp{sycl::range<1>{nx}, cgh};
+
         cgh.single_task([=]() {
 
             // double slice_x[nx];
-            double slice_ftmp[nx];
+            // double slice_ftmp[nx];
 
             for (auto iv = 0; iv < nVx; ++iv) {
 
