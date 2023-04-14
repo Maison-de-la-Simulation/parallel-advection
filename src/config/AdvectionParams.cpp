@@ -13,14 +13,6 @@ void ADVParams::setup(const ConfigMap& configMap)
   gpu = configMap.getBool("run", "gpu", false);
 
   kernelImpl = configMap.getString("run", "kernelImpl", "BasicRange");
-  // strKernelImpl = configMap.getString("run", "kernelImpl", "BasicRange");
-
-  // if (enumMap.find(strKernelImpl) != enumMap.end()) {
-  //     kernelImpl = enumMap[strKernelImpl];
-  // } else {
-  //     auto str = strKernelImpl + " is not a valid kernel name.\n" + error_str;
-  //     throw std::runtime_error(str);
-  // }
 
   // discretization parameters
   dt  = configMap.getFloat("discretization", "dt" , 1.0);

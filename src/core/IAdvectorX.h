@@ -4,23 +4,23 @@
 #include <sycl/sycl.hpp>
 
 /* Lagrange variables, order, number of points, offset from the current point */
-int    static constexpr LAG_ORDER  = 5;
-int    static constexpr LAG_PTS    = 6;
-int    static constexpr LAG_OFFSET = 2;
+int static constexpr LAG_ORDER = 5;
+int static constexpr LAG_PTS = 6;
+int static constexpr LAG_OFFSET = 2;
 
 class IAdvectorX {
-public:
+  public:
     virtual ~IAdvectorX() = default;
 
-    virtual sycl::event operator()(
-        sycl::queue &Q,
-        sycl::buffer<double, 2> &buff_fdistrib,
-        const ADVParams &params) const = 0;
+    virtual sycl::event operator()(sycl::queue &Q,
+                                   sycl::buffer<double, 2> &buff_fdistrib,
+                                   const ADVParams &params) const = 0;
 
     // ==========================================
     // ==========================================
     /* Computes the coefficient for semi lagrangian interp of order 5 */
-    inline void lag_basis(const double &px, double *coef) const {
+    inline __attribute__((always_inline)) void
+    lag_basis(const double &px, double *coef) const {
         constexpr double loc[] = {-1. / 24, 1. / 24.,  -1. / 12.,
                                   1. / 12., -1. / 24., 1. / 24.};
         const double pxm2 = px - 2.;
@@ -40,10 +40,9 @@ public:
 
     // ==========================================
     // ==========================================
-    /* Computes the covered distance by x during dt and returns the feet coord
-     */
-    inline double displ(const int &ix, const int &ivx,
-                     const ADVParams &params) const {
+    /* Computes the covered distance by x during dt. returns the feet coord */
+    inline __attribute__((always_inline)) double
+    displ(const int &ix, const int &ivx, const ADVParams &params) const {
         auto const minRealx = params.minRealx;
         auto const minRealVx = params.minRealVx;
         auto const dx = params.dx;
@@ -52,23 +51,12 @@ public:
         auto const realWidthx = params.realWidthx;
 
         double const x =
-             minRealx + ix * dx;   // real coordinate of particles at ix
+            minRealx + ix * dx;   // real coordinate of particles at ix
         double const vx =
             minRealVx + ivx * dVx;   // real speed of particles at ivx
         double const displx = dt * vx;
 
         return minRealx +
                sycl::fmod(realWidthx + x - displx - minRealx, realWidthx);
-        // double const xstar =
-        //     minRealx +
-        //     sycl::fmod(realWidthx + x - displx - minRealx, realWidthx);
-
-        // if(ivx ==0){
-        //     std::cout << "xstar - x:";
-        //     std::cout << xstar - x << std::endl;
-
-        // }
-
-        // return xstar;
     }   // end displ
 };

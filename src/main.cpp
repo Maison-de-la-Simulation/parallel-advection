@@ -25,7 +25,7 @@ advection(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
         advector->operator()(Q, buff_fdistrib, params);
 
         if (_DEBUG) {
-            std::cout << "\nFdist_p" << t << " :" << std::endl;
+            std::cout << "\nFdist_p" << t << ": " << std::endl;
             print_buffer(buff_fdistrib, params);
         }
     }   // end for t < T

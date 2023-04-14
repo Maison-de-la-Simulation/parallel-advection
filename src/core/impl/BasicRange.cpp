@@ -43,7 +43,6 @@ AdvX::BasicRange::operator()(sycl::queue &Q,
         int idx_ipos1 = (nx + ipos1 + k) % nx;
 
         ftmp[ix][ivx] += coef[k] * fdist[idx_ipos1][ivx];
-        // ftmp[ix][ivx] += 1/5 * fdist[idx_ipos1][ivx];   // <--- this does the same as previous line ???
       }
 
       // barrier
@@ -56,13 +55,5 @@ AdvX::BasicRange::operator()(sycl::queue &Q,
     auto fdist = buff_fdistrib.get_access<sycl::access::mode::write>(cgh);
     auto ftmp = global_buff_ftmp.get_access<sycl::access::mode::read>(cgh);
     cgh.copy(ftmp, fdist);
-
-    // cgh.parallel_for(sycl::range<1>(nVx), [=](sycl::id<1> itm) {
-    //     const int ivx = itm[0];
-
-    //     for (int i = 0; i < nx; ++i) {
-    //         fdist[ivx][i] = ftmp[ivx][i];
-    //     }
-    // });   // end parallel_for
   });   // end Q.submit
 }
