@@ -62,6 +62,7 @@ main(int argc, char **argv) {
                    "on the CPU\n"
                 << std::endl;
             d = sycl::device{sycl::cpu_selector_v};
+            // d = sycl::device{sycl::};
             params.gpu = false;
         }
     else

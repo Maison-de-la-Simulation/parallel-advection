@@ -10,20 +10,26 @@ AdvX::Sequential::operator()([[maybe_unused]] sycl::queue &Q,
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
+    // double array_nx[nx];
+    std::vector<double> array_nx(nx);
+    sycl::buffer<double, 1> buff_slice_ftmp(array_nx.data(), nx);
+
     // returning to avoid warning and undefined behavior
     return Q.submit([&](sycl::handler &cgh) {
         sycl::accessor fdist(buff_fdistrib, cgh, sycl::read_write);
 
-        sycl::local_accessor<double, 1> slice_ftmp{sycl::range<1>{nx}, cgh};
+        // sycl::local_accessor<double, 1> slice_ftmp{sycl::range<1>{nx}, cgh};
+        // sycl::accessor<double, 1ftmp
+        // auto buff_slice_ftmp.get_access<>
+        // auto slice_ftmp =
+        //     buff_slice_ftmp.get_access<sycl::access::mode::read_write>(
+        //         cgh);
+        sycl::accessor slice_ftmp(buff_slice_ftmp, sycl::read_write);
 
+        // cgh.parallel_for(sycl::range<1>(1), [=](sycl::id<1>) {
         cgh.single_task([=]() {
-
-            // double slice_x[nx];
-            // double slice_ftmp[nx];
-
             for (auto iv = 0; iv < nVx; ++iv) {
 
-                // Memcopy slice x in contiguous memory
                 for (int iix = 0; iix < nx; ++iix) {
                     // slice_x[iix] = fdist[iix][iv];
                     slice_ftmp[iix] = 0;
@@ -60,7 +66,10 @@ AdvX::Sequential::operator()([[maybe_unused]] sycl::queue &Q,
                     fdist[iix][iv] = slice_ftmp[iix];
                 }
 
-            }       // end for Vx
-        });         // end single_task
-    });             // end Q.submit
+            }   // end for Vx
+        }); // end parallel_for 1 iter
+    });   // end Q.submit
+
+    // event.wait_and_throw();
+    // return event;
 }

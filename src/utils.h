@@ -121,7 +121,6 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
     int errCount = 0;
     double totalError = 0.0;
     {
-
         sycl::buffer<int> buff_errCount{&errCount, 1};
         sycl::buffer<double> buff_sumTotalErr{&totalError, 1};
 
