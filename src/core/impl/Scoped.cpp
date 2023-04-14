@@ -11,8 +11,8 @@ AdvX::Scoped::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
 
 //   const sycl::range<2> nb_wg{1, nVx/4};
 //   const sycl::range<2> wg_size{nx, 4};
-  const sycl::range<2> nb_wg{64, nVx/512};
-  const sycl::range<2> wg_size{nx/64, 512};
+  const sycl::range<2> nb_wg{2, nVx};
+  const sycl::range<2> wg_size{nx/2, 1};
 
   return Q.submit([&](sycl::handler &cgh) {
     auto fdist = buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
@@ -61,7 +61,7 @@ AdvX::Scoped::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
             ftmp += coef[k] * slice_ftmp[idx_ipos1];
           }
 
-          fdist[ivx][ix] = ftmp;
+          fdist[ix][ivx] = ftmp;
         });   // end distribute items
       });     // end distribute_groups
 
