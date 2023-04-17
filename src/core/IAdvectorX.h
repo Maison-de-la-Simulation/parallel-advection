@@ -18,6 +18,14 @@ class IAdvectorX {
 
     // ==========================================
     // ==========================================
+    /* Computes the real position of x or speed of vx based on discretization */
+    inline __attribute__((always_inline)) double
+    coord(const int& i, const double& minValue, const double &delta) const {
+        return minValue + i * delta;
+    }
+
+    // ==========================================
+    // ==========================================
     /* Computes the coefficient for semi lagrangian interp of order 5 */
     inline __attribute__((always_inline)) void
     lag_basis(const double &px, double *coef) const {
@@ -50,10 +58,9 @@ class IAdvectorX {
         auto const dt = params.dt;
         auto const realWidthx = params.realWidthx;
 
-        double const x =
-            minRealx + ix * dx;   // real coordinate of particles at ix
-        double const vx =
-            minRealVx + ivx * dVx;   // real speed of particles at ivx
+        double const x = coord(ix, minRealx, dx);
+        double const vx = coord(ivx, minRealVx, dVx);
+
         double const displx = dt * vx;
 
         return minRealx +
