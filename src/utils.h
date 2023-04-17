@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <sycl/sycl.hpp>
+#include "unique_ref.h"
 
 // To switch case on a str
 constexpr unsigned int
@@ -17,31 +18,31 @@ static constexpr auto error_str = "Should be one of: {Sequential, BasicRange, "
 
 // // ==========================================
 // // ==========================================
-std::unique_ptr<IAdvectorX>
+sref::unique_ref<IAdvectorX>
 getKernelImpl(std::string k) {
     switch (str2int(k.data())) {
     case str2int("Sequential"):
-        return std::make_unique<AdvX::Sequential>();
+        return sref::make_unique<AdvX::Sequential>();
         break;
     case str2int("BasicRange"):
-        return std::make_unique<AdvX::BasicRange>();
+        return sref::make_unique<AdvX::BasicRange>();
         break;
     case str2int("BasicRange1D"):
-        return std::make_unique<AdvX::BasicRange1D>();
+        return sref::make_unique<AdvX::BasicRange1D>();
         break;
     case str2int("Hierarchical"):
-        return std::make_unique<AdvX::Hierarchical>();
+        return sref::make_unique<AdvX::Hierarchical>();
         break;
     case str2int("NDRange"):
-        return std::make_unique<AdvX::NDRange>();
+        return sref::make_unique<AdvX::NDRange>();
         break;
     case str2int("Scoped"):
-        return std::make_unique<AdvX::Scoped>();
+        return sref::make_unique<AdvX::Scoped>();
         break;
     }
     auto str = k + " is not a valid kernel name.\n" + error_str;
     throw std::runtime_error(str);
-    return nullptr;
+    return sref::make_unique<AdvX::Sequential>(); //TODO: return nullptr
 }
 
 // ==========================================

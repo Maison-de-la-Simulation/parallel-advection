@@ -20,10 +20,9 @@ advection(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
 
         // If it's last iteration, we wait
         if (t == maxIter - 1)
-            advector->operator()(Q, buff_fdistrib, params).wait_and_throw();
+            advector(Q, buff_fdistrib, params).wait_and_throw();
         else
-            advector->operator()(Q, buff_fdistrib, params);
-        
+            advector(Q, buff_fdistrib, params);
 
         if (_DEBUG) {
             std::cout << "\nFdist_p" << t << ": " << std::endl;
