@@ -39,10 +39,11 @@ getKernelImpl(std::string k) {
     case str2int("Scoped"):
         return sref::make_unique<AdvX::Scoped>();
         break;
+    default:
+        auto str = k + " is not a valid kernel name.\n" + error_str;
+        throw std::runtime_error(str);
+        break;
     }
-    auto str = k + " is not a valid kernel name.\n" + error_str;
-    throw std::runtime_error(str);
-    return sref::make_unique<AdvX::Sequential>();   // TODO: return nullptr
 }
 
 // ==========================================
