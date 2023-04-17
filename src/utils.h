@@ -1,10 +1,10 @@
+#include "unique_ref.h"
 #include <AdvectionParams.h>
 #include <advectors.h>
 #include <assert.h>
 #include <fstream>
 #include <iostream>
 #include <sycl/sycl.hpp>
-#include "unique_ref.h"
 
 // To switch case on a str
 constexpr unsigned int
@@ -42,7 +42,7 @@ getKernelImpl(std::string k) {
     }
     auto str = k + " is not a valid kernel name.\n" + error_str;
     throw std::runtime_error(str);
-    return sref::make_unique<AdvX::Sequential>(); //TODO: return nullptr
+    return sref::make_unique<AdvX::Sequential>();   // TODO: return nullptr
 }
 
 // ==========================================
@@ -52,23 +52,13 @@ fill_buffer(sycl::queue &q, sycl::buffer<double, 2> &buff_fdist,
             const ADVParams &params) {
 
     sycl::host_accessor fdist(buff_fdist, sycl::write_only, sycl::no_init);
-    // auto str = "x.log";
-    // std::ofstream outfile(str);
 
     for (int ix = 0; ix < params.nx; ++ix) {
         for (int iv = 0; iv < params.nVx; ++iv) {
-
-            // double x = fmod(params.minRealx + ix * params.dx,
-            // params.realWidthx);
             double x = params.minRealx + ix * params.dx;
-
-            // outfile << x << ", ";
-
             fdist[ix][iv] = sycl::sin(4 * x * M_PI);
         }
-        // outfile << "\n";
     }
-    // outfile.close();
 }
 
 // ==========================================
@@ -106,9 +96,6 @@ export_result_to_file(sycl::buffer<double, 2> &buff_fdistrib,
         outfile << std::endl;
     }
     outfile.close();
-
-    // myfile << "This is a line.\n";
-    // myfile << "This is another line.\n";
 }
 
 // ==========================================
@@ -135,7 +122,8 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
                  buff_sumTotalErr.get_access<sycl::access_mode::write>(cgh);
 
              auto errReduction = sycl::reduction(errAcc, sycl::plus<int>());
-             auto totalSumError = sycl::reduction(totErrAcc, sycl::plus<double>());
+             auto totalSumError =
+                 sycl::reduction(totErrAcc, sycl::plus<double>());
 
              cgh.parallel_for(
                  buff_fdistrib.get_range(), errReduction, totalSumError,
@@ -166,23 +154,19 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
               << fractionErr << "% of total cells" << std::endl;
 
     std::cout << "Total cumulated error: "
-              << totalError * params.dx * params.dVx << "\n"<< std::endl;
+              << totalError * params.dx * params.dVx << "\n"
+              << std::endl;
 
-} // end validate_results
+}   // end validate_results
 
 // ==========================================
 // ==========================================
 double
 check_result(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
-             const ADVParams &params, const bool _DEBUG) {
+             const ADVParams &params) {
     /* Fill a buffer the same way we filled fdist at init */
     sycl::buffer<double, 2> buff_init(sycl::range<2>(params.nx, params.nVx));
     fill_buffer(Q, buff_init, params);
-
-    if (_DEBUG) {
-        std::cout << "\nFdist_init :" << std::endl;
-        print_buffer(buff_init, params);
-    }
 
     /* Check norm of difference, should be 0 */
     sycl::buffer<double, 2> buff_res(buff_init.get_range());
@@ -196,11 +180,6 @@ check_result(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
              C[itm] *= C[itm];   // We square each elements
          });
      }).wait_and_throw();
-
-    if (_DEBUG) {
-        std::cout << "\nDifference Buffer :" << std::endl;
-        print_buffer(buff_res, params);
-    }
 
     double sumResult = 0;
     {

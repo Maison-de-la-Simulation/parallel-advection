@@ -4,8 +4,6 @@
 #include <iostream>
 #include <sycl/sycl.hpp>
 
-bool static constexpr _DEBUG = false;
-
 // ==========================================
 // ==========================================
 void
@@ -23,11 +21,6 @@ advection(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
             advector(Q, buff_fdistrib, params).wait_and_throw();
         else
             advector(Q, buff_fdistrib, params);
-
-        if (_DEBUG) {
-            std::cout << "\nFdist_p" << t << ": " << std::endl;
-            print_buffer(buff_fdistrib, params);
-        }
     }   // end for t < T
 
 }   // end advection
@@ -89,7 +82,7 @@ main(int argc, char **argv) {
     advection(Q, buff_fdistrib, params);
     auto end = std::chrono::high_resolution_clock::now();
 
-    // auto res = check_result(Q, buff_fdistrib, params, _DEBUG);
+    // auto res = check_result(Q, buff_fdistrib, params);
     // std::cout << "\nSqrt_sum: " << res << std::endl;
 
     std::cout << "\nRESULTS_VALIDATION:" << std::endl;
