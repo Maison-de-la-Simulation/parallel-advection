@@ -34,7 +34,8 @@ AdvX::Scoped::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
       });
 
       sycl::distribute_groups_and_wait(g, [&](auto subg) {
-        sycl::distribute_items_and_wait(subg, [&](sycl::s_item<2> it) {
+        sycl::distribute_groups_and_wait(subg, [&](auto subsubg) {
+        sycl::distribute_items_and_wait(subsubg, [&](sycl::s_item<2> it) {
           const int ix = it.get_local_id(g, 0);
           const int ivx = g.get_group_id(1);
 
@@ -61,6 +62,7 @@ AdvX::Scoped::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
 
           fdist[ix][ivx] = ftmp;
         });   // end distribute items
+      });     // end distribute_groups
       });     // end distribute_groups
 
       // sycl::single_item_and_wait(g, [&](){
