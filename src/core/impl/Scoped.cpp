@@ -49,7 +49,7 @@ AdvX::Scoped::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
 
           const double d_prev1 =
               LAG_OFFSET +
-              inv_dx * (xFootCoord - (minRealx + leftDiscreteCell * dx));
+              inv_dx * (xFootCoord - coord(leftDiscreteCell, minRealx, dx));
 
           double coef[LAG_PTS];
           lag_basis(d_prev1, coef);

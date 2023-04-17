@@ -19,7 +19,7 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
             buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
 
         sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>{nx}, cgh);
-        // double slice_ftmp[512];vi 
+        // double slice_ftmp[512];vi
         cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<2> g) {
             g.parallel_for_work_item([&](sycl::h_item<2> it) {
                 // const int ix = g.get_group_id(0);
@@ -34,8 +34,8 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
                     sycl::floor((xFootCoord - minRealx) * inv_dx);
 
                 const double d_prev1 =
-                    LAG_OFFSET +
-                    inv_dx * (xFootCoord - coord(leftDiscreteCell, minRealx, dx));
+                    LAG_OFFSET + inv_dx * (xFootCoord - coord(leftDiscreteCell,
+                                                              minRealx, dx));
 
                 double coef[LAG_PTS];
                 lag_basis(d_prev1, coef);
@@ -43,7 +43,8 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
                 const int ipos1 = leftDiscreteCell - LAG_OFFSET;
 
                 double ftmp = 0.;
-                // slice_ftmp[ix] = 0;   // initializing slice for each work item
+                // slice_ftmp[ix] = 0;   // initializing slice for each work
+                // item
                 for (int k = 0; k <= LAG_ORDER; k++) {
                     int idx_ipos1 = (nx + ipos1 + k) % nx;
 
@@ -59,10 +60,11 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
                 const int ix = it.get_local_id(0);
                 const int ivx = it.get_global_id(1);
                 fdist[ix][ivx] = slice_ftmp[ix];
-                // fdist[g.get_group_id(0)][g.get_group_id(1)] = slice_ftmp[it.get_local_id(1)];
+                // fdist[g.get_group_id(0)][g.get_group_id(1)] =
+                // slice_ftmp[it.get_local_id(1)];
             });
 
-            //code executed only once
+            // code executed only once
         });   // end parallel_for_work_group
     });       // end Q.submit
 }
