@@ -11,8 +11,19 @@ AdvX::Scoped::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
 
 //   const sycl::range<2> nb_wg{1, nVx/4};
 //   const sycl::range<2> wg_size{nx, 4};
-  const sycl::range<2> nb_wg{1, nVx};
-  const sycl::range<2> wg_size{nx, 1};
+  sycl::range<2> nb_wg;
+  sycl::range<2> wg_size;
+
+  // if(nVx % 32 == 0){
+    nb_wg = sycl::range<2>{nVx, 1};
+    wg_size = sycl::range<2>{1, nx};
+  //   // nb_wg = sycl::range<2>{1, nVx/32};
+  //   // wg_size = sycl::range<2>{nx, 32};
+  // }
+  // else {
+  //   // nb_wg = sycl::range<2>{1, nVx};
+  //   // wg_size = sycl::range<2>{nx, 1};
+  // }
 
   return Q.submit([&](sycl::handler &cgh) {
     auto fdist = buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
@@ -26,15 +37,20 @@ AdvX::Scoped::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
         //Actually doesn't work if version of CUDA is not 11.6. I have to use the local_accessor
 
       sycl::distribute_items_and_wait(g, [&](sycl::s_item<2> it) {
-          const int ix = it.get_local_id(g, 0);
-          const int ivx = g.get_group_id(1);
-          slice_ftmp[ix] = fdist[ix][ivx];
+          const int ix = it.get_local_id(g, 1);
+          // const int ivx = it.get_global_id(0);
+          const int ivx = g.get_group_id(0);
+          // const int ivx = g.get_group_id(1) * 32 + it.get_local_id(g,1);
+
+
+          slice_ftmp[ix] = fdist[ivx][ix];
       });
 
       sycl::distribute_groups_and_wait(g, [&](auto subg) {
         sycl::distribute_items_and_wait(subg, [&](sycl::s_item<2> it) {
-          const int ix = it.get_local_id(g, 0);
-          const int ivx = g.get_group_id(1);
+          const int ix = it.get_local_id(g, 1);
+          const int ivx = g.get_group_id(0);
+          // const int ivx = g.get_group_id(1) * 32 + it.get_local_id(g,1);
 
           double const xFootCoord = displ(ix, ivx, params);
 
@@ -57,15 +73,9 @@ AdvX::Scoped::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
             ftmp += coef[k] * slice_ftmp[idx_ipos1];
           }
 
-          fdist[ix][ivx] = ftmp;
+          fdist[ivx][ix] = ftmp;
         });   // end distribute items
       });     // end distribute_groups
-
-      // sycl::single_item_and_wait(g, [&](){
-      //    for(int i = 0; i < Nx ; ++i){
-      //       fdist[g.get_group_id(0)][i] = slice_ftmp[i];
-      //    }
-      // });
-    });   // end parallel_for_work_group
+    });   // end parallel regions
   });     // end Q.submit
 }

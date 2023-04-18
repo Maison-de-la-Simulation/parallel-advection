@@ -75,7 +75,7 @@ main(int argc, char **argv) {
     
     /* Buffer for the distribution function containing the probabilities of
     having a particle at a particular speed and position */
-    sycl::buffer<double, 2> buff_fdistrib(sycl::range<2>(nx, nVx));
+    sycl::buffer<double, 2> buff_fdistrib(sycl::range<2>(nVx, nx));
     fill_buffer(Q, buff_fdistrib, params);
 
     auto start = std::chrono::high_resolution_clock::now();
@@ -87,7 +87,7 @@ main(int argc, char **argv) {
 
     std::cout << "\nRESULTS_VALIDATION:" << std::endl;
     validate_result(Q, buff_fdistrib, params);
-    export_result_to_file(buff_fdistrib, params);
+    // export_result_to_file(buff_fdistrib, params);
 
     std::cout << "PERF_DIAGS:" << std::endl;
     std::chrono::duration<double> elapsed_seconds = end - start;

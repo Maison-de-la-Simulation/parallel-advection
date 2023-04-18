@@ -57,7 +57,7 @@ fill_buffer(sycl::queue &q, sycl::buffer<double, 2> &buff_fdist,
     for (int ix = 0; ix < params.nx; ++ix) {
         for (int iv = 0; iv < params.nVx; ++iv) {
             double x = params.minRealx + ix * params.dx;
-            fdist[ix][iv] = sycl::sin(4 * x * M_PI);
+            fdist[iv][ix] = sycl::sin(4 * x * M_PI);
         }
     }
 }
@@ -129,8 +129,10 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
              cgh.parallel_for(
                  buff_fdistrib.get_range(), errReduction, totalSumError,
                  [=](auto itm, auto &totalErr, auto &totalSumError) {
-                     auto ix = itm[0];
-                     auto ivx = itm[1];
+                    //  auto ix = itm[0];
+                     auto ix = itm[1];
+                     auto ivx = itm[0];
+                    //  auto ivx = itm[1];
                      auto f = fdist[itm];
 
                      double const x = params.minRealx + ix * params.dx;
