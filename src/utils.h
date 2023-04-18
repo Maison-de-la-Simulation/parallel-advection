@@ -89,7 +89,7 @@ export_result_to_file(sycl::buffer<double, 2> &buff_fdistrib,
 
     for (int iv = 0; iv < params.nVx; ++iv) {
         for (int ix = 0; ix < params.nx; ++ix) {
-            outfile << fdist[ix][iv];
+            outfile << fdist[iv][ix];
 
             if (ix != params.nx - 1)
                 outfile << ",";
@@ -105,7 +105,7 @@ void
 validate_result(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
                 const ADVParams &params) {
 
-    const double acceptable_error = 1e-2;
+    const double acceptable_error = 1e-5;
 
     int errCount = 0;
     double totalError = 0.0;
@@ -129,10 +129,8 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
              cgh.parallel_for(
                  buff_fdistrib.get_range(), errReduction, totalSumError,
                  [=](auto itm, auto &totalErr, auto &totalSumError) {
-                    //  auto ix = itm[0];
                      auto ix = itm[1];
                      auto ivx = itm[0];
-                    //  auto ivx = itm[1];
                      auto f = fdist[itm];
 
                      double const x = params.minRealx + ix * params.dx;
