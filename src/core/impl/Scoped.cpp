@@ -36,16 +36,19 @@ AdvX::Scoped::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
     //   double slice_ftmp[nx];   // declared in the private memory of the executing physical WI ???
         //Actually doesn't work if version of CUDA is not 11.6. I have to use the local_accessor
 
-      sycl::distribute_groups_and_wait(g, [&](auto subg) {
-          sycl::distribute_items_and_wait(subg, [&](sycl::s_item<2> it) {
-              const int ix = it.get_local_id(g, 1);
+      // sycl::distribute_groups_and_wait(g, [&](auto subg) {
+          // sycl::distribute_items_and_wait(g, [&](sycl::s_item<2> it) {
+
+              // const int ix = it.get_local_id(g, 1);
               // const int ivx = it.get_global_id(0);
               const int ivx = g.get_group_id(0);
               // const int ivx = g.get_group_id(1) * 32 + it.get_local_id(g,1);
 
-              slice_ftmp[ix] = fdist[ivx][ix];
-          });
-      });
+              sycl::device_event e = g.async_work_group_copy(slice_ftmp.get_pointer(), fdist.get_pointer()+nx*ivx, nx);
+
+              // slice_ftmp[ix] = fdist[ivx][ix];
+          // });
+      // });
 
       sycl::distribute_groups_and_wait(g, [&](auto subg) {
         sycl::distribute_items_and_wait(subg, [&](sycl::s_item<2> it) {
@@ -69,6 +72,9 @@ AdvX::Scoped::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
 
           const int ipos1 = leftDiscreteCell - LAG_OFFSET;
           double ftmp = 0.;
+
+          e.wait(); //let's be sure the slice is nicely copied
+
           for (int k = 0; k <= LAG_ORDER; k++) {
             int idx_ipos1 = (nx + ipos1 + k) % nx;
             ftmp += coef[k] * slice_ftmp[idx_ipos1];
