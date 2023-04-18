@@ -10,9 +10,9 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    assert(nVx % 512 == 0);
+    // assert(nVx % 512 == 0);
     const sycl::range<2> nb_wg{1, nVx};
-    const sycl::range<2> wg_size{nx, 1};
+    const sycl::range<2> wg_size{512, 1};
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
@@ -21,10 +21,11 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
         sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>{nx}, cgh);
         // double slice_ftmp[512];vi
         cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<2> g) {
-            g.parallel_for_work_item([&](sycl::h_item<2> it) {
+            g.parallel_for_work_item(sycl::range<2>(nx,1), [&](sycl::h_item<2> it) {
                 // const int ix = g.get_group_id(0);
-                const int ix = it.get_local_id(0);
-                const int ivx = it.get_global_id(1);
+                const int ix = it.get_global_id(0);
+                // const int ivx = it.get_global_id(1);
+                const int ivx = g.get_group_id(1);
 
                 double const xFootCoord = displ(ix, ivx, params);
 
@@ -56,13 +57,16 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
             });   // end parallel_for_work_item --> Implicit barrier
 
             // fdist[g.get_group_id(0)][] = ftmp;
-            g.parallel_for_work_item([&](sycl::h_item<2> it) {
-                const int ix = it.get_local_id(0);
-                const int ivx = it.get_global_id(1);
-                fdist[ix][ivx] = slice_ftmp[ix];
-                // fdist[g.get_group_id(0)][g.get_group_id(1)] =
-                // slice_ftmp[it.get_local_id(1)];
-            });
+            g.parallel_for_work_item(sycl::range<2>(nx, 1),
+                                     [&](sycl::h_item<2> it) {
+                                         const int ix = it.get_global_id(0);
+                                         const int ivx = it.get_global_id(1);
+                                         fdist[ix][ivx] = slice_ftmp[ix];
+                                         // fdist[g.get_group_id(0)][g.get_group_id(1)]
+                                         // = slice_ftmp[it.get_local_id(1)];
+                                     });
+
+            // g.async_work_group_copy();
 
             // code executed only once
         });   // end parallel_for_work_group
