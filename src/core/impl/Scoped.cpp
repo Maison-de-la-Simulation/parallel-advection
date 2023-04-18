@@ -9,21 +9,8 @@ AdvX::Scoped::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    //   const sycl::range<2> nb_wg{1, nVx/4};
-    //   const sycl::range<2> wg_size{nx, 4};
-    sycl::range<2> nb_wg;
-    sycl::range<2> wg_size;
-
-    // if(nVx % 32 == 0){
-    nb_wg = sycl::range<2>{nVx, 1};
-    wg_size = sycl::range<2>{1, nx};
-    //   // nb_wg = sycl::range<2>{1, nVx/32};
-    //   // wg_size = sycl::range<2>{nx, 32};
-    // }
-    // else {
-    //   // nb_wg = sycl::range<2>{1, nVx};
-    //   // wg_size = sycl::range<2>{nx, 1};
-    // }
+    sycl::range<2> nb_wg{nVx, 1};
+    sycl::range<2> wg_size{1, nx};
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
@@ -44,6 +31,8 @@ AdvX::Scoped::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
 
             sycl::device_event e = g.async_work_group_copy(
                 slice_ftmp.get_pointer(), fdist.get_pointer() + nx * ivx, nx);
+
+            e.wait();   // let's be sure the slice is nicely copied
 
 
             sycl::distribute_groups_and_wait(g, [&](auto subg) {
@@ -70,8 +59,6 @@ AdvX::Scoped::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
 
                     const int ipos1 = leftDiscreteCell - LAG_OFFSET;
                     double ftmp = 0.;
-
-                    e.wait();   // let's be sure the slice is nicely copied
 
                     for (int k = 0; k <= LAG_ORDER; k++) {
                         int idx_ipos1 = (nx + ipos1 + k) % nx;
