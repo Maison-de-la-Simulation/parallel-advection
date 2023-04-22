@@ -54,17 +54,10 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
                 slice_ftmp[ix] = ftmp;
             });   // end parallel_for_work_item --> Implicit barrier
 
-            // fdist[g.get_group_id(0)][] = ftmp;
-            g.parallel_for_work_item(sycl::range<2>(1, nx),
-                                     [&](sycl::h_item<2> it) {
-                                         const int ix = it.get_global_id(1);
-                                         const int ivx = it.get_global_id(0);
-                                         fdist[ivx][ix] = slice_ftmp[ix];
-                                         // fdist[g.get_group_id(0)][g.get_group_id(1)]
-                                         // = slice_ftmp[it.get_local_id(1)];
-                                     });
+            const int ivx = g.get_group_id(0);
 
-            // g.async_work_group_copy();
+            g.async_work_group_copy(fdist.get_pointer() + nx * ivx,
+                                    slice_ftmp.get_pointer(), nx).wait();
 
             // code executed only once
         });   // end parallel_for_work_group
