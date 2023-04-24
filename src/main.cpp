@@ -9,7 +9,7 @@
 void
 advection(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
           const ADVParams &params) {
-    auto advector = getKernelImpl(params.kernelImpl);
+    auto advector = getKernelImpl(params.kernelImpl, params);
 
     int static const maxIter = params.maxIter;
 

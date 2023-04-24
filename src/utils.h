@@ -12,23 +12,24 @@ str2int(const char *str, int h = 0) {
     return !str[h] ? 5381 : (str2int(str, h + 1) * 33) ^ str[h];
 }
 
-static constexpr auto error_str = "Should be one of: {Sequential, BasicRange, "
-                                  "BasicRange1D, Hierarchical, NDRange, "
-                                  "Scoped}";
+static constexpr auto error_str =
+    "Should be one of: {Sequential, BasicRange2D, "
+    "BasicRange1D, Hierarchical, NDRange, "
+    "Scoped}";
 
 // // ==========================================
 // // ==========================================
 sref::unique_ref<IAdvectorX>
-getKernelImpl(std::string k) {
+getKernelImpl(std::string k, const ADVParams &params) {
     switch (str2int(k.data())) {
     case str2int("Sequential"):
         return sref::make_unique<AdvX::Sequential>();
         break;
-    case str2int("BasicRange"):
-        return sref::make_unique<AdvX::BasicRange>();
+    case str2int("BasicRange2D"):
+        return sref::make_unique<AdvX::BasicRange2D>(params.nx, params.nVx);
         break;
     case str2int("BasicRange1D"):
-        return sref::make_unique<AdvX::BasicRange1D>();
+        return sref::make_unique<AdvX::BasicRange1D>(params.nx, params.nVx);
         break;
     case str2int("Hierarchical"):
         return sref::make_unique<AdvX::Hierarchical>();
