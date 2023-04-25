@@ -4,7 +4,7 @@ sycl::event
 AdvX::Sequential::operator()(
     sycl::queue &Q,
     sycl::buffer<double, 2> &buff_fdistrib,
-    const ADVParams &params) const
+    const ADVParams &params) const noexcept
 {
     auto const nx  = params.nx;
     auto const nVx = params.nVx;
@@ -43,7 +43,7 @@ AdvX::Sequential::operator()(
                /* Percentage of the distance inside the cell ???? TODO : Find better var name */
                const double d_prev1 = LAG_OFFSET + inv_dx * (xFootCoord - (minRealx + leftDiscreteCell * dx));
 
-               double coef[LAG_PTS];
+               std::array<double, LAG_PTS> coef;
                lag_basis(d_prev1, coef);
 
                const int ipos1 = leftDiscreteCell - LAG_OFFSET;

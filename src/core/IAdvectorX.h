@@ -14,13 +14,14 @@ class IAdvectorX {
 
     virtual sycl::event operator()(sycl::queue &Q,
                                    sycl::buffer<double, 2> &buff_fdistrib,
-                                   const ADVParams &params) const = 0;
+                                   const ADVParams &params) const noexcept = 0;
 
     // ==========================================
     // ==========================================
     /* Computes the real position of x or speed of vx based on discretization */
-    inline __attribute__((always_inline)) double
-    coord(const int& i, const double& minValue, const double &delta) const {
+    [[nodiscard]] inline __attribute__((always_inline)) double
+    coord(const int i, const double &minValue,
+          const double &delta) const noexcept {
         return minValue + i * delta;
     }
 
@@ -28,7 +29,7 @@ class IAdvectorX {
     // ==========================================
     /* Computes the coefficient for semi lagrangian interp of order 5 */
     inline __attribute__((always_inline)) void
-    lag_basis(const double &px, double *coef) const {
+    lag_basis(double px, std::array<double, LAG_PTS> &coef) const noexcept {
         constexpr double loc[] = {-1. / 24, 1. / 24.,  -1. / 12.,
                                   1. / 12., -1. / 24., 1. / 24.};
         const double pxm2 = px - 2.;
@@ -49,8 +50,8 @@ class IAdvectorX {
     // ==========================================
     // ==========================================
     /* Computes the covered distance by x during dt. returns the feet coord */
-    inline __attribute__((always_inline)) double
-    displ(const int &ix, const int &ivx, const ADVParams &params) const {
+    [[nodiscard]] inline __attribute__((always_inline)) double
+    displ(const int ix, const int ivx, const ADVParams &params) const noexcept {
         auto const minRealx = params.minRealx;
         auto const minRealVx = params.minRealVx;
         auto const dx = params.dx;

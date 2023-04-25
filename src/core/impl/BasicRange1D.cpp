@@ -1,9 +1,10 @@
 #include "advectors.h"
 
 sycl::event
-AdvX::BasicRange1D::operator()(sycl::queue &Q,
-                               sycl::buffer<double, 2> &buff_fdistrib,
-                               const ADVParams &params) const {
+AdvX::BasicRange1D::operator()(
+    sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
+    const ADVParams &params) const noexcept {
+
     auto const nx = params.nx;
     auto const nVx = params.nVx;
     auto const minRealx = params.minRealx;
@@ -13,8 +14,8 @@ AdvX::BasicRange1D::operator()(sycl::queue &Q,
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
             buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
-        sycl::accessor<double, 2> ftmp(*m_global_buff_ftmp, cgh, sycl::read_write,
-                                       sycl::no_init);
+        sycl::accessor<double, 2> ftmp(*m_global_buff_ftmp, cgh,
+                                       sycl::read_write, sycl::no_init);
 
         cgh.parallel_for(sycl::range<1>(nVx), [=](sycl::id<1> itm) {
             const int ivx = itm[0];
@@ -30,7 +31,7 @@ AdvX::BasicRange1D::operator()(sycl::queue &Q,
                     LAG_OFFSET + inv_dx * (xFootCoord - coord(leftDiscreteCell,
                                                               minRealx, dx));
 
-                double coef[LAG_PTS];
+                std::array<double, LAG_PTS> coef;
                 lag_basis(d_prev1, coef);
 
                 const int ipos1 = leftDiscreteCell - LAG_OFFSET;

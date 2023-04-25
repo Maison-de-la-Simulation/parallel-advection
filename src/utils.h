@@ -7,8 +7,8 @@
 #include <sycl/sycl.hpp>
 
 // To switch case on a str
-constexpr unsigned int
-str2int(const char *str, int h = 0) {
+[[nodiscard]] constexpr unsigned int
+str2int(const char *str, int h = 0) noexcept {
     return !str[h] ? 5381 : (str2int(str, h + 1) * 33) ^ str[h];
 }
 
@@ -19,9 +19,10 @@ static constexpr auto error_str =
 
 // // ==========================================
 // // ==========================================
-sref::unique_ref<IAdvectorX>
-getKernelImpl(std::string k, const ADVParams &params) {
-    switch (str2int(k.data())) {
+[[nodiscard]] sref::unique_ref<IAdvectorX>
+kernel_impl_factory(const ADVParams &params) {
+    std::string kernel_name = params.kernelImpl.data();
+    switch (str2int(kernel_name.data())) {
     case str2int("Sequential"):
         return sref::make_unique<AdvX::Sequential>();
         break;
@@ -41,7 +42,7 @@ getKernelImpl(std::string k, const ADVParams &params) {
         return sref::make_unique<AdvX::Scoped>();
         break;
     default:
-        auto str = k + " is not a valid kernel name.\n" + error_str;
+        auto str = kernel_name + " is not a valid kernel name.\n" + error_str;
         throw std::runtime_error(str);
         break;
     }
@@ -51,7 +52,7 @@ getKernelImpl(std::string k, const ADVParams &params) {
 // ==========================================
 void
 fill_buffer(sycl::queue &q, sycl::buffer<double, 2> &buff_fdist,
-            const ADVParams &params) {
+            const ADVParams &params) noexcept {
 
     sycl::host_accessor fdist(buff_fdist, sycl::write_only, sycl::no_init);
 
@@ -66,7 +67,7 @@ fill_buffer(sycl::queue &q, sycl::buffer<double, 2> &buff_fdist,
 // ==========================================
 // ==========================================
 void
-print_buffer(sycl::buffer<double, 2> &fdist, const ADVParams &params) {
+print_buffer(sycl::buffer<double, 2> &fdist, const ADVParams &params) noexcept {
     sycl::host_accessor tab(fdist, sycl::read_only);
 
     for (int ix = 0; ix < params.nx; ++ix) {
@@ -81,7 +82,7 @@ print_buffer(sycl::buffer<double, 2> &fdist, const ADVParams &params) {
 // ==========================================
 void
 export_result_to_file(sycl::buffer<double, 2> &buff_fdistrib,
-                      const ADVParams &params) {
+                      const ADVParams &params) noexcept {
 
     sycl::host_accessor fdist(buff_fdistrib, sycl::read_only);
 
@@ -104,7 +105,7 @@ export_result_to_file(sycl::buffer<double, 2> &buff_fdistrib,
 // ==========================================
 void
 validate_result(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
-                const ADVParams &params) {
+                const ADVParams &params) noexcept {
 
     const double acceptable_error = 1e-5;
 
@@ -163,9 +164,9 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
 
 // ==========================================
 // ==========================================
-double
+[[nodiscard]] double
 check_result(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
-             const ADVParams &params) {
+             const ADVParams &params) noexcept {
     /* Fill a buffer the same way we filled fdist at init */
     sycl::buffer<double, 2> buff_init(sycl::range<2>(params.nx, params.nVx));
     fill_buffer(Q, buff_init, params);
