@@ -10,8 +10,8 @@ AdvX::NDRange::operator()(sycl::queue &Q,
   auto const dx = params.dx;
   auto const inv_dx = params.inv_dx;
 
-  const sycl::range<2> global_size{nx, nVx};
-  const sycl::range<2> local_size(1, 512);
+  const sycl::range<2> global_size{nVx, nx};
+  const sycl::range<2> local_size(1, nx);
 
   // assert(nVx%128 == 0);
 
@@ -23,8 +23,8 @@ AdvX::NDRange::operator()(sycl::queue &Q,
     cgh.parallel_for(
         sycl::nd_range<2>{global_size, local_size},
         [=](sycl::nd_item<2> itm) {
-          const int ix = itm.get_global_id(0);
-          const int ivx = itm.get_global_id(1);
+          const int ix = itm.get_global_id(1);
+          const int ivx = itm.get_global_id(0);
 
           double const xFootCoord = displ(ix, ivx, params);
 
@@ -45,14 +45,13 @@ AdvX::NDRange::operator()(sycl::queue &Q,
           for (int k = 0; k <= LAG_ORDER; k++) {
             int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-            slice_ftmp[ix] += coef[k] * fdist[idx_ipos1][ivx];
-            // ftmp += coef[k] * fdist[idx_ipos1][ivx];
+            slice_ftmp[ix] += coef[k] * fdist[ivx][idx_ipos1];
           }
 
           sycl::group_barrier(itm.get_group());
           // fdist[ix][ivx] = ftmp;
           // for (int i = 0; i < nx; ++i) {
-          fdist[ix][ivx] = slice_ftmp[ix];
+          fdist[ivx][ix] = slice_ftmp[ix];
             // fdist[i][ivx] = slice_ftmp[i];
           // }
         }   // end lambda in parallel_for

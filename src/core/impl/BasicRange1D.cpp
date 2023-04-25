@@ -10,14 +10,11 @@ AdvX::BasicRange1D::operator()(sycl::queue &Q,
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    // sycl::buffer<double, 2> global_buff_ftmp(sycl::range<2>(nx, nVx));
-
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
             buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
         sycl::accessor<double, 2> ftmp(*m_global_buff_ftmp, cgh, sycl::read_write,
                                        sycl::no_init);
-        // sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>(nx), cgh);
 
         cgh.parallel_for(sycl::range<1>(nVx), [=](sycl::id<1> itm) {
             const int ivx = itm[0];
@@ -38,14 +35,11 @@ AdvX::BasicRange1D::operator()(sycl::queue &Q,
 
                 const int ipos1 = leftDiscreteCell - LAG_OFFSET;
 
-                // slice_ftmp[ix] = 0;   // initializing slice for each work
-                // item
                 ftmp[ivx][ix] = 0;
                 for (int k = 0; k <= LAG_ORDER; k++) {
                     int idx_ipos1 = (nx + ipos1 + k) % nx;
 
                     ftmp[ivx][ix] += coef[k] * fdist[ivx][idx_ipos1];
-                    //   slice_ftmp[ix] += coef[k] * fdist[idx_ipos1][ivx];
 
                 }   // end for k
             }       // end for ix

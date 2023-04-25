@@ -10,13 +10,10 @@ AdvX::BasicRange2D::operator()(sycl::queue &Q,
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    // /* Cannot use local memory with basic range parallel_for so I use a global
-    // buffer of size NVx * Nx*/
-    // sycl::buffer<double, 2> global_buff_ftmp(sycl::range<2>(nx, nVx));
-
     Q.submit([&](sycl::handler &cgh) {
         auto fdist = buff_fdistrib.get_access<sycl::access::mode::read>(cgh);
 
+        /* Using the preallocated global buffer */
         sycl::accessor ftmp(*m_global_buff_ftmp, cgh, sycl::write_only,
                             sycl::no_init);
 
@@ -50,8 +47,6 @@ AdvX::BasicRange2D::operator()(sycl::queue &Q,
         });   // end parallel_for
     });       // end Q.submit
 
-    // With basic range I have to submit 2 kernels in order to have a barrier
-    // this means I cannot use a local accessor in the previous kernel
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist = buff_fdistrib.get_access<sycl::access::mode::write>(cgh);
         auto ftmp = m_global_buff_ftmp->get_access<sycl::access::mode::read>(cgh);
