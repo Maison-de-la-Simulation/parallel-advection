@@ -4,11 +4,12 @@ target_sources(core
   PRIVATE
   IAdvectorX.h
   impl/Sequential.cpp
-  impl/BasicRange.cpp
+  impl/BasicRange2D.cpp
   impl/BasicRange1D.cpp
   impl/Hierarchical.cpp
   impl/NDRange.cpp
   impl/Scoped.cpp
+  impl/HierarchicalAlloca.cpp
 )
 
 target_include_directories(core

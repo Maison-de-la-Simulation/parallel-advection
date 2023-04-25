@@ -13,6 +13,9 @@ struct ADVParams {
   //The implementation of the kernel, correspond to core/impl cpp files
   std::string kernelImpl;
 
+  // Outputs the solution to solution.log file to be read with the ipynb
+  bool outputSolution;
+
   // Number of iterations
   size_t maxIter;
 

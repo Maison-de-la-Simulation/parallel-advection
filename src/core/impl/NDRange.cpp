@@ -3,55 +3,58 @@
 sycl::event
 AdvX::NDRange::operator()(sycl::queue &Q,
                           sycl::buffer<double, 2> &buff_fdistrib,
-                          const ADVParams &params) const {
-  auto const nx = params.nx;
-  auto const nVx = params.nVx;
-  auto const minRealx = params.minRealx;
-  auto const dx = params.dx;
-  auto const inv_dx = params.inv_dx;
+                          const ADVParams &params) const noexcept {
+    auto const nx = params.nx;
+    auto const nVx = params.nVx;
+    auto const minRealx = params.minRealx;
+    auto const dx = params.dx;
+    auto const inv_dx = params.inv_dx;
 
-  const sycl::range<2> global_size{nx, nVx};
-  const sycl::range<2> local_size(512, 1);
+    const sycl::range<2> global_size{nVx, nx};
+    const sycl::range<2> local_size(1, nx);
 
-  return Q.submit([&](sycl::handler &cgh) {
-    auto fdist = buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
+    // assert(nVx%128 == 0);
 
-    sycl::local_accessor<double, 1> slice_ftmp(sycl::range{nx}, cgh);
+    return Q.submit([&](sycl::handler &cgh) {
+        auto fdist =
+            buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
 
-    cgh.parallel_for(
-        sycl::nd_range<2>{global_size, local_size},
-        [=](sycl::nd_item<2> itm) {
-          const int ix = itm.get_global_id(0);
-          const int ivx = itm.get_global_id(1);
+        sycl::local_accessor<double, 1> slice_ftmp(sycl::range{nx}, cgh);
 
-          double const xFootCoord = displ(ix, ivx, params);
+        cgh.parallel_for(
+            sycl::nd_range<2>{global_size, local_size},
+            [=](sycl::nd_item<2> itm) {
+                const int ix = itm.get_global_id(1);
+                const int ivx = itm.get_global_id(0);
 
-          const int leftDiscreteCell =
-              sycl::floor((xFootCoord - minRealx) * inv_dx);
+                double const xFootCoord = displ(ix, ivx, params);
 
-          const double d_prev1 =
-              LAG_OFFSET +
-              inv_dx * (xFootCoord - coord(leftDiscreteCell, minRealx, dx));
+                const int leftDiscreteCell =
+                    sycl::floor((xFootCoord - minRealx) * inv_dx);
 
-          double coef[LAG_PTS];
-          lag_basis(d_prev1, coef);
+                const double d_prev1 =
+                    LAG_OFFSET + inv_dx * (xFootCoord - coord(leftDiscreteCell,
+                                                              minRealx, dx));
 
-          const int ipos1 = leftDiscreteCell - LAG_OFFSET;
+                auto coef = lag_basis(d_prev1);
 
-          slice_ftmp[ix] = 0;   // initializing slice for each work item
-          // double ftmp = 0.0;
-          for (int k = 0; k <= LAG_ORDER; k++) {
-            int idx_ipos1 = (nx + ipos1 + k) % nx;
+                const int ipos1 = leftDiscreteCell - LAG_OFFSET;
 
-            slice_ftmp[ix] += coef[k] * fdist[idx_ipos1][ivx];
-            // ftmp += coef[k] * fdist[idx_ipos1][ivx];
-          }
+                slice_ftmp[ix] = 0;   // initializing slice for each work item
+                // double ftmp = 0.0;
+                for (int k = 0; k <= LAG_ORDER; k++) {
+                    int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-          sycl::group_barrier(itm.get_group());
+                    slice_ftmp[ix] += coef[k] * fdist[ivx][idx_ipos1];
+                }
 
-          fdist[ix][ivx] = slice_ftmp[ix];
-
-        }   // end lambda parallel_for
-    );      // end parallel_for nd_range
-  });       // end Q.submit
+                sycl::group_barrier(itm.get_group());
+                // fdist[ix][ivx] = ftmp;
+                // for (int i = 0; i < nx; ++i) {
+                fdist[ivx][ix] = slice_ftmp[ix];
+                // fdist[i][ivx] = slice_ftmp[i];
+                // }
+            }   // end lambda in parallel_for
+        );      // end parallel_for nd_range
+    });         // end Q.submit
 }

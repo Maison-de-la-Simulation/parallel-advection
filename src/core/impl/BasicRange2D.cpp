@@ -1,28 +1,25 @@
 #include "advectors.h"
 
 sycl::event
-AdvX::BasicRange::operator()(sycl::queue &Q,
-                             sycl::buffer<double, 2> &buff_fdistrib,
-                             const ADVParams &params) const {
+AdvX::BasicRange2D::operator()(sycl::queue &Q,
+                               sycl::buffer<double, 2> &buff_fdistrib,
+                               const ADVParams &params) const noexcept {
     auto const nx = params.nx;
     auto const nVx = params.nVx;
     auto const minRealx = params.minRealx;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    /* Cannot use local memory with basic range parallel_for so I use a global
-    buffer of size NVx * Nx*/
-    sycl::buffer<double, 2> global_buff_ftmp(sycl::range<2>(nx, nVx));
-
     Q.submit([&](sycl::handler &cgh) {
         auto fdist = buff_fdistrib.get_access<sycl::access::mode::read>(cgh);
 
-        sycl::accessor ftmp(global_buff_ftmp, cgh, sycl::write_only,
+        /* Using the preallocated global buffer */
+        sycl::accessor ftmp(*m_global_buff_ftmp, cgh, sycl::write_only,
                             sycl::no_init);
 
         cgh.parallel_for(buff_fdistrib.get_range(), [=](sycl::id<2> itm) {
-            const int ix = itm[0];
-            const int ivx = itm[1];
+            const int ix = itm[1];
+            const int ivx = itm[0];
 
             double const xFootCoord = displ(ix, ivx, params);
 
@@ -34,27 +31,25 @@ AdvX::BasicRange::operator()(sycl::queue &Q,
                 LAG_OFFSET +
                 inv_dx * (xFootCoord - coord(leftDiscreteCell, minRealx, dx));
 
-            double coef[LAG_PTS];
-            lag_basis(d_prev1, coef);
+            auto coef = lag_basis(d_prev1);
 
             const int ipos1 = leftDiscreteCell - LAG_OFFSET;
 
-            ftmp[ix][ivx] = 0;   // initializing slice for each work item
+            ftmp[ivx][ix] = 0;   // initializing slice for each work item
             for (int k = 0; k <= LAG_ORDER; k++) {
                 int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-                ftmp[ix][ivx] += coef[k] * fdist[idx_ipos1][ivx];
+                ftmp[ivx][ix] += coef[k] * fdist[ivx][idx_ipos1];
             }
 
             // barrier
         });   // end parallel_for
     });       // end Q.submit
 
-    // With basic range I have to submit 2 kernels in order to have a barrier
-    // this means I cannot use a local accessor in the previous kernel
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist = buff_fdistrib.get_access<sycl::access::mode::write>(cgh);
-        auto ftmp = global_buff_ftmp.get_access<sycl::access::mode::read>(cgh);
+        auto ftmp =
+            m_global_buff_ftmp->get_access<sycl::access::mode::read>(cgh);
         cgh.copy(ftmp, fdist);
     });   // end Q.submit
 }

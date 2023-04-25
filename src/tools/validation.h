@@ -1,111 +1,17 @@
-#include "unique_ref.h"
+#pragma once
+
+#include "init.h"
 #include <AdvectionParams.h>
-#include <advectors.h>
-#include <assert.h>
-#include <fstream>
 #include <iostream>
 #include <sycl/sycl.hpp>
-
-// To switch case on a str
-constexpr unsigned int
-str2int(const char *str, int h = 0) {
-    return !str[h] ? 5381 : (str2int(str, h + 1) * 33) ^ str[h];
-}
-
-static constexpr auto error_str = "Should be one of: {Sequential, BasicRange, "
-                                  "BasicRange1D, Hierarchical, NDRange, "
-                                  "Scoped}";
-
-// // ==========================================
-// // ==========================================
-sref::unique_ref<IAdvectorX>
-getKernelImpl(std::string k) {
-    switch (str2int(k.data())) {
-    case str2int("Sequential"):
-        return sref::make_unique<AdvX::Sequential>();
-        break;
-    case str2int("BasicRange"):
-        return sref::make_unique<AdvX::BasicRange>();
-        break;
-    case str2int("BasicRange1D"):
-        return sref::make_unique<AdvX::BasicRange1D>();
-        break;
-    case str2int("Hierarchical"):
-        return sref::make_unique<AdvX::Hierarchical>();
-        break;
-    case str2int("NDRange"):
-        return sref::make_unique<AdvX::NDRange>();
-        break;
-    case str2int("Scoped"):
-        return sref::make_unique<AdvX::Scoped>();
-        break;
-    default:
-        auto str = k + " is not a valid kernel name.\n" + error_str;
-        throw std::runtime_error(str);
-        break;
-    }
-}
-
-// ==========================================
-// ==========================================
-void
-fill_buffer(sycl::queue &q, sycl::buffer<double, 2> &buff_fdist,
-            const ADVParams &params) {
-
-    sycl::host_accessor fdist(buff_fdist, sycl::write_only, sycl::no_init);
-
-    for (int ix = 0; ix < params.nx; ++ix) {
-        for (int iv = 0; iv < params.nVx; ++iv) {
-            double x = params.minRealx + ix * params.dx;
-            fdist[ix][iv] = sycl::sin(4 * x * M_PI);
-        }
-    }
-}
-
-// ==========================================
-// ==========================================
-void
-print_buffer(sycl::buffer<double, 2> &fdist, const ADVParams &params) {
-    sycl::host_accessor tab(fdist, sycl::read_only);
-
-    for (int ix = 0; ix < params.nx; ++ix) {
-        for (int iv = 0; iv < params.nVx; ++iv) {
-            std::cout << tab[ix][iv] << " ";
-        }
-        std::cout << std::endl;
-    }
-}   // end print_buffer
-
-// ==========================================
-// ==========================================
-void
-export_result_to_file(sycl::buffer<double, 2> &buff_fdistrib,
-                      const ADVParams &params) {
-
-    sycl::host_accessor fdist(buff_fdistrib, sycl::read_only);
-
-    auto str = "solution.log";
-    std::ofstream outfile(str);
-
-    for (int iv = 0; iv < params.nVx; ++iv) {
-        for (int ix = 0; ix < params.nx; ++ix) {
-            outfile << fdist[ix][iv];
-
-            if (ix != params.nx - 1)
-                outfile << ",";
-        }
-        outfile << std::endl;
-    }
-    outfile.close();
-}
 
 // ==========================================
 // ==========================================
 void
 validate_result(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
-                const ADVParams &params) {
+                const ADVParams &params) noexcept {
 
-    const double acceptable_error = 1e-2;
+    const double acceptable_error = 1e-5;
 
     int errCount = 0;
     double totalError = 0.0;
@@ -129,8 +35,8 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
              cgh.parallel_for(
                  buff_fdistrib.get_range(), errReduction, totalSumError,
                  [=](auto itm, auto &totalErr, auto &totalSumError) {
-                     auto ix = itm[0];
-                     auto ivx = itm[1];
+                     auto ix = itm[1];
+                     auto ivx = itm[0];
                      auto f = fdist[itm];
 
                      double const x = params.minRealx + ix * params.dx;
@@ -162,9 +68,9 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
 
 // ==========================================
 // ==========================================
-double
+[[nodiscard]] double
 check_result(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
-             const ADVParams &params) {
+             const ADVParams &params) noexcept {
     /* Fill a buffer the same way we filled fdist at init */
     sycl::buffer<double, 2> buff_init(sycl::range<2>(params.nx, params.nVx));
     fill_buffer(Q, buff_init, params);

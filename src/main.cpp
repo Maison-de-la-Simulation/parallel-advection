@@ -1,15 +1,17 @@
-#include "utils.h"
+#include <sycl/sycl.hpp>
 #include <AdvectionParams.h>
 #include <advectors.h>
 #include <iostream>
-#include <sycl/sycl.hpp>
+#include <init.h>
+#include <io.h>
+#include <validation.h>
 
 // ==========================================
 // ==========================================
 void
 advection(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
           const ADVParams &params) {
-    auto advector = getKernelImpl(params.kernelImpl);
+    auto advector = kernel_impl_factory(params);
 
     int static const maxIter = params.maxIter;
 
@@ -75,7 +77,7 @@ main(int argc, char **argv) {
     
     /* Buffer for the distribution function containing the probabilities of
     having a particle at a particular speed and position */
-    sycl::buffer<double, 2> buff_fdistrib(sycl::range<2>(nx, nVx));
+    sycl::buffer<double, 2> buff_fdistrib(sycl::range<2>(nVx, nx));
     fill_buffer(Q, buff_fdistrib, params);
 
     auto start = std::chrono::high_resolution_clock::now();
@@ -87,7 +89,9 @@ main(int argc, char **argv) {
 
     std::cout << "\nRESULTS_VALIDATION:" << std::endl;
     validate_result(Q, buff_fdistrib, params);
-    export_result_to_file(buff_fdistrib, params);
+
+    if(params.outputSolution)
+        export_result_to_file(buff_fdistrib, params);
 
     std::cout << "PERF_DIAGS:" << std::endl;
     std::chrono::duration<double> elapsed_seconds = end - start;
