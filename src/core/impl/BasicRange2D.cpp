@@ -2,8 +2,8 @@
 
 sycl::event
 AdvX::BasicRange2D::operator()(sycl::queue &Q,
-                             sycl::buffer<double, 2> &buff_fdistrib,
-                             const ADVParams &params) const noexcept {
+                               sycl::buffer<double, 2> &buff_fdistrib,
+                               const ADVParams &params) const noexcept {
     auto const nx = params.nx;
     auto const nVx = params.nVx;
     auto const minRealx = params.minRealx;
@@ -31,8 +31,7 @@ AdvX::BasicRange2D::operator()(sycl::queue &Q,
                 LAG_OFFSET +
                 inv_dx * (xFootCoord - coord(leftDiscreteCell, minRealx, dx));
 
-            std::array<double, LAG_PTS> coef;
-            lag_basis(d_prev1, coef);
+            auto coef = lag_basis(d_prev1);
 
             const int ipos1 = leftDiscreteCell - LAG_OFFSET;
 
@@ -49,7 +48,8 @@ AdvX::BasicRange2D::operator()(sycl::queue &Q,
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist = buff_fdistrib.get_access<sycl::access::mode::write>(cgh);
-        auto ftmp = m_global_buff_ftmp->get_access<sycl::access::mode::read>(cgh);
+        auto ftmp =
+            m_global_buff_ftmp->get_access<sycl::access::mode::read>(cgh);
         cgh.copy(ftmp, fdist);
     });   // end Q.submit
 }

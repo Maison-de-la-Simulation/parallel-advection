@@ -32,8 +32,7 @@ AdvX::Sequential::operator()([[maybe_unused]] sycl::queue &Q,
                 LAG_OFFSET +
                 inv_dx * (xFootCoord - coord(leftDiscreteCell, minRealx, dx));
 
-            std::array<double, LAG_PTS> coef;
-            lag_basis(d_prev1, coef);
+            auto coef = lag_basis(d_prev1);
 
             const int ipos1 = leftDiscreteCell - LAG_OFFSET;
             // double ftmp = 0.;

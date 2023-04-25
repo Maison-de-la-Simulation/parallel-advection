@@ -34,7 +34,6 @@ AdvX::Scoped::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
 
             e.wait();   // let's be sure the slice is nicely copied
 
-
             sycl::distribute_groups_and_wait(g, [&](auto subg) {
                 sycl::distribute_items_and_wait(subg, [&](sycl::s_item<2> it) {
                     const int ix = it.get_local_id(g, 1);
@@ -54,8 +53,7 @@ AdvX::Scoped::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
                         inv_dx * (xFootCoord -
                                   coord(leftDiscreteCell, minRealx, dx));
 
-                    std::array<double, LAG_PTS> coef;
-                    lag_basis(d_prev1, coef);
+                    auto coef = lag_basis(d_prev1);
 
                     const int ipos1 = leftDiscreteCell - LAG_OFFSET;
                     double ftmp = 0.;
