@@ -42,27 +42,20 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
 
                     const int ipos1 = leftDiscreteCell - LAG_OFFSET;
 
-                    double ftmp = 0.;
-                    // slice_ftmp[ix] = 0;   // initializing slice for each work
-                    // item
+                    // double ftmp = 0.;
+                    slice_ftmp[ix] = 0;
                     for (int k = 0; k <= LAG_ORDER; k++) {
                         int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-                        // slice_ftmp[ix] += coef[k] * fdist[ivx][idx_ipos1];
-                        ftmp += coef[k] * fdist[ivx][idx_ipos1];
+                        slice_ftmp[ix] += coef[k] * fdist[ivx][idx_ipos1];
                     }
-
-                    slice_ftmp[ix] = ftmp;
                 });   // end parallel_for_work_item --> Implicit barrier
 
-            // fdist[g.get_group_id(0)][] = ftmp;
             g.parallel_for_work_item(sycl::range<2>(1, nx),
                                      [&](sycl::h_item<2> it) {
                                          const int ix = it.get_global_id(1);
                                          const int ivx = it.get_global_id(0);
                                          fdist[ivx][ix] = slice_ftmp[ix];
-                                         // fdist[g.get_group_id(0)][g.get_group_id(1)]
-                                         // = slice_ftmp[it.get_local_id(1)];
                                      });
 
             // g.async_work_group_copy();
