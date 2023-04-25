@@ -87,7 +87,9 @@ main(int argc, char **argv) {
 
     std::cout << "\nRESULTS_VALIDATION:" << std::endl;
     validate_result(Q, buff_fdistrib, params);
-    export_result_to_file(buff_fdistrib, params);
+
+    if(params.outputSolution)
+        export_result_to_file(buff_fdistrib, params);
 
     std::cout << "PERF_DIAGS:" << std::endl;
     std::chrono::duration<double> elapsed_seconds = end - start;

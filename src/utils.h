@@ -87,9 +87,11 @@ void
 export_result_to_file(sycl::buffer<double, 2> &buff_fdistrib,
                       const ADVParams &params) noexcept {
 
+    auto str = "solution.log";
+    std::cout << "Exporting result to file " << str << "...\n" << std::endl;
+
     sycl::host_accessor fdist(buff_fdistrib, sycl::read_only);
 
-    auto str = "solution.log";
     std::ofstream outfile(str);
 
     for (int iv = 0; iv < params.nVx; ++iv) {

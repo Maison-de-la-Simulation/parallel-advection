@@ -11,6 +11,7 @@ void ADVParams::setup(const ConfigMap& configMap)
   // run parameters
   maxIter = configMap.getInteger("run", "maxIter", nx/2);
   gpu = configMap.getBool("run", "gpu", false);
+  outputSolution = configMap.getBool("run", "outputSolution", false);
 
   kernelImpl = configMap.getString("run", "kernelImpl", "BasicRange");
 
