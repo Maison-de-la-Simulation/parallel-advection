@@ -43,7 +43,8 @@ class BasicRange1D : public BasicRange {
       sycl::buffer<double, 2> &buff_fdistrib,
       const ADVParams &params) const noexcept override;
 
-    explicit BasicRange1D(const size_t nx, const size_t nvx) : BasicRange(nx, nvx){};
+    explicit BasicRange1D(const size_t nx, const size_t nvx)
+        : BasicRange(nx, nvx){};
 };
 
 class Hierarchical : public IAdvectorX {
@@ -63,6 +64,14 @@ class NDRange : public IAdvectorX {
 };
 
 class Scoped : public IAdvectorX {
+  public:
+    sycl::event operator()(
+      sycl::queue &Q,
+      sycl::buffer<double, 2> &buff_fdistrib,
+      const ADVParams &params) const noexcept override;
+};
+
+class HierarchicalAlloca : public IAdvectorX {
   public:
     sycl::event operator()(
       sycl::queue &Q,
