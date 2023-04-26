@@ -45,17 +45,17 @@ AdvX::Scoped::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
 
                     // Corresponds to the index of the cell to
                     // the left of footCoord
-                    const int leftDiscreteCell =
+                    const int LeftDiscreteNode =
                         sycl::floor((xFootCoord - minRealx) * inv_dx);
 
                     const double d_prev1 =
                         LAG_OFFSET +
                         inv_dx * (xFootCoord -
-                                  coord(leftDiscreteCell, minRealx, dx));
+                                  coord(LeftDiscreteNode, minRealx, dx));
 
                     auto coef = lag_basis(d_prev1);
 
-                    const int ipos1 = leftDiscreteCell - LAG_OFFSET;
+                    const int ipos1 = LeftDiscreteNode - LAG_OFFSET;
                     double ftmp = 0.;
 
                     for (int k = 0; k <= LAG_ORDER; k++) {

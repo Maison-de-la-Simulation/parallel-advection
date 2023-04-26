@@ -38,7 +38,7 @@ AdvX::Sequential::operator()(sycl::queue &Q,
 
                     // Corresponds to the index of the cell to the left of
                     // footCoord
-                    const int leftDiscreteCell =
+                    const int LeftDiscreteNode =
                         sycl::floor((xFootCoord - minRealx) * inv_dx);
 
                     // d_prev1 : dist entre premier point utilisé pour
@@ -50,11 +50,11 @@ AdvX::Sequential::operator()(sycl::queue &Q,
                     const double d_prev1 =
                         LAG_OFFSET +
                         inv_dx *
-                            (xFootCoord - (minRealx + leftDiscreteCell * dx));
+                            (xFootCoord - (minRealx + LeftDiscreteNode * dx));
 
                     auto coef = lag_basis(d_prev1);
 
-                    const int ipos1 = leftDiscreteCell - LAG_OFFSET;
+                    const int ipos1 = LeftDiscreteNode - LAG_OFFSET;
                     double ftmp = 0.;
                     for (int k = 0; k <= LAG_ORDER; k++) {
                         int idx_ipos1 =
