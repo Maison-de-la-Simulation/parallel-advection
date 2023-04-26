@@ -19,12 +19,7 @@ AdvX::HierarchicalAlloca::operator()(sycl::queue &Q,
 
         cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<2> g) {
 
-            double* slice_ftmp;
-
-            if(g.leader()){
-                // Should be executed only once
-                slice_ftmp = (double *) alloca(sizeof(double) * nx);
-            }
+            double* slice_ftmp = (double *) alloca(sizeof(double) * nx);
 
             g.parallel_for_work_item(
                 sycl::range<2>(1, nx), [&](sycl::h_item<2> it) {
