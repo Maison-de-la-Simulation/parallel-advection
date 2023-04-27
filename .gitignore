@@ -4,3 +4,4 @@ main_copy.cpp
 benchmark/log/*
 *.ods#
 *.xlsx#
+adv_*

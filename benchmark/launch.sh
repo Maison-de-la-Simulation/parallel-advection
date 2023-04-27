@@ -11,7 +11,7 @@
 EXECUTABLE=/local/home/am273028/source/advection/build/src/advection
 NB_RUNS=10
 #arguments for the main program
-INI_FILE=/local/home/am273028/source/advection/benchmark/script/advection.ini
+INI_FILE=$3
 
 #path to save tmp logs
 LOG_PATH=$1
