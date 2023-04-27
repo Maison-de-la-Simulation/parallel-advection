@@ -14,12 +14,7 @@ CSV_OUT="${LOG_PATH}/${OUT_FILENAME}.csv"
 
 echo "Parsing outputs..."
 
-#For advection, log files are
-#elapsed_time: 1.46671 s
-#upd_cells_per_sec: 16.414456 Mcells/sec
-#parsing;2048;512;4
-
-echo "duration;cellspersec;globalsize;nx;nvx;maxIter" > $CSV_OUT
+echo "duration;cellspersec;globalsize;nx;nvx;maxIter;error;throughput;gpu" > $CSV_OUT
 
 for f in $FILES
 do
@@ -31,13 +26,20 @@ do
   nvx=$(grep parsing $f | cut -d ';' -f4)
   maxIter=$(grep maxIter $f | cut -d ':' -f2 | sed 's/^ *//g')
 
+  error=$(grep cumulated $f | cut -d ':' -f2 |  sed 's/^ *//g')
+  throughput=$(grep estimated_throughput $f | cut -d ':' -f2 |  cut -d ' ' -f2)
+  gpu=$(grep gpu $f | cut -d ':' -f2 | sed 's/^ *//g')
+
   echo "\
 ${duration};\
 ${cellspersec};\
 ${globalsize};\
 ${nx};\
 ${nvx};\
-${maxIter}" >> $CSV_OUT
+${maxIter};\
+${error};\
+${throughput};\
+${gpu}" >> $CSV_OUT
 
 done
 

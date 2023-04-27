@@ -24,8 +24,6 @@ def edit_ini_file(
 
     with open(inifile, 'w') as configfile:
         config.write(configfile)
-    
-    # print(inifile, kernelImpl, use_gpu, nx, nvx)
 
 
 if __name__ == "__main__":
