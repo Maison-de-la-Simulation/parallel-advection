@@ -6,7 +6,7 @@ from shutil import copyfile
 import subprocess
 import pandas as pd
 
-__SCRIPT__ = "RUN_PARSE" # "RUN" or "PARSE" depending on what we want to do
+__SCRIPT__ = "PARSE" # "RUN" or "PARSE" depending on what we want to do
 
 
 #path to save tmp logs
@@ -26,7 +26,7 @@ SETS={
     # 'kernelImpl':["BasicRange2D"],#, "BasicRange1D", "Hierarchical" , "Scoped", "NDRange"],
     # 'use_gpu':[True, False],
     'use_gpu':[False],
-    '(nx,nvx)':[(200,100), (400,100), (800,100)],
+    '(nx,nvx)':[(128,64), (256,64), (512,64)],
 }
 
 if __name__ == "__main__":
@@ -79,7 +79,7 @@ if __name__ == "__main__":
 
 
                     #run the advection binary with recently modified .ini
-                    subprocess.run(["./launch.sh", LOG_PATH, OUT_FILENAME, new_inifile])
+                    subprocess.run(["./launch.sh", LOG_PATH, OUT_FILENAME, new_inifile, unique_prefix])
 
                 if "PARSE" in __SCRIPT__:
                     parsed_file = LOG_PATH+"/"+OUT_FILENAME+".csv"

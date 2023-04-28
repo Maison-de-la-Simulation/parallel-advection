@@ -1,9 +1,9 @@
 #!/bin/bash 
 
-if [ "$#" != "4" ]; then
+if [ "$#" != "5" ]; then
   echo "you must provide the paths to the executable (+ arguments), where to \
 store log files and number of runs."
-  echo "usage : ./run EXECUTABLE ARGS LOG_PATH NB_RUNS"
+  echo "usage : ./run EXECUTABLE ARGS LOG_PATH NB_RUNS PREFIX"
   exit
 fi
 
@@ -11,12 +11,13 @@ EXECUTABLE=$1
 ARGS=$2
 LOG_PATH=$3
 NB_RUNS=$4
+PREFIX=$5
 
 echo "Running ${NB_RUNS} times"
 
 for i in $(seq 1 $NB_RUNS)
 do
-  LOG_FILE=${LOG_PATH}/run${i}.log
+  LOG_FILE=${LOG_PATH}/run${PREFIX}_${i}.log
   $EXECUTABLE $ARGS > $LOG_FILE
 done
 

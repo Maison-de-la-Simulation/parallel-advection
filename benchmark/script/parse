@@ -1,15 +1,16 @@
 #!/bin/bash
 
-if [ "$#" != "2" ]; then
+if [ "$#" != "3" ]; then
   echo "you must provide the paths to the run log files and the output filename"
-  echo "usage : ./parse LOG_PATH OUT_FILENAME"
+  echo "usage : ./parse LOG_PATH OUT_FILENAME PREFIX"
   exit
 fi
 
 LOG_PATH=$1
 OUT_FILENAME=$2
+PREFIX=$3
 
-FILES="${LOG_PATH}/run*"
+FILES="${LOG_PATH}/run${PREFIX}_*"
 CSV_OUT="${LOG_PATH}/${OUT_FILENAME}.csv"
 
 echo "Parsing outputs..."
@@ -44,3 +45,4 @@ ${gpu}" >> $CSV_OUT
 done
 
 echo "Parsing OK."
+rm $FILES
