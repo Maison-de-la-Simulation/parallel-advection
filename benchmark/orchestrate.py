@@ -35,21 +35,10 @@ if __name__ == "__main__":
 
     print("Running script in " + __SCRIPT__ +  " mode.")
 
-    global_dataframe = pd.DataFrame(
-        columns=["global_size",
-                 "nx",
-                 "nvx",
-                 "kernel",
-                 "error_mean",
-                 "error_std",
-                 "runtime_mean",
-                 "runtime_std",
-                 "cellspersec_mean",
-                 "cellspersec_std",
-                 "throughput_mean",
-                 "throughput_std",
-                 "gpu"]
-    )
+
+    
+    global_data_as_list = []
+
 
     for kernelImpl in SETS['kernelImpl'] :
         for use_gpu in SETS['use_gpu'] :
@@ -90,22 +79,51 @@ if __name__ == "__main__":
                     df = pd.read_csv(parsed_file, sep=";")
 
 
-                    global_dataframe = global_dataframe.append(
-                        {
-                        "global_size":nx*nvx,
-                        "nx":nx,
-                        "nvx":nvx,
-                        "kernel":kernelImpl,
-                        "error_mean":df['error'].mean(),
-                        "error_std":df['error'].std(),
-                        "runtime_mean":df['duration'].mean(),
-                        "runtime_std":df['duration'].std(),
-                        "cellspersec_mean":df['cellspersec'].mean(),
-                        "cellspersec_std":df['cellspersec'].std(),
-                        "throughput_mean":df['throughput'].mean(),
-                        "throughput_std":df['throughput'].std(),
-                        "gpu":df['gpu'][0]},#any value of the gpu should be the same so we take [0]
-                        ignore_index=True)
+                    # global_dataframe = global_dataframe.append(
+                    #     {
+                    #     "global_size":nx*nvx,
+                    #     "nx":nx,
+                    #     "nvx":nvx,
+                    #     "kernel":kernelImpl,
+                    #     "error_mean":df['error'].mean(),
+                    #     "error_std":df['error'].std(),
+                    #     "runtime_mean":df['duration'].mean(),
+                    #     "runtime_std":df['duration'].std(),
+                    #     "cellspersec_mean":df['cellspersec'].mean(),
+                    #     "cellspersec_std":df['cellspersec'].std(),
+                    #     "throughput_mean":df['throughput'].mean(),
+                    #     "throughput_std":df['throughput'].std(),
+                    #     "gpu":df['gpu'][0]},#any value of the gpu should be the same so we take [0]
+                    #     ignore_index=True)
+                    global_data_as_list.append(
+                        [nx*nvx,
+                        nx,
+                        nvx,
+                        kernelImpl,
+                        df['error'].mean(),
+                        df['error'].std(),
+                        df['duration'].mean(),
+                        df['duration'].std(),
+                        df['cellspersec'].mean(),
+                        df['cellspersec'].std(),
+                        df['throughput'].mean(),
+                        df['throughput'].std(),
+                        df['gpu'][0]])
 
     if "PARSE" in __SCRIPT__:
+        global_dataframe = pd.DataFrame(global_data_as_list,
+            columns=["global_size",
+                    "nx",
+                    "nvx",
+                    "kernel",
+                    "error_mean",
+                    "error_std",
+                    "runtime_mean",
+                    "runtime_std",
+                    "cellspersec_mean",
+                    "cellspersec_std",
+                    "throughput_mean",
+                    "throughput_std",
+                    "gpu"]
+        )
         global_dataframe.to_csv(GLOBAL_CSV_FILE, index=False)
