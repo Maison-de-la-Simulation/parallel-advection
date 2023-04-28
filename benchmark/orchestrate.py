@@ -1,5 +1,5 @@
 import warnings
-#remove pandas warning
+#remove pandas warning for depreciated .append
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 from shutil import copyfile
@@ -17,15 +17,17 @@ BASE_INIFILE = INIFILE_ROOTDIR + "/advection.ini"
 #the file used to store the mean, std, and all infos for each run
 GLOBAL_CSV_FILE="/local/home/am273028/source/advection/benchmark/log/describe_all.csv"
 
+#The configurations we want to bench
+SETS={
+    # 'kernelImpl':["BasicRange2D", "BasicRange1D", "Hierarchical" , "Scoped", "NDRange"],
+    'kernelImpl':["BasicRange2D"],#, "BasicRange1D", "Hierarchical" , "Scoped", "NDRange"],
+    # 'use_gpu':[True, False],
+    'use_gpu':[False],
+    '(nx,nvx)':[(200,100), (400,100), (800,100)],
+}
 
 if __name__ == "__main__":
 
-    sets={
-        'kernelImpl':["BasicRange2D", "BasicRange1D", "Hierarchical" , "Scoped", "NDRange"],
-        # 'use_gpu':[True, False],
-        'use_gpu':[False],
-        '(nx,nvx)':[(100,100), (200,200), (400,400)],
-    }
 
     global_dataframe = pd.DataFrame(
         columns=["global_size",
@@ -43,21 +45,22 @@ if __name__ == "__main__":
                  "gpu"]
     )
 
-    for kernelImpl in sets['kernelImpl'] :
-        for use_gpu in sets['use_gpu'] :
-            for sizes in sets['(nx,nvx)'] :
+    for kernelImpl in SETS['kernelImpl'] :
+        for use_gpu in SETS['use_gpu'] :
+            for sizes in SETS['(nx,nvx)'] :
                 nx = sizes[0]
                 nvx = sizes[1]
 
                 use_gpu_str = "gpu" if use_gpu else "cpu"
                 
+                unique_prefix = f"adv_{kernelImpl}_{nx}_{nvx}_{use_gpu_str}"
                 #We copy the advection file and edit the new advection file
-                new_inifile = f"adv_{kernelImpl}_{nx}_{nvx}_{use_gpu_str}.ini"
+                new_inifile = f"{unique_prefix}.ini"
                 new_inifile = INIFILE_ROOTDIR+"/"+new_inifile
                 copyfile(BASE_INIFILE, new_inifile)
 
+                #append with "--" so we can send it as an arg for other script
                 use_gpu_str = "--" + use_gpu_str
-
 
                 #update advection.ini
                 subprocess.run(["python3", "script/edit_ini_file.py",
@@ -67,12 +70,18 @@ if __name__ == "__main__":
                                         f"--nx={nx}",
                                         f"--nvx={nvx}"])
 
+
+                OUT_FILENAME = "perfs" + f"{unique_prefix}"
                 #run the advection binary with recently modified .ini
                 subprocess.run(["./launch.sh", LOG_PATH, OUT_FILENAME, new_inifile])
 
-                file = LOG_PATH+"/"+OUT_FILENAME+".csv"
+                #TODO : SUBMIT LAUNCH.SH TO SCHEDULER
+
+                #TODO : SOMEHOW WAIT FOR IT TO BE DONE AND PARSE AND DO STUFF THEN
+
+                parsed_file = LOG_PATH+"/"+OUT_FILENAME+".csv"
                 #average results and store into nice csv
-                df = pd.read_csv(file, sep=";")
+                df = pd.read_csv(parsed_file, sep=";")
 
 
                 global_dataframe = global_dataframe.append(
