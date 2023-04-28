@@ -21,10 +21,15 @@ GLOBAL_CSV_FILE="/gpfs/workdir/millana/ADVECTION_LOGS/describe_all.csv"
 
 #The configurations we want to bench
 SETS={
-    'kernelImpl':["BasicRange2D", "BasicRange1D", "Hierarchical" , "Scoped", "NDRange"],
+    'kernelImpl':["Hierarchical"],
     'use_gpu':[True, False],
     '(nx,nvx)':[(128,64), (256,64), (512,64)],
 }
+# SETS={
+#     'kernelImpl':["BasicRange2D", "BasicRange1D", "Hierarchical" , "Scoped", "NDRange"],
+#     'use_gpu':[True, False],
+#     '(nx,nvx)':[(128,64), (256,64), (512,64)],
+# }
 
 if __name__ == "__main__":
 
@@ -77,7 +82,7 @@ if __name__ == "__main__":
 
                     #run the advection binary with recently modified .ini
                     # subprocess.run(["./launch.sh", LOG_PATH, OUT_FILENAME, new_inifile, unique_prefix])
-                    subprocess.run(["oarsub", "-S ./launch.sh", LOG_PATH, OUT_FILENAME, new_inifile, unique_prefix])
+                    subprocess.run(["sbatch", "launch.sh", LOG_PATH, OUT_FILENAME, new_inifile, unique_prefix])
 
                 if "PARSE" in __SCRIPT__:
                     parsed_file = LOG_PATH+"/"+OUT_FILENAME+".csv"
