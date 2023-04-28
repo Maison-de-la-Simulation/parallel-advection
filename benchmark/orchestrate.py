@@ -6,6 +6,9 @@ from shutil import copyfile
 import subprocess
 import pandas as pd
 
+__SCRIPT__ = "RUN_PARSE" # "RUN" or "PARSE" depending on what we want to do
+
+
 #path to save tmp logs
 LOG_PATH="/local/home/am273028/source/advection/benchmark/log"
 #name of the outputted csv file
@@ -19,8 +22,8 @@ GLOBAL_CSV_FILE="/local/home/am273028/source/advection/benchmark/log/describe_al
 
 #The configurations we want to bench
 SETS={
-    # 'kernelImpl':["BasicRange2D", "BasicRange1D", "Hierarchical" , "Scoped", "NDRange"],
-    'kernelImpl':["BasicRange2D"],#, "BasicRange1D", "Hierarchical" , "Scoped", "NDRange"],
+    'kernelImpl':["BasicRange2D", "BasicRange1D", "Hierarchical" , "Scoped", "NDRange"],
+    # 'kernelImpl':["BasicRange2D"],#, "BasicRange1D", "Hierarchical" , "Scoped", "NDRange"],
     # 'use_gpu':[True, False],
     'use_gpu':[False],
     '(nx,nvx)':[(200,100), (400,100), (800,100)],
@@ -28,6 +31,7 @@ SETS={
 
 if __name__ == "__main__":
 
+    print("Running script in " + __SCRIPT__ +  " mode.")
 
     global_dataframe = pd.DataFrame(
         columns=["global_size",
@@ -62,44 +66,43 @@ if __name__ == "__main__":
                 #append with "--" so we can send it as an arg for other script
                 use_gpu_str = "--" + use_gpu_str
 
-                #update advection.ini
-                subprocess.run(["python3", "script/edit_ini_file.py",
-                                        f"--inifile={new_inifile}",
-                                        f"--kernel={kernelImpl}",
-                                        use_gpu_str,
-                                        f"--nx={nx}",
-                                        f"--nvx={nvx}"])
-
-
                 OUT_FILENAME = "perfs" + f"{unique_prefix}"
-                #run the advection binary with recently modified .ini
-                subprocess.run(["./launch.sh", LOG_PATH, OUT_FILENAME, new_inifile])
 
-                #TODO : SUBMIT LAUNCH.SH TO SCHEDULER
-
-                #TODO : SOMEHOW WAIT FOR IT TO BE DONE AND PARSE AND DO STUFF THEN
-
-                parsed_file = LOG_PATH+"/"+OUT_FILENAME+".csv"
-                #average results and store into nice csv
-                df = pd.read_csv(parsed_file, sep=";")
-
-
-                global_dataframe = global_dataframe.append(
-                    {
-                    "global_size":nx*nvx,
-                    "nx":nx,
-                    "nvx":nvx,
-                    "kernel":kernelImpl,
-                    "error_mean":df['error'].mean(),
-                    "error_std":df['error'].std(),
-                    "runtime_mean":df['duration'].mean(),
-                    "runtime_std":df['duration'].std(),
-                    "cellspersec_mean":df['cellspersec'].mean(),
-                    "cellspersec_std":df['cellspersec'].std(),
-                    "throughput_mean":df['throughput'].mean(),
-                    "throughput_std":df['throughput'].std(),
-                    "gpu":df['gpu'][0]},#any value of the gpu should be the same so we take [0]
-                    ignore_index=True)
+                if "RUN" in __SCRIPT__ :
+                    #update advection.ini
+                    subprocess.run(["python3", "script/edit_ini_file.py",
+                                            f"--inifile={new_inifile}",
+                                            f"--kernel={kernelImpl}",
+                                            use_gpu_str,
+                                            f"--nx={nx}",
+                                            f"--nvx={nvx}"])
 
 
-    global_dataframe.to_csv(GLOBAL_CSV_FILE, index=False)
+                    #run the advection binary with recently modified .ini
+                    subprocess.run(["./launch.sh", LOG_PATH, OUT_FILENAME, new_inifile])
+
+                if "PARSE" in __SCRIPT__:
+                    parsed_file = LOG_PATH+"/"+OUT_FILENAME+".csv"
+                    #average results and store into nice csv
+                    df = pd.read_csv(parsed_file, sep=";")
+
+
+                    global_dataframe = global_dataframe.append(
+                        {
+                        "global_size":nx*nvx,
+                        "nx":nx,
+                        "nvx":nvx,
+                        "kernel":kernelImpl,
+                        "error_mean":df['error'].mean(),
+                        "error_std":df['error'].std(),
+                        "runtime_mean":df['duration'].mean(),
+                        "runtime_std":df['duration'].std(),
+                        "cellspersec_mean":df['cellspersec'].mean(),
+                        "cellspersec_std":df['cellspersec'].std(),
+                        "throughput_mean":df['throughput'].mean(),
+                        "throughput_std":df['throughput'].std(),
+                        "gpu":df['gpu'][0]},#any value of the gpu should be the same so we take [0]
+                        ignore_index=True)
+
+    if "PARSE" in __SCRIPT__:
+        global_dataframe.to_csv(GLOBAL_CSV_FILE, index=False)
