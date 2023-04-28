@@ -8,8 +8,8 @@
 #SBATCH --gres=gpu:1
 
 #main program to run
-EXECUTABLE=/local/home/am273028/source/advection/build/src/advection
-NB_RUNS=10
+EXECUTABLE=/gpfs/users/millana/source/parallel-advection/build/src
+NB_RUNS=20
 #arguments for the main program
 INI_FILE=$3
 

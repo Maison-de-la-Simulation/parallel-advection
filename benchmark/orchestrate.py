@@ -6,26 +6,23 @@ from shutil import copyfile
 import subprocess
 import pandas as pd
 
-__SCRIPT__ = "PARSE" # "RUN" or "PARSE" depending on what we want to do
+__SCRIPT__ = "RUN_PARSE" # "RUN" or "PARSE" depending on what we want to do
 
 
 #path to save tmp logs
-LOG_PATH="/local/home/am273028/source/advection/benchmark/log"
-#name of the outputted csv file
-OUT_FILENAME="perfs"
+LOG_PATH="/gpfs/workdir/millana/ADVECTION_LOGS"
+
 #file .ini to update and use for the runtime
-INIFILE_ROOTDIR = "/local/home/am273028/source/advection/benchmark/script"
+INIFILE_ROOTDIR = "/gpfs/users/millana/source/parallel-advection/benchmark/script"
 BASE_INIFILE = INIFILE_ROOTDIR + "/advection.ini"
 
 #the file used to store the mean, std, and all infos for each run
-GLOBAL_CSV_FILE="/local/home/am273028/source/advection/benchmark/log/describe_all.csv"
+GLOBAL_CSV_FILE="/gpfs/workdir/millana/ADVECTION_LOGS/describe_all.csv"
 
 #The configurations we want to bench
 SETS={
     'kernelImpl':["BasicRange2D", "BasicRange1D", "Hierarchical" , "Scoped", "NDRange"],
-    # 'kernelImpl':["BasicRange2D"],#, "BasicRange1D", "Hierarchical" , "Scoped", "NDRange"],
-    # 'use_gpu':[True, False],
-    'use_gpu':[False],
+    'use_gpu':[True, False],
     '(nx,nvx)':[(128,64), (256,64), (512,64)],
 }
 
@@ -79,7 +76,8 @@ if __name__ == "__main__":
 
 
                     #run the advection binary with recently modified .ini
-                    subprocess.run(["./launch.sh", LOG_PATH, OUT_FILENAME, new_inifile, unique_prefix])
+                    # subprocess.run(["./launch.sh", LOG_PATH, OUT_FILENAME, new_inifile, unique_prefix])
+                    subprocess.run(["oarsub", "-S ./launch.sh", LOG_PATH, OUT_FILENAME, new_inifile, unique_prefix])
 
                 if "PARSE" in __SCRIPT__:
                     parsed_file = LOG_PATH+"/"+OUT_FILENAME+".csv"
