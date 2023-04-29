@@ -37,8 +37,9 @@ struct ADVParams {
   double maxRealx;
   double realWidthx;
 
-  // Min physical value of Vx
-  double minRealVx;//we only need min since we perform advection in x only
+  // Min/max physical value of Vx
+  double minRealVx;
+  double maxRealVx;
 
   //! setup / initialization
   void setup(const ConfigMap& configMap); 
