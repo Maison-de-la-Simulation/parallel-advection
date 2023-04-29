@@ -7,8 +7,8 @@
 int static constexpr LAG_ORDER = 5;
 int static constexpr LAG_PTS = 6;
 int static constexpr LAG_OFFSET = 2;
-double constexpr loc[] = {-1. / 24, 1. / 24.,  -1. / 12.,
-                          1. / 12., -1. / 24., 1. / 24.};
+double static constexpr loc[] = {-1. / 24, 1. / 24.,  -1. / 12.,
+                                 1. / 12., -1. / 24., 1. / 24.};
 
 class IAdvectorX {
   public:

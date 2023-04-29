@@ -10,9 +10,7 @@
 // ==========================================
 void
 advection(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
-          const ADVParams &params) {
-    auto advector = kernel_impl_factory(params);
-
+          sref::unique_ref<IAdvectorX> &advector, const ADVParams &params) {
     int static const maxIter = params.maxIter;
 
     // Time loop, cannot parallelize this
@@ -80,12 +78,11 @@ main(int argc, char **argv) {
     sycl::buffer<double, 2> buff_fdistrib(sycl::range<2>(nVx, nx));
     fill_buffer(Q, buff_fdistrib, params);
 
-    auto start = std::chrono::high_resolution_clock::now();
-    advection(Q, buff_fdistrib, params);
-    auto end = std::chrono::high_resolution_clock::now();
+    auto advector = kernel_impl_factory(params);
 
-    // auto res = check_result(Q, buff_fdistrib, params);
-    // std::cout << "\nSqrt_sum: " << res << std::endl;
+    auto start = std::chrono::high_resolution_clock::now();
+    advection(Q, buff_fdistrib, advector, params);
+    auto end = std::chrono::high_resolution_clock::now();
 
     std::cout << "\nRESULTS_VALIDATION:" << std::endl;
     validate_result(Q, buff_fdistrib, params);
