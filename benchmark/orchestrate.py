@@ -12,6 +12,8 @@ import pandas as pd
 #path to save tmp logs
 LOG_PATH="/gpfs/workdir/millana/ADVECTION_LOGS"
 
+EXECUTABLE="/gpfs/users/millana/source/parallel-advection/build/src/advection"
+
 #file .ini to update and use for the runtime
 INIFILE_ROOTDIR = "/gpfs/users/millana/source/parallel-advection/benchmark/script"
 BASE_INIFILE = INIFILE_ROOTDIR + "/advection.ini"
@@ -82,8 +84,14 @@ if __name__ == "__main__":
 
 
                     #run the advection binary with recently modified .ini
-                    # subprocess.run(["./launch.sh", LOG_PATH, OUT_FILENAME, new_inifile, unique_prefix])
-                    subprocess.run(["sbatch", "launch.sh", LOG_PATH, OUT_FILENAME, new_inifile, unique_prefix])
+                    subprocess.run(["sbatch",     #scheduler/runner
+                                    "launch.sh",  #shell script
+                                    EXECUTABLE,   #arg #1
+                                    LOG_PATH,     #arg #2
+                                    OUT_FILENAME, #arg #3
+                                    new_inifile,  #arg #4
+                                    unique_prefix #arg #5
+                                    ])
 
                 if PARSE_MODE :
                     parsed_file = LOG_PATH+"/"+OUT_FILENAME+".csv"

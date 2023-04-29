@@ -7,19 +7,22 @@
 #SBATCH --partition=gpua100
 #SBATCH --gres=gpu:1
 
-#main program to run
-EXECUTABLE=/gpfs/users/millana/source/parallel-advection/build/src/advection
 NB_RUNS=20
-#arguments for the main program
-INI_FILE=$3
+
+#main program to run
+EXECUTABLE=$1
 
 #path to save tmp logs
-LOG_PATH=$1
+LOG_PATH=$2
+
 #name of the outputted csv file
-OUT_FILENAME=$2
+OUT_FILENAME=$3
+
+#arguments for the main program
+INI_FILE=$4
 
 #prefix to append before logfiles
-PREFIX=$4
+PREFIX=$5
 
 
 # load modules here
@@ -31,6 +34,3 @@ rm $INI_FILE
 
 # call parse scripts with log_path and out_filename parameters
 ./script/parse $LOG_PATH $OUT_FILENAME $PREFIX
-
-# #run python plot
-# module load pyhton
