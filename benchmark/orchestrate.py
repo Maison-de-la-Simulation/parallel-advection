@@ -16,9 +16,9 @@ EXECUTABLE="/gpfs/users/millana/source/parallel-advection/build/src/advection"
 
 #file .ini to update and use for the runtime
 INIFILE_ROOTDIR = "/gpfs/users/millana/source/parallel-advection/benchmark/script"
-BASE_INIFILE = INIFILE_ROOTDIR + "/advection.ini"
+BASE_INIFILE = INIFILE_ROOTDIR + "/" + "advection.ini"
 
-#the file used to store the mean, std, and all infos for each run
+#the main output file used to store the mean, std, and all infos for each run
 GLOBAL_CSV_FILE="/gpfs/workdir/millana/ADVECTION_LOGS/describe_all.csv"
 
 #The configurations we want to bench
@@ -50,9 +50,8 @@ if __name__ == "__main__":
     if RUN_MODE   : print("Running script in RUN mode.")
     if PARSE_MODE : print("Running script in PARSE mode.")
 
-    
+    #init a list that we will use to create a pandas DataFrame
     global_data_as_list = []
-
 
     for kernelImpl in SETS['kernelImpl'] :
         for use_gpu in SETS['use_gpu'] :
@@ -111,7 +110,7 @@ if __name__ == "__main__":
                         df['cellspersec'].std(),
                         df['throughput'].mean(),
                         df['throughput'].std(),
-                        df['gpu'][0]]#any value should be the same
+                        df['gpu'][0]]#any value should be the same so we use [0]
                         )
 
     if PARSE_MODE :

@@ -7,7 +7,7 @@
 #SBATCH --partition=gpua100
 #SBATCH --gres=gpu:1
 
-NB_RUNS=20
+NB_RUNS=50
 
 #main program to run
 EXECUTABLE=$1
