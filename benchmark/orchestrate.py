@@ -1,13 +1,13 @@
+#!/usr/bin/env python3
+
 import warnings
 #remove pandas warning for depreciated .append
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 from shutil import copyfile
 import subprocess
+from optparse import OptionParser
 import pandas as pd
-
-__SCRIPT__ = "RUN_PARSE" # "RUN" or "PARSE" depending on what we want to do
-
 
 #path to save tmp logs
 LOG_PATH="/gpfs/workdir/millana/ADVECTION_LOGS"
@@ -32,9 +32,21 @@ SETS={
 # }
 
 if __name__ == "__main__":
+    parser = OptionParser()
 
-    print("Running script in " + __SCRIPT__ +  " mode.")
+    parser.add_option("--run", action="store_true", dest="run_mode", default=False, help="Use the script to RUN the binary and store logs with unique names based on parameters of simulation")
+    parser.add_option("--parse", action="store_true", dest="parse_mode", default=False, help="Use the script in PARSE mode to parse the previously generated logs")
 
+    (options, args) = parser.parse_args()
+
+    RUN_MODE      = options.__dict__['run_mode']
+    PARSE_MODE    = options.__dict__['parse_mode']
+
+    if not (RUN_MODE or PARSE_MODE) :
+        exit("Error: missing argument.\nUsage: orchestrate.py --help")
+
+    if RUN_MODE   : print("Running script in RUN mode.")
+    if PARSE_MODE : print("Running script in PARSE mode.")
 
     
     global_data_as_list = []
@@ -59,7 +71,7 @@ if __name__ == "__main__":
 
                 OUT_FILENAME = "perfs" + f"{unique_prefix}"
 
-                if "RUN" in __SCRIPT__ :
+                if RUN_MODE :
                     #update advection.ini
                     subprocess.run(["python3", "script/edit_ini_file.py",
                                             f"--inifile={new_inifile}",
@@ -73,28 +85,11 @@ if __name__ == "__main__":
                     # subprocess.run(["./launch.sh", LOG_PATH, OUT_FILENAME, new_inifile, unique_prefix])
                     subprocess.run(["sbatch", "launch.sh", LOG_PATH, OUT_FILENAME, new_inifile, unique_prefix])
 
-                if "PARSE" in __SCRIPT__:
+                if PARSE_MODE :
                     parsed_file = LOG_PATH+"/"+OUT_FILENAME+".csv"
                     #average results and store into nice csv
                     df = pd.read_csv(parsed_file, sep=";")
 
-
-                    # global_dataframe = global_dataframe.append(
-                    #     {
-                    #     "global_size":nx*nvx,
-                    #     "nx":nx,
-                    #     "nvx":nvx,
-                    #     "kernel":kernelImpl,
-                    #     "error_mean":df['error'].mean(),
-                    #     "error_std":df['error'].std(),
-                    #     "runtime_mean":df['duration'].mean(),
-                    #     "runtime_std":df['duration'].std(),
-                    #     "cellspersec_mean":df['cellspersec'].mean(),
-                    #     "cellspersec_std":df['cellspersec'].std(),
-                    #     "throughput_mean":df['throughput'].mean(),
-                    #     "throughput_std":df['throughput'].std(),
-                    #     "gpu":df['gpu'][0]},#any value of the gpu should be the same so we take [0]
-                    #     ignore_index=True)
                     global_data_as_list.append(
                         [nx*nvx,
                         nx,
@@ -108,9 +103,10 @@ if __name__ == "__main__":
                         df['cellspersec'].std(),
                         df['throughput'].mean(),
                         df['throughput'].std(),
-                        df['gpu'][0]])
+                        df['gpu'][0]]#any value should be the same
+                        )
 
-    if "PARSE" in __SCRIPT__:
+    if PARSE_MODE :
         global_dataframe = pd.DataFrame(global_data_as_list,
             columns=["global_size",
                     "nx",
