@@ -27,10 +27,11 @@ GLOBAL_CSV_FILE="/gpfs/workdir/millana/ADVECTION_LOGS/describe_all.csv"
 #     'use_gpu':[True, False],
 #     '(nx,nvx)':[(128,64), (256,64), (512,64)],
 # }
+
 SETS={
     'kernelImpl':["BasicRange2D", "BasicRange1D", "Hierarchical" , "Scoped", "NDRange"],
-    'use_gpu':[True, False],
-    '(nx,nvx)':[(1024,256), (1024,512), (1024,1024), (1024,2048), (1024,4096)],
+    'use_gpu':[True],#, False],
+    '(nx,nvx)':[(64,64), (128,128), (256,256), (512,512), (1024,1024), (1024, 4096), (1024, 8192), (1024, 8192), (1024, 16384), (1024, 32768)],
 }
 
 if __name__ == "__main__":
@@ -134,3 +135,4 @@ if __name__ == "__main__":
                     "gpu"]
         )
         global_dataframe.to_csv(GLOBAL_CSV_FILE, index=False)
+        print(f"Write file: {GLOBAL_CSV_FILE}")
