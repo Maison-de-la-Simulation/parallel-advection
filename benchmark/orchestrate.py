@@ -95,23 +95,27 @@ if __name__ == "__main__":
                 if PARSE_MODE :
                     parsed_file = LOG_PATH+"/"+OUT_FILENAME+".csv"
                     #average results and store into nice csv
-                    df = pd.read_csv(parsed_file, sep=";")
+                    try:
+                        df = pd.read_csv(parsed_file, sep=";")
 
-                    global_data_as_list.append(
-                        [nx*nvx,
-                        nx,
-                        nvx,
-                        kernelImpl,
-                        df['error'].mean(),
-                        df['error'].std(),
-                        df['duration'].mean(),
-                        df['duration'].std(),
-                        df['cellspersec'].mean(),
-                        df['cellspersec'].std(),
-                        df['throughput'].mean(),
-                        df['throughput'].std(),
-                        df['gpu'][0]]#any value should be the same so we use [0]
-                        )
+                        global_data_as_list.append(
+                            [nx*nvx,
+                            nx,
+                            nvx,
+                            kernelImpl,
+                            df['error'].mean(),
+                            df['error'].std(),
+                            df['duration'].mean(),
+                            df['duration'].std(),
+                            df['cellspersec'].mean(),
+                            df['cellspersec'].std(),
+                            df['throughput'].mean(),
+                            df['throughput'].std(),
+                            df['gpu'][0]]#any value should be the same so we use [0]
+                            )
+                    except:
+                        print(f"{parsed_file} not found, skipping it.")
+
 
     if PARSE_MODE :
         global_dataframe = pd.DataFrame(global_data_as_list,
