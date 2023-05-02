@@ -22,16 +22,16 @@ BASE_INIFILE = INIFILE_ROOTDIR + "/" + "advection.ini"
 GLOBAL_CSV_FILE="/gpfs/workdir/millana/ADVECTION_LOGS/describe_all.csv"
 
 #The configurations we want to bench
-SETS={
-    'kernelImpl':["Hierarchical"],
-    'use_gpu':[True, False],
-    '(nx,nvx)':[(128,64), (256,64), (512,64)],
-}
 # SETS={
-#     'kernelImpl':["BasicRange2D", "BasicRange1D", "Hierarchical" , "Scoped", "NDRange"],
+#     'kernelImpl':["Hierarchical"],
 #     'use_gpu':[True, False],
 #     '(nx,nvx)':[(128,64), (256,64), (512,64)],
 # }
+SETS={
+    'kernelImpl':["BasicRange2D", "BasicRange1D", "Hierarchical" , "Scoped", "NDRange"],
+    'use_gpu':[True, False],
+    '(nx,nvx)':[(1024,256), (1024,512), (1024,1024), (1024,2048), (1024,4096)],
+}
 
 if __name__ == "__main__":
     parser = OptionParser()
