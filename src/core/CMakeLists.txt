@@ -10,6 +10,7 @@ target_sources(core
   impl/NDRange.cpp
   impl/Scoped.cpp
   impl/HierarchicalAlloca.cpp
+  impl/HierarchicalMallocDevice.cpp
 )
 
 target_include_directories(core
