@@ -13,7 +13,7 @@ void ADVParams::setup(const ConfigMap& configMap)
   gpu = configMap.getBool("run", "gpu", false);
   outputSolution = configMap.getBool("run", "outputSolution", false);
 
-  kernelImpl = configMap.getString("run", "kernelImpl", "BasicRange");
+  kernelImpl = configMap.getString("run", "kernelImpl", "BasicRange2D");
 
   // discretization parameters
   dt  = configMap.getFloat("discretization", "dt" , 0.0001);
