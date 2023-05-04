@@ -24,32 +24,23 @@ kernel_impl_factory(const ADVParams &params) {
     switch (str2int(kernel_name.data())) {
     case str2int("Sequential"):
         return sref::make_unique<AdvX::Sequential>();
-        break;
     case str2int("BasicRange2D"):
         return sref::make_unique<AdvX::BasicRange2D>(params.nx, params.nVx);
-        break;
     case str2int("BasicRange1D"):
         return sref::make_unique<AdvX::BasicRange1D>(params.nx, params.nVx);
-        break;
     case str2int("Hierarchical"):
         return sref::make_unique<AdvX::Hierarchical>();
-        break;
     case str2int("HierarchicalAlloca"):
         return sref::make_unique<AdvX::HierarchicalAlloca>();
-        break;
     case str2int("HierarchicalMallocDevice"):
         return sref::make_unique<AdvX::HierarchicalMallocDevice>();
-        break;
     case str2int("NDRange"):
         return sref::make_unique<AdvX::NDRange>();
-        break;
     case str2int("Scoped"):
         return sref::make_unique<AdvX::Scoped>();
-        break;
     default:
         auto str = kernel_name + " is not a valid kernel name.\n" + error_str;
         throw std::runtime_error(str);
-        break;
     }
 }
 

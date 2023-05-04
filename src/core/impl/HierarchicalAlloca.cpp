@@ -22,7 +22,7 @@ AdvX::HierarchicalAlloca::operator()(sycl::queue &Q,
             double* slice_ftmp = (double *) alloca(sizeof(double) * nx);
 
             g.parallel_for_work_item(
-                sycl::range<2>(1, nx), [&](sycl::h_item<2> it) {
+                sycl::range<2>(1, nx), [=](sycl::h_item<2> it) {
                     const int ix = it.get_global_id(1);
                     const int ivx = g.get_group_id(0);
 
@@ -52,7 +52,7 @@ AdvX::HierarchicalAlloca::operator()(sycl::queue &Q,
 
             // fdist[g.get_group_id(0)][] = ftmp;
             g.parallel_for_work_item(sycl::range<2>(1, nx),
-                                     [&](sycl::h_item<2> it) {
+                                     [=](sycl::h_item<2> it) {
                                          const int ix = it.get_global_id(1);
                                          const int ivx = it.get_global_id(0);
                                          fdist[ivx][ix] = slice_ftmp[ix];

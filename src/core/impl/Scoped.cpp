@@ -34,7 +34,7 @@ AdvX::Scoped::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
 
             e.wait();   // let's be sure the slice is nicely copied
 
-            sycl::distribute_groups_and_wait(g, [&](auto subg) {
+            sycl::distribute_groups_and_wait(g, [=](auto subg) {
                 sycl::distribute_items_and_wait(subg, [&](sycl::s_item<2> it) {
                     const int ix = it.get_local_id(g, 1);
                     const int ivx = g.get_group_id(0);

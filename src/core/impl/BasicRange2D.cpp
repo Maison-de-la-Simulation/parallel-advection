@@ -5,7 +5,6 @@ AdvX::BasicRange2D::operator()(sycl::queue &Q,
                                sycl::buffer<double, 2> &buff_fdistrib,
                                const ADVParams &params) const noexcept {
     auto const nx = params.nx;
-    auto const nVx = params.nVx;
     auto const minRealx = params.minRealx;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
