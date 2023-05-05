@@ -1,7 +1,7 @@
 .vscode
 build*
-main_copy.cpp
 benchmark/log/*
 *.ods#
 *.xlsx#
 adv_*
+venv*

@@ -79,7 +79,7 @@ class HierarchicalAlloca : public IAdvectorX {
       const ADVParams &params) const noexcept override;
 };
 
-class HierarchicalMallocDevice : public IAdvectorX {
+class FixedMemoryFootprint : public IAdvectorX {
   public:
     sycl::event operator()(
       sycl::queue &Q,

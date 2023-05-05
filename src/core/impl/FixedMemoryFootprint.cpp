@@ -1,7 +1,7 @@
 #include "advectors.h"
 
 sycl::event
-AdvX::HierarchicalMallocDevice::operator()(sycl::queue &Q,
+AdvX::FixedMemoryFootprint::operator()(sycl::queue &Q,
                                sycl::buffer<double, 2> &buff_fdistrib,
                                const ADVParams &params) const noexcept {
     auto const nx = params.nx;

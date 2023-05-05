@@ -14,7 +14,7 @@ str2int(const char *str, int h = 0) noexcept {
 static constexpr auto error_str =
     "Should be one of: {Sequential, BasicRange2D, "
     "BasicRange1D, Hierarchical, NDRange, "
-    "Scoped, HierarchicalAlloca, HierarchicalMallocDevice}";
+    "Scoped, HierarchicalAlloca, FixedMemoryFootprint}";
 
 // // ==========================================
 // // ==========================================
@@ -32,8 +32,8 @@ kernel_impl_factory(const ADVParams &params) {
         return sref::make_unique<AdvX::Hierarchical>();
     case str2int("HierarchicalAlloca"):
         return sref::make_unique<AdvX::HierarchicalAlloca>();
-    case str2int("HierarchicalMallocDevice"):
-        return sref::make_unique<AdvX::HierarchicalMallocDevice>();
+    case str2int("FixedMemoryFootprint"):
+        return sref::make_unique<AdvX::FixedMemoryFootprint>();
     case str2int("NDRange"):
         return sref::make_unique<AdvX::NDRange>();
     case str2int("Scoped"):
