@@ -1,14 +1,13 @@
 #include "advectors.h"
 
 sycl::event
-AdvX::NDRange::operator()(sycl::queue &Q,
-                          sycl::buffer<double, 2> &buff_fdistrib,
-                          const ADVParams &params) const noexcept {
-    auto const nx = params.nx;
-    auto const nVx = params.nVx;
-    auto const minRealx = params.minRealx;
-    auto const dx = params.dx;
-    auto const inv_dx = params.inv_dx;
+AdvX::NDRange::operator()(
+    sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib) const noexcept {
+    auto const nx = m_params.nx;
+    auto const nVx = m_params.nVx;
+    auto const minRealx = m_params.minRealx;
+    auto const dx = m_params.dx;
+    auto const inv_dx = m_params.inv_dx;
 
     const sycl::range<2> global_size{nVx, nx};
     const sycl::range<2> local_size(1, nx);
@@ -27,7 +26,7 @@ AdvX::NDRange::operator()(sycl::queue &Q,
                 const int ix = itm.get_global_id(1);
                 const int ivx = itm.get_global_id(0);
 
-                double const xFootCoord = displ(ix, ivx, params);
+                double const xFootCoord = displ(ix, ivx);
 
                 const int LeftDiscreteNode =
                     sycl::floor((xFootCoord - minRealx) * inv_dx);

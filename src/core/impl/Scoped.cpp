@@ -1,13 +1,13 @@
 #include "advectors.h"
 
 sycl::event
-AdvX::Scoped::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
-                         const ADVParams &params) const noexcept {
-    auto const nx = params.nx;
-    auto const nVx = params.nVx;
-    auto const minRealx = params.minRealx;
-    auto const dx = params.dx;
-    auto const inv_dx = params.inv_dx;
+AdvX::Scoped::operator()(
+    sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib) const noexcept {
+    auto const nx = m_params.nx;
+    auto const nVx = m_params.nVx;
+    auto const minRealx = m_params.minRealx;
+    auto const dx = m_params.dx;
+    auto const inv_dx = m_params.inv_dx;
 
     sycl::range<2> nb_wg{nVx, 1};
     sycl::range<2> wg_size{1, nx};
@@ -41,7 +41,7 @@ AdvX::Scoped::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
                     // const int ivx = g.get_group_id(1) * 32 +
                     // it.get_local_id(g,1);
 
-                    double const xFootCoord = displ(ix, ivx, params);
+                    double const xFootCoord = displ(ix, ivx);
 
                     // Corresponds to the index of the cell to
                     // the left of footCoord

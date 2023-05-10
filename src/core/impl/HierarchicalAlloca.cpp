@@ -1,14 +1,13 @@
 #include "advectors.h"
 
 sycl::event
-AdvX::HierarchicalAlloca::operator()(sycl::queue &Q,
-                                     sycl::buffer<double, 2> &buff_fdistrib,
-                                     const ADVParams &params) const noexcept {
-    auto const nx = params.nx;
-    auto const nVx = params.nVx;
-    auto const minRealx = params.minRealx;
-    auto const dx = params.dx;
-    auto const inv_dx = params.inv_dx;
+AdvX::HierarchicalAlloca::operator()(
+    sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib) const noexcept {
+    auto const nx = m_params.nx;
+    auto const nVx = m_params.nVx;
+    auto const minRealx = m_params.minRealx;
+    auto const dx = m_params.dx;
+    auto const inv_dx = m_params.inv_dx;
 
     const sycl::range<2> nb_wg{nVx, 1};
     const sycl::range<2> wg_size{1, 512};
@@ -18,15 +17,14 @@ AdvX::HierarchicalAlloca::operator()(sycl::queue &Q,
             buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
 
         cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<2> g) {
-
-            double* slice_ftmp = (double *) alloca(sizeof(double) * nx);
+            double *slice_ftmp = (double *) alloca(sizeof(double) * nx);
 
             g.parallel_for_work_item(
                 sycl::range<2>(1, nx), [=](sycl::h_item<2> it) {
                     const int ix = it.get_global_id(1);
                     const int ivx = g.get_group_id(0);
 
-                    double const xFootCoord = displ(ix, ivx, params);
+                    double const xFootCoord = displ(ix, ivx);
 
                     // Corresponds to the index of the cell to the left of
                     // footCoord

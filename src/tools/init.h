@@ -23,21 +23,21 @@ kernel_impl_factory(const ADVParams &params) {
     std::string kernel_name = params.kernelImpl.data();
     switch (str2int(kernel_name.data())) {
     case str2int("Sequential"):
-        return sref::make_unique<AdvX::Sequential>();
+        return sref::make_unique<AdvX::Sequential>(params);
     case str2int("BasicRange2D"):
-        return sref::make_unique<AdvX::BasicRange2D>(params.nx, params.nVx);
+        return sref::make_unique<AdvX::BasicRange2D>(params.nx, params.nVx, params);
     case str2int("BasicRange1D"):
-        return sref::make_unique<AdvX::BasicRange1D>(params.nx, params.nVx);
+        return sref::make_unique<AdvX::BasicRange1D>(params.nx, params.nVx, params);
     case str2int("Hierarchical"):
-        return sref::make_unique<AdvX::Hierarchical>();
+        return sref::make_unique<AdvX::Hierarchical>(params);
     case str2int("HierarchicalAlloca"):
-        return sref::make_unique<AdvX::HierarchicalAlloca>();
+        return sref::make_unique<AdvX::HierarchicalAlloca>(params);
     case str2int("FixedMemoryFootprint"):
-        return sref::make_unique<AdvX::FixedMemoryFootprint>();
+        return sref::make_unique<AdvX::FixedMemoryFootprint>(params);
     case str2int("NDRange"):
-        return sref::make_unique<AdvX::NDRange>();
+        return sref::make_unique<AdvX::NDRange>(params);
     case str2int("Scoped"):
-        return sref::make_unique<AdvX::Scoped>();
+        return sref::make_unique<AdvX::Scoped>(params);
     default:
         auto str = kernel_name + " is not a valid kernel name.\n" + error_str;
         throw std::runtime_error(str);
