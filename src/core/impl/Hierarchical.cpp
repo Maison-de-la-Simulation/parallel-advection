@@ -20,7 +20,7 @@ AdvX::Hierarchical::operator()(
         sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>{nx}, cgh);
         cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<2> g) {
             g.parallel_for_work_item(
-                sycl::range<2>(1, nx), [=](sycl::h_item<2> it) {
+                sycl::range<2>(1, nx), [&](sycl::h_item<2> it) {
                     const int ix = it.get_global_id(1);
                     const int ivx = g.get_group_id(0);
                     double const xFootCoord = displ(ix, ivx);
