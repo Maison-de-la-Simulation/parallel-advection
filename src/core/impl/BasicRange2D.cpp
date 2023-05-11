@@ -12,7 +12,7 @@ AdvX::BasicRange2D::operator()(
         auto fdist = buff_fdistrib.get_access<sycl::access::mode::read>(cgh);
 
         /* Using the preallocated global buffer */
-        sycl::accessor ftmp(*m_global_buff_ftmp, cgh, sycl::write_only,
+        sycl::accessor ftmp(m_global_buff_ftmp, cgh, sycl::write_only,
                             sycl::no_init);
 
         cgh.parallel_for(buff_fdistrib.get_range(), [=](sycl::id<2> itm) {
@@ -47,7 +47,7 @@ AdvX::BasicRange2D::operator()(
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist = buff_fdistrib.get_access<sycl::access::mode::write>(cgh);
         auto ftmp =
-            m_global_buff_ftmp->get_access<sycl::access::mode::read>(cgh);
+            m_global_buff_ftmp.get_access<sycl::access::mode::read>(cgh);
         cgh.copy(ftmp, fdist);
     });   // end Q.submit
 }

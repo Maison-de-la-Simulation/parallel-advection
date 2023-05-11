@@ -13,7 +13,7 @@ AdvX::BasicRange1D::operator()(
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
             buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
-        sycl::accessor<double, 2> ftmp(*m_global_buff_ftmp, cgh,
+        sycl::accessor<double, 2> ftmp(m_global_buff_ftmp, cgh,
                                        sycl::read_write, sycl::no_init);
 
         cgh.parallel_for(sycl::range<1>(nVx), [=](sycl::id<1> itm) {

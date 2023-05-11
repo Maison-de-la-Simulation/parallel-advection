@@ -17,12 +17,12 @@ class Sequential : public IAdvectorX {
 buffer that is the same size as the fdistrib buffer */
 class BasicRange : public IAdvectorX {
   protected:
-    std::unique_ptr<sycl::buffer<double, 2>> m_global_buff_ftmp; //on peut utiliser mutable à la place
+    // std::unique_ptr<sycl::buffer<double, 2>> m_global_buff_ftmp; //on peut utiliser mutable à la place
+    mutable sycl::buffer<double, 2> m_global_buff_ftmp;
 
   public:
     BasicRange(const size_t nx, const size_t nvx, const ADVParams &params)
-        : m_global_buff_ftmp{std::make_unique<sycl::buffer<double, 2>>(
-              sycl::range<2>(nvx, nx))},
+        : m_global_buff_ftmp{sycl::range<2>(nvx, nx)},
           IAdvectorX(params) {}
 };
 
