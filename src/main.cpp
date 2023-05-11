@@ -10,16 +10,18 @@
 // ==========================================
 void
 advection(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
-          sref::unique_ref<IAdvectorX> &advector, const size_t maxIter) {
+          sref::unique_ref<IAdvectorX> &advector, const ADVParams &params) {
+
+    auto static const maxIter = params.maxIter;
 
     // Time loop, cannot parallelize this
     for (auto t = 0; t < maxIter; ++t) {
 
         // If it's last iteration, we wait
         if (t == maxIter - 1)
-            advector(Q, buff_fdistrib).wait_and_throw();
+            advector(Q, buff_fdistrib, params).wait_and_throw();
         else
-            advector(Q, buff_fdistrib);
+            advector(Q, buff_fdistrib, params);
     }   // end for t < T
 
 }   // end advection
@@ -80,7 +82,7 @@ main(int argc, char **argv) {
     auto advector = kernel_impl_factory(params);
 
     auto start = std::chrono::high_resolution_clock::now();
-    advection(Q, buff_fdistrib, advector, params.maxIter);
+    advection(Q, buff_fdistrib, advector, params);
     auto end = std::chrono::high_resolution_clock::now();
 
     std::cout << "\nRESULTS_VALIDATION:" << std::endl;

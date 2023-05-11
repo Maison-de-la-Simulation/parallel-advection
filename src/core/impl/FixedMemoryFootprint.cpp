@@ -1,13 +1,14 @@
 #include "advectors.h"
 
 sycl::event
-AdvX::FixedMemoryFootprint::operator()(
-    sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib) const noexcept {
-    auto const nx = m_params.nx;
-    auto const nVx = m_params.nVx;
-    auto const minRealx = m_params.minRealx;
-    auto const dx = m_params.dx;
-    auto const inv_dx = m_params.inv_dx;
+AdvX::FixedMemoryFootprint::operator()(sycl::queue &Q,
+                                       sycl::buffer<double, 2> &buff_fdistrib,
+                                       const ADVParams &params) const noexcept {
+    auto const nx = params.nx;
+    auto const nVx = params.nVx;
+    auto const minRealx = params.minRealx;
+    auto const dx = params.dx;
+    auto const inv_dx = params.inv_dx;
 
     /* All this should be done in ctor not in kernel */
     auto const NB_SLICES_IN_MEMORY = 10;
@@ -48,7 +49,7 @@ AdvX::FixedMemoryFootprint::operator()(
                     // g.get_group_id(0) also works for ivx
                     const int ivx = it.get_global_id(0);
 
-                    double const xFootCoord = displ(ix, ivx, m_params);
+                    double const xFootCoord = displ(ix, ivx, params);
 
                     // Corresponds to the index of the cell to the left of
                     // footCoord

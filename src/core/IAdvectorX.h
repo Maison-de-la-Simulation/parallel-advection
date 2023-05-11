@@ -11,16 +11,12 @@ double static constexpr loc[] = {-1. / 24, 1. / 24.,  -1. / 12.,
                                  1. / 12., -1. / 24., 1. / 24.};
 
 class IAdvectorX {
-  protected:
-    const ADVParams m_params;
-
   public:
-    IAdvectorX(const ADVParams &params) : m_params(params){};
     virtual ~IAdvectorX() = default;
 
-    virtual sycl::event
-    operator()(sycl::queue &Q,
-               sycl::buffer<double, 2> &buff_fdistrib) const noexcept = 0;
+    virtual sycl::event operator()(sycl::queue &Q,
+                                   sycl::buffer<double, 2> &buff_fdistrib,
+                                   const ADVParams &params) const noexcept = 0;
 
     // ==========================================
     // ==========================================

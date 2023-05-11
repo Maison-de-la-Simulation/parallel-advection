@@ -5,93 +5,90 @@
 namespace AdvX {
 
 class Sequential : public IAdvectorX {
-  using IAdvectorX::IAdvectorX; //Inheriting constructor
+    using IAdvectorX::IAdvectorX;   // Inheriting constructor
 
   public:
-    sycl::event
-    operator()(sycl::queue &Q,
-               sycl::buffer<double, 2> &buff_fdistrib) const noexcept override;
+    sycl::event operator()(sycl::queue &Q,
+                           sycl::buffer<double, 2> &buff_fdistrib,
+                           const ADVParams &params) const noexcept override;
 };
 
 /* For BasicRange kernels we have to do it out-of-place so we need a global
 buffer that is the same size as the fdistrib buffer */
 class BasicRange : public IAdvectorX {
   protected:
-    // std::unique_ptr<sycl::buffer<double, 2>> m_global_buff_ftmp; //on peut utiliser mutable à la place
+    // std::unique_ptr<sycl::buffer<double, 2>> m_global_buff_ftmp;
     mutable sycl::buffer<double, 2> m_global_buff_ftmp;
 
   public:
-    BasicRange(const size_t nx, const size_t nvx, const ADVParams &params)
-        : m_global_buff_ftmp{sycl::range<2>(nvx, nx)},
-          IAdvectorX(params) {}
+    BasicRange(const size_t nx, const size_t nvx)
+        : m_global_buff_ftmp{sycl::range<2>(nvx, nx)} {}
 };
 
 class BasicRange2D : public BasicRange {
   public:
-    sycl::event
-    operator()(sycl::queue &Q,
-               sycl::buffer<double, 2> &buff_fdistrib) const noexcept override;
+    sycl::event operator()(sycl::queue &Q,
+                           sycl::buffer<double, 2> &buff_fdistrib,
+                           const ADVParams &params) const noexcept override;
 
-    explicit BasicRange2D(const size_t nx, const size_t nvx,
-                          const ADVParams &params)
-        : BasicRange(nx, nvx, params){};
+    explicit BasicRange2D(const size_t nx, const size_t nvx)
+        : BasicRange(nx, nvx){};
 };
 
 class BasicRange1D : public BasicRange {
   public:
-    sycl::event
-    operator()(sycl::queue &Q,
-               sycl::buffer<double, 2> &buff_fdistrib) const noexcept override;
+    sycl::event operator()(sycl::queue &Q,
+                           sycl::buffer<double, 2> &buff_fdistrib,
+                           const ADVParams &params) const noexcept override;
 
-    explicit BasicRange1D(const size_t nx, const size_t nvx,
-                          const ADVParams &params)
-        : BasicRange(nx, nvx, params){};
+    explicit BasicRange1D(const size_t nx, const size_t nvx)
+        : BasicRange(nx, nvx){};
 };
 
 class Hierarchical : public IAdvectorX {
-  using IAdvectorX::IAdvectorX;
+    using IAdvectorX::IAdvectorX;
 
   public:
-    sycl::event
-    operator()(sycl::queue &Q,
-               sycl::buffer<double, 2> &buff_fdistrib) const noexcept override;
+    sycl::event operator()(sycl::queue &Q,
+                           sycl::buffer<double, 2> &buff_fdistrib,
+                           const ADVParams &params) const noexcept override;
 };
 
 class NDRange : public IAdvectorX {
-  using IAdvectorX::IAdvectorX;
+    using IAdvectorX::IAdvectorX;
 
   public:
-    sycl::event
-    operator()(sycl::queue &Q,
-               sycl::buffer<double, 2> &buff_fdistrib) const noexcept override;
+    sycl::event operator()(sycl::queue &Q,
+                           sycl::buffer<double, 2> &buff_fdistrib,
+                           const ADVParams &params) const noexcept override;
 };
 
 class Scoped : public IAdvectorX {
-  using IAdvectorX::IAdvectorX;
+    using IAdvectorX::IAdvectorX;
 
   public:
-    sycl::event
-    operator()(sycl::queue &Q,
-               sycl::buffer<double, 2> &buff_fdistrib) const noexcept override;
+    sycl::event operator()(sycl::queue &Q,
+                           sycl::buffer<double, 2> &buff_fdistrib,
+                           const ADVParams &params) const noexcept override;
 };
 
 class HierarchicalAlloca : public IAdvectorX {
-  using IAdvectorX::IAdvectorX;
+    using IAdvectorX::IAdvectorX;
 
   public:
-    sycl::event
-    operator()(sycl::queue &Q,
-               sycl::buffer<double, 2> &buff_fdistrib) const noexcept override;
+    sycl::event operator()(sycl::queue &Q,
+                           sycl::buffer<double, 2> &buff_fdistrib,
+                           const ADVParams &params) const noexcept override;
 };
 
 /* Fixed memory footprint using a basic range */
 class FixedMemoryFootprint : public IAdvectorX {
-  using IAdvectorX::IAdvectorX;
+    using IAdvectorX::IAdvectorX;
 
   public:
-    sycl::event
-    operator()(sycl::queue &Q,
-               sycl::buffer<double, 2> &buff_fdistrib) const noexcept override;
+    sycl::event operator()(sycl::queue &Q,
+                           sycl::buffer<double, 2> &buff_fdistrib,
+                           const ADVParams &params) const noexcept override;
 };
 
 }   // namespace AdvX
