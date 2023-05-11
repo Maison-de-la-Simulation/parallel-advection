@@ -18,6 +18,8 @@ AdvX::Scoped::operator()(
 
         sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>(nx), cgh);
 
+        // slice_ftmp.get_pointer()
+
         // cgh.copy()
         cgh.parallel(nb_wg, wg_size, [=](auto g) {
             // c.f.

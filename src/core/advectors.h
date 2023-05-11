@@ -16,10 +16,8 @@ class Sequential : public IAdvectorX {
 /* For BasicRange kernels we have to do it out-of-place so we need a global
 buffer that is the same size as the fdistrib buffer */
 class BasicRange : public IAdvectorX {
-  using IAdvectorX::IAdvectorX;
-
   protected:
-    std::unique_ptr<sycl::buffer<double, 2>> m_global_buff_ftmp;
+    std::unique_ptr<sycl::buffer<double, 2>> m_global_buff_ftmp; //on peut utiliser mutable à la place
 
   public:
     BasicRange(const size_t nx, const size_t nvx, const ADVParams &params)

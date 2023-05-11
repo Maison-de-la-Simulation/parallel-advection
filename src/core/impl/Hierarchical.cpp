@@ -18,13 +18,11 @@ AdvX::Hierarchical::operator()(
             buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
 
         sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>{nx}, cgh);
-        // double slice_ftmp[512];vi
         cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<2> g) {
             g.parallel_for_work_item(
                 sycl::range<2>(1, nx), [=](sycl::h_item<2> it) {
                     const int ix = it.get_global_id(1);
                     const int ivx = g.get_group_id(0);
-
                     double const xFootCoord = displ(ix, ivx);
 
                     // Corresponds to the index of the cell to the left of

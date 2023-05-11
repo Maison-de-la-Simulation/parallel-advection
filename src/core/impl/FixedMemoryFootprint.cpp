@@ -14,19 +14,21 @@ AdvX::FixedMemoryFootprint::operator()(
     auto const NB_TOTAL_ITERATIONS = nVx / NB_SLICES_IN_MEMORY;
     auto const REST_ITERATIONS = nVx % NB_SLICES_IN_MEMORY;
 
-    assert(REST_ITERATIONS ==
-           0);   // for now nVx need to be divisible by NB_SLICES
+    assert(REST_ITERATIONS == 0);   // for now nVx need to be divisible by NB_SLICES
 
-    sycl::buffer<double, 2> FTMP_BUFF{sycl::range<2>{NB_SLICES_IN_MEMORY, nx}};
+    // sycl::buffer<double, 2> FTMP_BUFF{sycl::range<2>{NB_SLICES_IN_MEMORY, nx}};
+    auto buff_ftmp = sycl::malloc_device<double>(nx * NB_SLICES_IN_MEMORY * sizeof(double), Q);
 
-    const sycl::range<2> global_size{nVx, nx};
-    const sycl::range<2> local_size(1, nx);
+    sycl::free(buff_ftmp, Q);
 
-    // assert(nVx % 512 == 0);
-    const sycl::range<2> nb_wg{NB_SLICES_IN_MEMORY, 1};
+    // const sycl::range<2> global_size{nVx, nx};
+    // const sycl::range<2> local_size(1, nx);
+
+    const sycl::range<2> nb_wg{NB_TOTAL_ITERATIONS, 1};
     const sycl::range<2> wg_size{1, 1024};
 
-    auto buff_ftmp = sycl::malloc_device<double>(nx * sizeof(double) * nVx, Q);
+    //on regarde le reste de i avec NB_TOTAL_ITER et on divise
+
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
             buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
