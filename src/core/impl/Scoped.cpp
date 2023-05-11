@@ -43,7 +43,7 @@ AdvX::Scoped::operator()(
                     // const int ivx = g.get_group_id(1) * 32 +
                     // it.get_local_id(g,1);
 
-                    double const xFootCoord = displ(ix, ivx);
+                    double const xFootCoord = displ(ix, ivx, m_params);
 
                     // Corresponds to the index of the cell to
                     // the left of footCoord

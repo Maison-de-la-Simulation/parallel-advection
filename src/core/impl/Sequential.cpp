@@ -23,7 +23,7 @@ AdvX::Sequential::operator()(
         // For each x with regards to current Vx
         for (auto ix = 0; ix < nx; ++ix) {
 
-            double const xFootCoord = displ(ix, iv);
+            double const xFootCoord = displ(ix, iv, m_params);
 
             const int LeftDiscreteNode =
                 sycl::floor((xFootCoord - minRealx) * inv_dx);

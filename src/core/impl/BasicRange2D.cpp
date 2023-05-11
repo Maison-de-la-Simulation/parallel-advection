@@ -19,7 +19,7 @@ AdvX::BasicRange2D::operator()(
             const int ix = itm[1];
             const int ivx = itm[0];
 
-            double const xFootCoord = displ(ix, ivx);
+            double const xFootCoord = displ(ix, ivx, m_params);
 
             // Corresponds to the index of the cell to the left of footCoord
             const int LeftDiscreteNode =

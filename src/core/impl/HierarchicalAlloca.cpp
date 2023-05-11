@@ -25,7 +25,7 @@ AdvX::HierarchicalAlloca::operator()(
                     const int ix = it.get_global_id(1);
                     const int ivx = g.get_group_id(0);
 
-                    double const xFootCoord = displ(ix, ivx);
+                    double const xFootCoord = displ(ix, ivx, m_params);
 
                     // Corresponds to the index of the cell to the left of
                     // footCoord

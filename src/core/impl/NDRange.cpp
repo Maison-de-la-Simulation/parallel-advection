@@ -26,7 +26,7 @@ AdvX::NDRange::operator()(
                 const int ix = itm.get_global_id(1);
                 const int ivx = itm.get_global_id(0);
 
-                double const xFootCoord = displ(ix, ivx);
+                double const xFootCoord = displ(ix, ivx, m_params);
 
                 const int LeftDiscreteNode =
                     sycl::floor((xFootCoord - minRealx) * inv_dx);

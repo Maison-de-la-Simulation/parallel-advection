@@ -16,7 +16,7 @@ class IAdvectorX {
 
   public:
     IAdvectorX(const ADVParams &params) : m_params(params){};
-    // virtual ~IAdvectorX() = default;
+    virtual ~IAdvectorX() = default;
 
     virtual sycl::event
     operator()(sycl::queue &Q,
@@ -60,13 +60,13 @@ class IAdvectorX {
     // ==========================================
     /* Computes the covered distance by x during dt. returns the feet coord */
     [[nodiscard]] inline __attribute__((always_inline)) double
-    displ(const int ix, const int ivx) const noexcept {
-        auto const minRealx = m_params.minRealx;
-        auto const minRealVx = m_params.minRealVx;
-        auto const dx = m_params.dx;
-        auto const dVx = m_params.dVx;
-        auto const dt = m_params.dt;
-        auto const realWidthx = m_params.realWidthx;
+    displ(const int ix, const int ivx, const ADVParams &params) const noexcept {
+        auto const minRealx = params.minRealx;
+        auto const minRealVx = params.minRealVx;
+        auto const dx = params.dx;
+        auto const dVx = params.dVx;
+        auto const dt = params.dt;
+        auto const realWidthx = params.realWidthx;
 
         double const x = coord(ix, minRealx, dx);
         double const vx = coord(ivx, minRealVx, dVx);

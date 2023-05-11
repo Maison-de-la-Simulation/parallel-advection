@@ -48,7 +48,7 @@ AdvX::FixedMemoryFootprint::operator()(
                     // g.get_group_id(0) also works for ivx
                     const int ivx = it.get_global_id(0);
 
-                    double const xFootCoord = displ(ix, ivx);
+                    double const xFootCoord = displ(ix, ivx, m_params);
 
                     // Corresponds to the index of the cell to the left of
                     // footCoord

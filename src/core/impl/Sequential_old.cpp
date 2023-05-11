@@ -33,7 +33,7 @@ AdvX::Sequential::operator()(
 
                 // For each x with regards to current Vx
                 for (int ix = 0; ix < nx; ++ix) {
-                    double const xFootCoord = displ(ix, ivx);
+                    double const xFootCoord = displ(ix, ivx, m_params);
 
                     // Corresponds to the index of the cell to the left of
                     // footCoord
