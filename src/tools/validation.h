@@ -14,27 +14,23 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
     const double acceptable_error = 1e-5;
 
     int errCount = 0;
-    double totalError = 0.0;
+    double errorL1 = 0.0;
     {
-        sycl::buffer<int> buff_errCount{&errCount, 1};
-        sycl::buffer<double> buff_sumTotalErr{&totalError, 1};
+        sycl::buffer<double> buff_errorL1{&errorL1, 1};
 
         Q.submit([&](sycl::handler &cgh) {
              // Input values to reductions are standard accessors
-             auto errAcc =
-                 buff_errCount.get_access<sycl::access_mode::write>(cgh);
              auto fdist =
                  buff_fdistrib.get_access<sycl::access_mode::read>(cgh);
-             auto totErrAcc =
-                 buff_sumTotalErr.get_access<sycl::access_mode::write>(cgh);
+             auto acc_errorL1 =
+                 buff_errorL1.get_access<sycl::access_mode::write>(cgh);
 
-             auto errReduction = sycl::reduction(errAcc, sycl::plus<int>());
-             auto totalSumError =
-                 sycl::reduction(totErrAcc, sycl::plus<double>());
+             auto reduc_errorL1 =
+                 sycl::reduction(acc_errorL1, sycl::plus<double>());
 
              cgh.parallel_for(
-                 buff_fdistrib.get_range(), errReduction, totalSumError,
-                 [=](auto itm, auto &totalErr, auto &totalSumError) {
+                 buff_fdistrib.get_range(), reduc_errorL1,
+                 [=](auto itm, auto &reduc_errorL1) {
                      auto ix = itm[1];
                      auto ivx = itm[0];
                      auto f = fdist[itm];
@@ -46,22 +42,13 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
                      auto value = sycl::sin(4 * M_PI * (x - v * t));
 
                      auto err = sycl::fabs(f - value);
-                     totalSumError += err;
-
-                     if (err > acceptable_error)
-                         totalErr += 1;
+                     reduc_errorL1 += err;
                  });
          }).wait_and_throw();
     }
 
-    double const totalCells = params.nx * params.nVx;
-    double const fractionErr = errCount / totalCells * 100;
-
-    std::cout << "fraction of cells with error > " << acceptable_error << ": "
-              << fractionErr << "% of total cells" << std::endl;
-
     std::cout << "Total cumulated error: "
-              << totalError * params.dx * params.dVx << "\n"
+              << errorL1 * params.dx * params.dVx << "\n"
               << std::endl;
 
 }   // end validate_results

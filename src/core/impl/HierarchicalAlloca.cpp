@@ -3,7 +3,7 @@
 sycl::event
 AdvX::HierarchicalAlloca::operator()(sycl::queue &Q,
                                      sycl::buffer<double, 2> &buff_fdistrib,
-                                     const ADVParams &params) const noexcept {
+                                     const ADVParams &params) noexcept {
     auto const nx = params.nx;
     auto const nVx = params.nVx;
     auto const minRealx = params.minRealx;
@@ -19,7 +19,6 @@ AdvX::HierarchicalAlloca::operator()(sycl::queue &Q,
 
         cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<2> g) {
             double *slice_ftmp = (double *) alloca(sizeof(double) * nx);
-            g.barrier();
 
             g.parallel_for_work_item(
                 sycl::range<2>(1, nx), [&](sycl::h_item<2> it) {

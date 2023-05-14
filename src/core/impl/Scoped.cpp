@@ -2,7 +2,7 @@
 
 sycl::event
 AdvX::Scoped::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
-                         const ADVParams &params) const noexcept {
+                         const ADVParams &params) noexcept {
     auto const nx = params.nx;
     auto const nVx = params.nVx;
     auto const minRealx = params.minRealx;
@@ -18,7 +18,6 @@ AdvX::Scoped::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
 
         sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>(nx), cgh);
 
-        // slice_ftmp.get_pointer()
 
         // cgh.copy()
         cgh.parallel(nb_wg, wg_size, [=](auto g) {
