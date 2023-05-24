@@ -12,7 +12,7 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
 
     // assert(nVx % 512 == 0);
     const sycl::range<1> nb_wg{nVx};
-    const sycl::range<1> wg_size{512};
+    const sycl::range<1> wg_size{params.wg_size};
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
