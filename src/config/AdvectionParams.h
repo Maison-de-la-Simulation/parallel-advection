@@ -25,6 +25,9 @@ struct ADVParams {
   // Number of points for speeds (Vx)
   size_t nVx;
 
+  // Sizes of the SYCL work groups
+  size_t wg_size;
+
   // Deltas : taille physique d'une cellule discrète (en x, vx, t)
   double dt;
   double dx;

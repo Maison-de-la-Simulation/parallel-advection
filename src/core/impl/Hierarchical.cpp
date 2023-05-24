@@ -11,18 +11,18 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
     auto const inv_dx = params.inv_dx;
 
     // assert(nVx % 512 == 0);
-    const sycl::range<2> nb_wg{nVx, 1};
-    const sycl::range<2> wg_size{1, 512};
+    const sycl::range<1> nb_wg{nVx};
+    const sycl::range<1> wg_size{params.wg_size};
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
             buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
 
         sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>{nx}, cgh);
-        cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<2> g) {
+        cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<1> g) {
             g.parallel_for_work_item(
-                sycl::range<2>(1, nx), [&](sycl::h_item<2> it) {
-                    const int ix = it.get_global_id(1);
+                sycl::range<1>(nx), [&](sycl::h_item<1> it) {
+                    const int ix = it.get_local_id(0);
                     const int ivx = g.get_group_id(0);
                     double const xFootCoord = displ(ix, ivx, params);
 
@@ -49,10 +49,10 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
                     }
                 });   // end parallel_for_work_item --> Implicit barrier
 
-            g.parallel_for_work_item(sycl::range<2>(1, nx),
-                                     [&](sycl::h_item<2> it) {
-                                         const int ix = it.get_global_id(1);
-                                         const int ivx = it.get_global_id(0);
+            g.parallel_for_work_item(sycl::range<1>(nx),
+                                     [&](sycl::h_item<1> it) {
+                                         const int ix = it.get_local_id(0);
+                                         const int ivx = g.get_group_id(0);
                                          fdist[ivx][ix] = slice_ftmp[ix];
                                      });
 

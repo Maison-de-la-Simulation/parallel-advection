@@ -14,6 +14,7 @@ void ADVParams::setup(const ConfigMap& configMap)
   outputSolution = configMap.getBool("run", "outputSolution", false);
 
   kernelImpl = configMap.getString("run", "kernelImpl", "BasicRange2D");
+  wg_size = configMap.getInteger("run", "workGroupSize", 512);
 
   // discretization parameters
   dt  = configMap.getFloat("discretization", "dt" , 0.0001);
@@ -38,6 +39,7 @@ void ADVParams::print()
   printf( "Simulation run parameters:\n");
   printf( "##########################\n");
   std::cout << "kernelImpl : " << kernelImpl << std::endl;
+  std::cout << "wgSizes    : " << wg_size << std::endl;
   printf( "gpu        : %d\n", gpu);
   printf( "maxIter    : %zu\n", maxIter);
   printf( "nx         : %zu\n", nx);
