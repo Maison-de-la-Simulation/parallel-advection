@@ -50,12 +50,14 @@ void
 fill_buffer(sycl::queue &q, sycl::buffer<double, 2> &buff_fdist,
             const ADVParams &params) noexcept {
 
-    sycl::host_accessor fdist(buff_fdist, sycl::write_only, sycl::no_init);
+    q.submit([&](sycl::handler &cgh) {
+        sycl::accessor fdist(buff_fdist, cgh, sycl::write_only, sycl::no_init);
 
-    for (int ix = 0; ix < params.nx; ++ix) {
-        for (int iv = 0; iv < params.nVx; ++iv) {
+        cgh.parallel_for(buff_fdist.get_range(), [=](sycl::id<2> itm) {
+            const int ix = itm[1];
+
             double x = params.minRealx + ix * params.dx;
-            fdist[iv][ix] = sycl::sin(4 * x * M_PI);
-        }
-    }
+            fdist[itm] = sycl::sin(4 * x * M_PI);
+        });   // end parallel_for
+    });       // end q.submit
 }
