@@ -9,8 +9,8 @@ AdvX::Scoped::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    sycl::range<2> nb_wg{nVx, 1};
-    sycl::range<2> wg_size{1, nx};
+    sycl::range<1> nb_wg{nVx};
+    sycl::range<1> wg_size{nx};
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
@@ -18,29 +18,11 @@ AdvX::Scoped::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
 
         sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>(nx), cgh);
 
-
-        // cgh.copy()
         cgh.parallel(nb_wg, wg_size, [=](auto g) {
-            // c.f.
-            // https://github.com/OpenSYCL/OpenSYCL/blob/develop/doc/scoped-parallelism.md#memory-placement-rules
-            //   double slice_ftmp[nx];   // declared in the private memory of
-            //   the executing physical WI ???
-            // Actually doesn't work if version of CUDA is not 11.6. I have to
-            // use the local_accessor
 
-            const int ivx = g.get_group_id(0);
-
-            sycl::device_event e = g.async_work_group_copy(
-                slice_ftmp.get_pointer(), fdist.get_pointer() + nx * ivx, nx);
-
-            e.wait();   // let's be sure the slice is nicely copied
-
-            sycl::distribute_groups_and_wait(g, [&](auto subg) {
-                sycl::distribute_items_and_wait(subg, [&](sycl::s_item<2> it) {
-                    const int ix = it.get_local_id(g, 1);
+                sycl::distribute_items_and_wait(g, [&](sycl::s_item<1> it) {
+                    const int ix = it.get_local_id(g, 0);
                     const int ivx = g.get_group_id(0);
-                    // const int ivx = g.get_group_id(1) * 32 +
-                    // it.get_local_id(g,1);
 
                     double const xFootCoord = displ(ix, ivx, params);
 
@@ -57,16 +39,24 @@ AdvX::Scoped::operator()(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
                     auto coef = lag_basis(d_prev1);
 
                     const int ipos1 = LeftDiscreteNode - LAG_OFFSET;
-                    double ftmp = 0.;
-
+                    // double ftmp = 0.;
+                    slice_ftmp[ix] = 0.;
                     for (int k = 0; k <= LAG_ORDER; k++) {
                         int idx_ipos1 = (nx + ipos1 + k) % nx;
-                        ftmp += coef[k] * slice_ftmp[idx_ipos1];
+                        // ftmp += coef[k] * slice_ftmp[idx_ipos1];
+                        slice_ftmp[ix] += coef[k] * fdist[ivx][idx_ipos1];
+
                     }
 
-                    fdist[ivx][ix] = ftmp;
+                    // fdist[ivx][ix] = ftmp;
                 });   // end distribute items
-            });       // end distribute_groups
+            // });       // end distribute_groups
+
+                g.async_work_group_copy(fdist.get_pointer() +
+                                            nx * g.get_group_id(0),
+                                        slice_ftmp.get_pointer(), nx)
+                    .wait();
+
         });           // end parallel regions
     });               // end Q.submit
 }
