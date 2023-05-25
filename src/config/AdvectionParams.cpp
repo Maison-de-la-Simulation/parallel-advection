@@ -39,7 +39,7 @@ void ADVParams::print()
   printf( "Simulation run parameters:\n");
   printf( "##########################\n");
   std::cout << "kernelImpl : " << kernelImpl << std::endl;
-  std::cout << "wgSizes    : " << wg_size << std::endl;
+  std::cout << "wgSize     : " << wg_size << std::endl;
   printf( "gpu        : %d\n", gpu);
   printf( "maxIter    : %zu\n", maxIter);
   printf( "nx         : %zu\n", nx);
