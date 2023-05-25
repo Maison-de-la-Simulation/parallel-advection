@@ -11,9 +11,7 @@ AdvX::NDRange::operator()(sycl::queue &Q,
     auto const inv_dx = params.inv_dx;
 
     const sycl::range<2> global_size{nVx, nx};
-    const sycl::range<2> local_size(1, nx);
-
-    // assert(nVx%128 == 0);
+    const sycl::range<2> local_size{1, nx};
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
@@ -24,7 +22,7 @@ AdvX::NDRange::operator()(sycl::queue &Q,
         cgh.parallel_for(
             sycl::nd_range<2>{global_size, local_size},
             [=](sycl::nd_item<2> itm) {
-                const int ix = itm.get_global_id(1);
+                const int ix = itm.get_local_id(1);
                 const int ivx = itm.get_global_id(0);
 
                 double const xFootCoord = displ(ix, ivx, params);
@@ -49,11 +47,7 @@ AdvX::NDRange::operator()(sycl::queue &Q,
                 }
 
                 sycl::group_barrier(itm.get_group());
-                // fdist[ix][ivx] = ftmp;
-                // for (int i = 0; i < nx; ++i) {
                 fdist[ivx][ix] = slice_ftmp[ix];
-                // fdist[i][ivx] = slice_ftmp[i];
-                // }
             }   // end lambda in parallel_for
         );      // end parallel_for nd_range
     });         // end Q.submit
