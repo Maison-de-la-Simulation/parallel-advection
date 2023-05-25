@@ -11,11 +11,11 @@ AdvX::BasicRange1D::operator()(sycl::queue &Q,
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    return Q.submit([&](sycl::handler &cgh) {
+    Q.submit([&](sycl::handler &cgh) {
         auto fdist =
-            buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
+            buff_fdistrib.get_access<sycl::access::mode::read>(cgh);
         sycl::accessor<double, 2> ftmp(m_global_buff_ftmp, cgh,
-                                       sycl::read_write, sycl::no_init);
+                                       sycl::write_only, sycl::no_init);
 
         cgh.parallel_for(sycl::range<1>(nVx), [=](sycl::id<1> itm) {
             const int ivx = itm[0];
@@ -44,11 +44,13 @@ AdvX::BasicRange1D::operator()(sycl::queue &Q,
                 }   // end for k
             }       // end for ix
             // barrier
-
-            for (int i = 0; i < nx; ++i) {
-                // fdist[i][ivx] = slice_ftmp[i];
-                fdist[ivx][i] = ftmp[ivx][i];
-            }
         });   // end parallel_for
     });       // end Q.submit
+
+    return Q.submit([&](sycl::handler &cgh) {
+        auto fdist = buff_fdistrib.get_access<sycl::access::mode::write>(cgh);
+        auto ftmp =
+            m_global_buff_ftmp.get_access<sycl::access::mode::read>(cgh);
+        cgh.copy(ftmp, fdist);
+    });   // end Q.submit
 }

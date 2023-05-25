@@ -17,7 +17,6 @@ class Sequential : public IAdvectorX {
 buffer that is the same size as the fdistrib buffer */
 class BasicRange : public IAdvectorX {
   protected:
-    // std::unique_ptr<sycl::buffer<double, 2>> m_global_buff_ftmp;
     mutable sycl::buffer<double, 2> m_global_buff_ftmp;
 
   public:
