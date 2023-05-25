@@ -1,6 +1,7 @@
 .vscode
 build*
 benchmark/log/*
+benchmark/pandas
 *.ods#
 *.xlsx#
 adv_*
