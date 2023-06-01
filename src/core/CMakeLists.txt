@@ -3,7 +3,7 @@ add_subdirectory(advectorVx)
 
 add_library(core "")
 
-target_sources(core PUBLIC advectors.h IAdvector.h)
+target_sources(core PUBLIC x_advectors.h vx_advectors.h IAdvector.h)
 
 target_link_libraries(core
   PUBLIC

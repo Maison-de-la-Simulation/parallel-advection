@@ -1,5 +1,6 @@
 #include <AdvectionParams.h>
-#include <advectors.h>
+#include <x_advectors.h>
+#include <vx_advectors.h>
 #include <init.h>
 #include <io.h>
 #include <iostream>
@@ -9,10 +10,12 @@
 // ==========================================
 // ==========================================
 void
-advection(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
-               sref::unique_ref<IAdvectorX> &x_advector,
-               sref::unique_ref<IAdvectorVx> &vx_advector,
-               const ADVParams &params) {
+advection(sycl::queue &Q,
+          sycl::buffer<double, 2> &buff_fdistrib,
+          sycl::buffer<double, 1> &buff_efield,
+          sref::unique_ref<IAdvectorX> &x_advector,
+          sref::unique_ref<IAdvectorVx> &vx_advector,
+          const ADVParams &params) {
 
     auto static const maxIter = params.maxIter;
 
@@ -22,9 +25,9 @@ advection(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
 
         // If it's last iteration, we wait
         if (t == maxIter - 1)
-            vx_advector(Q, buff_fdistrib, params).wait_and_throw();
+            vx_advector(Q, buff_fdistrib, buff_efield, params).wait_and_throw();
         else
-            vx_advector(Q, buff_fdistrib, params).wait_and_throw();
+            vx_advector(Q, buff_fdistrib, buff_efield, params);
     }   // end for t < T
 
 }   // end advection
@@ -82,11 +85,15 @@ main(int argc, char **argv) {
     sycl::buffer<double, 2> buff_fdistrib(sycl::range<2>(nvx, nx));
     fill_buffer(Q, buff_fdistrib, params);
 
+    /* Fictive electric field to advect along vx */
+    std::vector<double> efield(nx, 0);
+    sycl::buffer<double, 1> buff_efield(efield);
+
     auto x_advector = x_advector_factory(params);
     auto vx_advector = vx_advector_factory();
 
     auto start = std::chrono::high_resolution_clock::now();
-    advection(Q, buff_fdistrib, x_advector, vx_advector, params);
+    advection(Q, buff_fdistrib, buff_efield, x_advector, vx_advector, params);
     auto end = std::chrono::high_resolution_clock::now();
 
     std::cout << "\nRESULTS_VALIDATION:" << std::endl;

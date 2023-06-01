@@ -1,9 +1,11 @@
-#include "advectors.h"
+#include "vx_advectors.h"
 
 sycl::event
-advector::vx::Hierarchical::operator()(sycl::queue &Q,
-                                       sycl::buffer<double, 2> &buff_fdistrib,
-                                       const ADVParams &params) noexcept {
+advector::vx::Hierarchical::operator()(
+    sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
+    sycl::buffer<double, 1> &buff_electric_field,
+    const ADVParams &params) noexcept {
+
     auto const nx = params.nx;
     auto const nvx = params.nvx;
     auto const minRealVx = params.minRealVx;
@@ -12,13 +14,14 @@ advector::vx::Hierarchical::operator()(sycl::queue &Q,
     auto const inv_dvx = params.inv_dvx;
     auto const realWidthVx = params.realWidthVx;
 
-    // assert(nvx % 512 == 0);
     const sycl::range<1> nb_wg{nx};
     const sycl::range<1> wg_size{params.wg_size};
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
             buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
+        auto efield =
+            buff_electric_field.get_access<sycl::access::mode::read_write>(cgh);
 
         sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>{nvx}, cgh);
 
@@ -29,12 +32,12 @@ advector::vx::Hierarchical::operator()(sycl::queue &Q,
                     const int ivx = it.get_local_id(0);
 
 
-                    auto const vx = coord(ivx, minRealVx, dvx);
-                    auto const displx = dt * vx;
+                    auto const ex = efield[ix];
+                    auto const displx = dt * ex;
 
                     auto const vxFootCoord =
                         minRealVx +
-                        sycl::fmod(realWidthVx + vx - displx - minRealVx,
+                        sycl::fmod(realWidthVx + ex - displx - minRealVx,
                                    realWidthVx);
 
                     const int LeftDiscreteNode =

@@ -1,6 +1,5 @@
 #pragma once
-#include "advectorX/IAdvectorX.h"
-#include "advectorVx/IAdvectorVx.h"
+#include <IAdvectorX.h>
 
 /* Contains headers for different implementations of advector interface */
 namespace advector {
@@ -94,23 +93,6 @@ class FixedMemoryFootprint : public IAdvectorX {
 };
 
 }   // namespace x
-
-// ==========================================
-// ==========================================
-// ==========================================
-// ==========================================
-namespace vx {
-
-class Hierarchical : public IAdvectorVx {
-    using IAdvectorVx::IAdvectorVx;
-
-  public:
-    sycl::event operator()(sycl::queue &Q,
-                           sycl::buffer<double, 2> &buff_fdistrib,
-                           const ADVParams &params) noexcept override;
-};
-
-}   // namespace vx
 
 }   // namespace advector
 

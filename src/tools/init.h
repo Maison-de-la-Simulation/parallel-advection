@@ -2,7 +2,8 @@
 
 #include "unique_ref.h"
 #include <AdvectionParams.h>
-#include <advectors.h>
+#include <x_advectors.h>
+#include <vx_advectors.h>
 #include <sycl/sycl.hpp>
 
 // To switch case on a str

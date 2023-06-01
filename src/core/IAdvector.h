@@ -14,10 +14,6 @@ class IAdvector {
   public:
     virtual ~IAdvector() = default;
 
-    virtual sycl::event operator()(sycl::queue &Q,
-                                   sycl::buffer<double, 2> &buff_fdistrib,
-                                   const ADVParams &params) noexcept = 0;
-
     // ==========================================
     // ==========================================
     /* Computes the real position of x or speed of vx based on discretization */
