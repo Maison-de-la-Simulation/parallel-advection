@@ -40,7 +40,6 @@ advector::x::Hierarchical::operator()(sycl::queue &Q,
 
                     const int ipos1 = LeftDiscreteNode - LAG_OFFSET;
 
-                    // double ftmp = 0.;
                     slice_ftmp[ix] = 0;
                     for (int k = 0; k <= LAG_ORDER; k++) {
                         int idx_ipos1 = (nx + ipos1 + k) % nx;

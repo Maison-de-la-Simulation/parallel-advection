@@ -21,23 +21,23 @@ advector::vx::Hierarchical::operator()(
         auto fdist =
             buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
         auto efield =
-            buff_electric_field.get_access<sycl::access::mode::read_write>(cgh);
+            buff_electric_field.get_access<sycl::access::mode::read>(cgh);
 
         sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>{nvx}, cgh);
 
         cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<1> g) {
             g.parallel_for_work_item(
-                sycl::range<1>(nx), [&](sycl::h_item<1> it) {
+                sycl::range<1>(nvx), [&](sycl::h_item<1> it) {
                     const int ix  = g.get_group_id(0);
                     const int ivx = it.get_local_id(0);
 
-
                     auto const ex = efield[ix];
                     auto const displx = dt * ex;
+                    double const vx = coord(ivx, minRealVx, dvx);
 
                     auto const vxFootCoord =
                         minRealVx +
-                        sycl::fmod(realWidthVx + ex - displx - minRealVx,
+                        sycl::fmod(realWidthVx + vx - displx - minRealVx,
                                    realWidthVx);
 
                     const int LeftDiscreteNode =
@@ -61,7 +61,7 @@ advector::vx::Hierarchical::operator()(
                 });   // end parallel_for_work_item --> Implicit barrier
 
             //Copy not contiguous slice
-            g.parallel_for_work_item(sycl::range<1>(nx),
+            g.parallel_for_work_item(sycl::range<1>(nvx),
                                      [&](sycl::h_item<1> it) {
                                          const int ix = g.get_group_id(0);
                                          const int ivx = it.get_local_id(0);
