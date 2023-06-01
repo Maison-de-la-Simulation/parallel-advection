@@ -2,28 +2,34 @@
 
 sycl::event
 advector::x::Hierarchical::operator()(sycl::queue &Q,
-                                      sycl::buffer<double, 2> &buff_fdistrib,
+                                      sycl::buffer<double, 3> &buff_fdistrib,
                                       const ADVParams &params) noexcept {
     auto const nx = params.nx;
     auto const nvx = params.nvx;
+    auto const n_fict = params.n_fict_dim;
     auto const minRealx = params.minRealx;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    // assert(nvx % 512 == 0);
-    const sycl::range<1> nb_wg{nvx};
-    const sycl::range<1> wg_size{params.wg_size};
+    const sycl::range<3> nb_wg{n_fict, nvx, 1};
+    const sycl::range<3> wg_size{1, 1, params.wg_size};
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
             buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
 
         sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>{nx}, cgh);
-        cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<1> g) {
+
+        cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<3> g) {
+            const int ivx = g.get_group_id(1);
+            const int i_fict = g.get_group_id(0);
+
             g.parallel_for_work_item(
-                sycl::range<1>(nx), [&](sycl::h_item<1> it) {
-                    const int ix = it.get_local_id(0);
-                    const int ivx = g.get_group_id(0);
+                sycl::range<3>(1, 1, nx), [&](sycl::h_item<3> it) {
+                    const int ix = it.get_local_id(2);
+                    // const int ivx = g.get_group_id(1);
+                    // const int i_fict = g.get_group_id(0);
+
                     double const xFootCoord = displ(ix, ivx, params);
 
                     // Corresponds to the index of the cell to the left of
@@ -44,23 +50,17 @@ advector::x::Hierarchical::operator()(sycl::queue &Q,
                     for (int k = 0; k <= LAG_ORDER; k++) {
                         int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-                        slice_ftmp[ix] += coef[k] * fdist[ivx][idx_ipos1];
+                        slice_ftmp[ix] += coef[k] * fdist[i_fict][ivx][idx_ipos1];
                     }
                 });   // end parallel_for_work_item --> Implicit barrier
 
-            g.async_work_group_copy(fdist.get_pointer() +
-                                        nx * g.get_group_id(0),
-                                    slice_ftmp.get_pointer(), nx)
+            // ix + nx*ivx + nx*nvx*i_fict
+            g.async_work_group_copy(
+                 fdist.get_pointer() + nx * ivx + nx * nvx * i_fict,   // dest
+                 slice_ftmp.get_pointer(),                             // source
+                 nx   // nb elements
+                 )
                 .wait();
-
-            // g.parallel_for_work_item(sycl::range<1>(nx),
-            //                          [&](sycl::h_item<1> it) {
-            //                              const int ix = it.get_local_id(0);
-            //                              const int ivx = g.get_group_id(0);
-            //                              fdist[ivx][ix] = slice_ftmp[ix];
-            //                          });
-
-            // g.async_work_group_copy(); doesn't work in hierarhical dunno why
         });   // end parallel_for_work_group
     });       // end Q.submit
 }

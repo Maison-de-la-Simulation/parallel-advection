@@ -25,6 +25,9 @@ struct ADVParams {
   // Number of points for speeds (Vx)
   size_t nvx;
 
+  // Fictive dimension to get 1D independant problems with v and vx dimensions
+  size_t n_fict_dim;
+
   // Sizes of the SYCL work groups
   size_t wg_size;
 

@@ -11,7 +11,7 @@ class Sequential : public IAdvectorX {
 
   public:
     sycl::event operator()(sycl::queue &Q,
-                           sycl::buffer<double, 2> &buff_fdistrib,
+                           sycl::buffer<double, 3> &buff_fdistrib,
                            const ADVParams &params) noexcept override;
 };
 
@@ -19,31 +19,33 @@ class Sequential : public IAdvectorX {
 buffer that is the same size as the fdistrib buffer */
 class BasicRange : public IAdvectorX {
   protected:
-    mutable sycl::buffer<double, 2> m_global_buff_ftmp;
+    mutable sycl::buffer<double, 3> m_global_buff_ftmp;
 
   public:
-    BasicRange(const size_t nx, const size_t nvx)
-        : m_global_buff_ftmp{sycl::range<2>(nvx, nx)} {}
+    BasicRange(const size_t n_fict_dim, const size_t nvx, const size_t nx)
+        : m_global_buff_ftmp{sycl::range<3>(n_fict_dim, nvx, nx)} {}
 };
 
-class BasicRange2D : public BasicRange {
+class BasicRange3D : public BasicRange {
   public:
     sycl::event operator()(sycl::queue &Q,
-                           sycl::buffer<double, 2> &buff_fdistrib,
+                           sycl::buffer<double, 3> &buff_fdistrib,
                            const ADVParams &params) noexcept override;
 
-    explicit BasicRange2D(const size_t nx, const size_t nvx)
-        : BasicRange(nx, nvx){};
+    explicit BasicRange3D(const size_t n_fict_dim, const size_t nvx,
+                          const size_t nx)
+        : BasicRange(n_fict_dim, nvx, nx){};
 };
 
 class BasicRange1D : public BasicRange {
   public:
     sycl::event operator()(sycl::queue &Q,
-                           sycl::buffer<double, 2> &buff_fdistrib,
+                           sycl::buffer<double, 3> &buff_fdistrib,
                            const ADVParams &params) noexcept override;
 
-    explicit BasicRange1D(const size_t nx, const size_t nvx)
-        : BasicRange(nx, nvx){};
+    explicit BasicRange1D(const size_t n_fict_dim, const size_t nvx,
+                          const size_t nx)
+        : BasicRange(n_fict_dim, nvx, nx){};
 };
 
 class Hierarchical : public IAdvectorX {
@@ -51,7 +53,7 @@ class Hierarchical : public IAdvectorX {
 
   public:
     sycl::event operator()(sycl::queue &Q,
-                           sycl::buffer<double, 2> &buff_fdistrib,
+                           sycl::buffer<double, 3> &buff_fdistrib,
                            const ADVParams &params) noexcept override;
 };
 
@@ -60,7 +62,7 @@ class NDRange : public IAdvectorX {
 
   public:
     sycl::event operator()(sycl::queue &Q,
-                           sycl::buffer<double, 2> &buff_fdistrib,
+                           sycl::buffer<double, 3> &buff_fdistrib,
                            const ADVParams &params) noexcept override;
 };
 
@@ -69,7 +71,7 @@ class Scoped : public IAdvectorX {
 
   public:
     sycl::event operator()(sycl::queue &Q,
-                           sycl::buffer<double, 2> &buff_fdistrib,
+                           sycl::buffer<double, 3> &buff_fdistrib,
                            const ADVParams &params) noexcept override;
 };
 
@@ -78,7 +80,7 @@ class HierarchicalAlloca : public IAdvectorX {
 
   public:
     sycl::event operator()(sycl::queue &Q,
-                           sycl::buffer<double, 2> &buff_fdistrib,
+                           sycl::buffer<double, 3> &buff_fdistrib,
                            const ADVParams &params) noexcept override;
 };
 
@@ -88,12 +90,10 @@ class FixedMemoryFootprint : public IAdvectorX {
 
   public:
     sycl::event operator()(sycl::queue &Q,
-                           sycl::buffer<double, 2> &buff_fdistrib,
+                           sycl::buffer<double, 3> &buff_fdistrib,
                            const ADVParams &params) noexcept override;
 };
 
 }   // namespace x
 
 }   // namespace advector
-
-

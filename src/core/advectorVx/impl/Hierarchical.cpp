@@ -2,20 +2,21 @@
 
 sycl::event
 advector::vx::Hierarchical::operator()(
-    sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
+    sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
     sycl::buffer<double, 1> &buff_electric_field,
     const ADVParams &params) noexcept {
 
     auto const nx = params.nx;
     auto const nvx = params.nvx;
+    auto const n_fict = params.n_fict_dim;
     auto const minRealVx = params.minRealVx;
     auto const dvx = params.dvx;
     auto const dt = params.dt;
     auto const inv_dvx = params.inv_dvx;
     auto const realWidthVx = params.realWidthVx;
 
-    const sycl::range<1> nb_wg{nx};
-    const sycl::range<1> wg_size{params.wg_size};
+    const sycl::range<3> nb_wg{n_fict, 1, nx};
+    const sycl::range<3> wg_size{1, params.wg_size, 1};
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
@@ -25,11 +26,13 @@ advector::vx::Hierarchical::operator()(
 
         sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>{nvx}, cgh);
 
-        cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<1> g) {
+        cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<3> g) {
+            const int ix = g.get_group_id(2);
+            const int i_fict = g.get_group_id(0);
+
             g.parallel_for_work_item(
-                sycl::range<1>(nvx), [&](sycl::h_item<1> it) {
-                    const int ix  = g.get_group_id(0);
-                    const int ivx = it.get_local_id(0);
+                sycl::range<3>(1, nvx, 1), [&](sycl::h_item<3> it) {
+                    const int ivx = it.get_local_id(1);
 
                     auto const ex = efield[ix];
                     auto const displx = dt * ex;
@@ -56,17 +59,16 @@ advector::vx::Hierarchical::operator()(
                     for (int k = 0; k <= LAG_ORDER; k++) {
                         int idx_coef = (nvx + ipos1 + k) % nvx;
 
-                        slice_ftmp[ivx] += coef[k] * fdist[idx_coef][ix];
+                        slice_ftmp[ivx] += coef[k] * fdist[i_fict][idx_coef][ix];
                     }
                 });   // end parallel_for_work_item --> Implicit barrier
 
             //Copy not contiguous slice
-            g.parallel_for_work_item(sycl::range<1>(nvx),
-                                     [&](sycl::h_item<1> it) {
-                                         const int ix = g.get_group_id(0);
-                                         const int ivx = it.get_local_id(0);
+            g.parallel_for_work_item(sycl::range<3>(1, nvx, 1),
+                                     [&](sycl::h_item<3> it) {
+                                         const int ivx = it.get_local_id(1);
 
-                                         fdist[ivx][ix] = slice_ftmp[ivx];
+                                         fdist[i_fict][ivx][ix] = slice_ftmp[ivx];
                                      });
 
         });   // end parallel_for_work_group

@@ -2,7 +2,7 @@
 
 sycl::event
 advector::x::Sequential::operator()(sycl::queue &Q,
-                                    sycl::buffer<double, 2> &buff_fdistrib,
+                                    sycl::buffer<double, 3> &buff_fdistrib,
                                     const ADVParams &params) noexcept {
     auto const nx = params.nx;
     auto const nvx = params.nvx;

@@ -4,7 +4,7 @@ target_sources(xadvec
   PRIVATE
   IAdvectorX.h
   impl/Sequential.cpp
-  impl/BasicRange2D.cpp
+  impl/BasicRange3D.cpp
   impl/BasicRange1D.cpp
   impl/Hierarchical.cpp
   impl/NDRange.cpp

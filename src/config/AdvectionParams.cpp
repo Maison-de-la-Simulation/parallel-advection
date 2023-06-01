@@ -5,15 +5,16 @@
 void ADVParams::setup(const ConfigMap& configMap)
 {
   // geometry
-  nx  = configMap.getInteger("geometry", "nx",  512);
+  nx  = configMap.getInteger("geometry", "nx",  1024);
   nvx = configMap.getInteger("geometry", "nvx", 1024);
+  n_fict_dim = configMap.getInteger("geometry", "n_fict_dim", 2048);
 
   // run parameters
   maxIter = configMap.getInteger("run", "maxIter", 1000);
   gpu = configMap.getBool("run", "gpu", false);
   outputSolution = configMap.getBool("run", "outputSolution", false);
 
-  kernelImpl = configMap.getString("run", "kernelImpl", "BasicRange2D");
+  kernelImpl = configMap.getString("run", "kernelImpl", "BasicRange3D");
   wg_size = configMap.getInteger("run", "workGroupSize", 512);
 
   // discretization parameters
@@ -46,6 +47,7 @@ void ADVParams::print()
   printf( "maxIter    : %zu\n", maxIter);
   printf( "nx         : %zu\n", nx);
   printf( "nvx        : %zu\n", nvx);
+  printf( "n_fict_dim : %zu\n", n_fict_dim);
   printf( "dt         : %f\n", dt);
   printf( "dx         : %f\n", dx);
   printf( "dvx        : %f\n", dvx);

@@ -8,21 +8,7 @@
 // ==========================================
 // ==========================================
 void
-print_buffer(sycl::buffer<double, 2> &fdist, const ADVParams &params) noexcept {
-    sycl::host_accessor tab(fdist, sycl::read_only);
-
-    for (int ix = 0; ix < params.nx; ++ix) {
-        for (int iv = 0; iv < params.nvx; ++iv) {
-            std::cout << tab[ix][iv] << " ";
-        }
-        std::cout << std::endl;
-    }
-}   // end print_buffer
-
-// ==========================================
-// ==========================================
-void
-export_result_to_file(sycl::buffer<double, 2> &buff_fdistrib,
+export_result_to_file(sycl::buffer<double, 3> &buff_fdistrib,
                       const ADVParams &params) noexcept {
 
     auto str = "solution.log";
@@ -34,7 +20,7 @@ export_result_to_file(sycl::buffer<double, 2> &buff_fdistrib,
 
     for (int iv = 0; iv < params.nvx; ++iv) {
         for (int ix = 0; ix < params.nx; ++ix) {
-            outfile << fdist[iv][ix];
+            outfile << fdist[0][iv][ix];
 
             if (ix != params.nx - 1)
                 outfile << ",";
@@ -47,7 +33,7 @@ export_result_to_file(sycl::buffer<double, 2> &buff_fdistrib,
 // ==========================================
 // ==========================================
 void
-export_error_to_file(sycl::buffer<double, 2> &buff_fdistrib,
+export_error_to_file(sycl::buffer<double, 3> &buff_fdistrib,
                       const ADVParams &params) noexcept {
 
     auto str = "error.log";
@@ -65,7 +51,7 @@ export_error_to_file(sycl::buffer<double, 2> &buff_fdistrib,
             double const t = params.maxIter * params.dt;
             auto value = sycl::sin(4 * M_PI * (x - v * t));
 
-            outfile << sycl::fabs(fdist[iv][ix] - value);
+            outfile << sycl::fabs(fdist[0][iv][ix] - value);
 
             if (ix != params.nx - 1)
                 outfile << ",";

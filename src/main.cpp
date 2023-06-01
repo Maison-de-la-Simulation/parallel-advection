@@ -11,7 +11,7 @@
 // ==========================================
 void
 advection(sycl::queue &Q,
-          sycl::buffer<double, 2> &buff_fdistrib,
+          sycl::buffer<double, 3> &buff_fdistrib,
           sycl::buffer<double, 1> &buff_efield,
           sref::unique_ref<IAdvectorX> &x_advector,
           sref::unique_ref<IAdvectorVx> &vx_advector,
@@ -78,11 +78,12 @@ main(int argc, char **argv) {
 
     const auto nx = params.nx;
     const auto nvx = params.nvx;
+    const auto n_fict_dim = params.n_fict_dim;
     const auto maxIter = params.maxIter;
 
     /* Buffer for the distribution function containing the probabilities of
     having a particle at a particular speed and position */
-    sycl::buffer<double, 2> buff_fdistrib(sycl::range<2>(nvx, nx));
+    sycl::buffer<double, 3> buff_fdistrib(sycl::range<3>(n_fict_dim, nvx, nx));
     fill_buffer(Q, buff_fdistrib, params);
 
     /* Fictive electric field to advect along vx */

@@ -13,7 +13,7 @@ str2int(const char *str, int h = 0) noexcept {
 }
 
 static constexpr auto error_str =
-    "Should be one of: {Sequential, BasicRange2D, "
+    "Should be one of: {Sequential, BasicRange3D, "
     "BasicRange1D, Hierarchical, NDRange, "
     "Scoped, HierarchicalAlloca, FixedMemoryFootprint}";
 
@@ -25,12 +25,14 @@ x_advector_factory(const ADVParams &params) {
     switch (str2int(kernel_name.data())) {
     case str2int("Sequential"):
         return sref::make_unique<advector::x::Sequential>();
-    case str2int("BasicRange2D"):
-        return sref::make_unique<advector::x::BasicRange2D>(params.nx,
-                                                            params.nvx);
+    case str2int("BasicRange3D"):
+        return sref::make_unique<advector::x::BasicRange3D>(params.n_fict_dim,
+                                                            params.nvx,
+                                                            params.nx);
     case str2int("BasicRange1D"):
-        return sref::make_unique<advector::x::BasicRange1D>(params.nx,
-                                                            params.nvx);
+        return sref::make_unique<advector::x::BasicRange1D>(params.n_fict_dim,
+                                                            params.nvx,
+                                                            params.nx);
     case str2int("Hierarchical"):
         return sref::make_unique<advector::x::Hierarchical>();
     case str2int("HierarchicalAlloca"):
@@ -57,14 +59,14 @@ vx_advector_factory() {
 // ==========================================
 // ==========================================
 void
-fill_buffer(sycl::queue &q, sycl::buffer<double, 2> &buff_fdist,
+fill_buffer(sycl::queue &q, sycl::buffer<double, 3> &buff_fdist,
             const ADVParams &params) noexcept {
 
     q.submit([&](sycl::handler &cgh) {
         sycl::accessor fdist(buff_fdist, cgh, sycl::write_only, sycl::no_init);
 
-        cgh.parallel_for(buff_fdist.get_range(), [=](sycl::id<2> itm) {
-            const int ix = itm[1];
+        cgh.parallel_for(buff_fdist.get_range(), [=](sycl::id<3> itm) {
+            const int ix = itm[2];
 
             double x = params.minRealx + ix * params.dx;
             fdist[itm] = sycl::sin(4 * x * M_PI);
