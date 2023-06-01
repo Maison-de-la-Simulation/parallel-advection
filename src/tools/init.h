@@ -19,15 +19,17 @@ static constexpr auto error_str =
 // // ==========================================
 // // ==========================================
 [[nodiscard]] sref::unique_ref<IAdvectorX>
-kernel_impl_factory(const ADVParams &params) {
+x_advector_factory(const ADVParams &params) {
     std::string kernel_name = params.kernelImpl.data();
     switch (str2int(kernel_name.data())) {
     case str2int("Sequential"):
         return sref::make_unique<advector::x::Sequential>();
     case str2int("BasicRange2D"):
-        return sref::make_unique<advector::x::BasicRange2D>(params.nx, params.nVx);
+        return sref::make_unique<advector::x::BasicRange2D>(params.nx,
+                                                            params.nVx);
     case str2int("BasicRange1D"):
-        return sref::make_unique<advector::x::BasicRange1D>(params.nx, params.nVx);
+        return sref::make_unique<advector::x::BasicRange1D>(params.nx,
+                                                            params.nVx);
     case str2int("Hierarchical"):
         return sref::make_unique<advector::x::Hierarchical>();
     case str2int("HierarchicalAlloca"):
@@ -42,6 +44,13 @@ kernel_impl_factory(const ADVParams &params) {
         auto str = kernel_name + " is not a valid kernel name.\n" + error_str;
         throw std::runtime_error(str);
     }
+}
+
+// // ==========================================
+// // ==========================================
+[[nodiscard]] sref::unique_ref<IAdvectorVx>
+vx_advector_factory() {
+   return sref::make_unique<advector::vx::Hierarchical>();
 }
 
 // ==========================================

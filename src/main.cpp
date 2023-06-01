@@ -1,27 +1,30 @@
-#include <sycl/sycl.hpp>
 #include <AdvectionParams.h>
 #include <advectors.h>
-#include <iostream>
 #include <init.h>
 #include <io.h>
+#include <iostream>
+#include <sycl/sycl.hpp>
 #include <validation.h>
 
 // ==========================================
 // ==========================================
 void
 advection(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
-          sref::unique_ref<IAdvectorX> &advector, const ADVParams &params) {
+               sref::unique_ref<IAdvectorX> &x_advector,
+               sref::unique_ref<IAdvectorVx> &vx_advector,
+               const ADVParams &params) {
 
     auto static const maxIter = params.maxIter;
 
     // Time loop, cannot parallelize this
     for (auto t = 0; t < maxIter; ++t) {
+        x_advector(Q, buff_fdistrib, params);
 
         // If it's last iteration, we wait
         if (t == maxIter - 1)
-            advector(Q, buff_fdistrib, params).wait_and_throw();
+            vx_advector(Q, buff_fdistrib, params).wait_and_throw();
         else
-            advector(Q, buff_fdistrib, params);
+            vx_advector(Q, buff_fdistrib, params).wait_and_throw();
     }   // end for t < T
 
 }   // end advection
@@ -73,22 +76,23 @@ main(int argc, char **argv) {
     const auto nx = params.nx;
     const auto nVx = params.nVx;
     const auto maxIter = params.maxIter;
-    
+
     /* Buffer for the distribution function containing the probabilities of
     having a particle at a particular speed and position */
     sycl::buffer<double, 2> buff_fdistrib(sycl::range<2>(nVx, nx));
     fill_buffer(Q, buff_fdistrib, params);
 
-    auto advector = kernel_impl_factory(params);
+    auto x_advector = x_advector_factory(params);
+    auto vx_advector = vx_advector_factory();
 
     auto start = std::chrono::high_resolution_clock::now();
-    advection(Q, buff_fdistrib, advector, params);
+    advection(Q, buff_fdistrib, x_advector, vx_advector, params);
     auto end = std::chrono::high_resolution_clock::now();
 
     std::cout << "\nRESULTS_VALIDATION:" << std::endl;
     validate_result(Q, buff_fdistrib, params);
 
-    if(params.outputSolution){
+    if (params.outputSolution) {
         export_result_to_file(buff_fdistrib, params);
         export_error_to_file(buff_fdistrib, params);
     }
