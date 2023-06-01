@@ -27,7 +27,7 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
                  sycl::reduction(acc_errorL1, sycl::plus<double>());
 
              cgh.parallel_for(
-                 buff_fdistrib.get_range(), reduc_errorL1,
+                 buff_fdistrib.get_range() , reduc_errorL1,
                  [=](auto itm, auto &reduc_errorL1) {
                      auto ix = itm[2];
                      auto ivx = itm[1];
