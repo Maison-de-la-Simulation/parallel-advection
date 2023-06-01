@@ -29,7 +29,7 @@ GLOBAL_CSV_FILE="/gpfs/workdir/millana/ADVECTION_LOGS/describe_all.csv"
 # }
 
 SETS={
-    'kernelImpl':["BasicRange2D", "BasicRange1D", "Hierarchical" , "Scoped", "NDRange"],
+    'kernelImpl':["BasicRange3D", "BasicRange1D", "Hierarchical" , "Scoped", "NDRange"],
     'use_gpu':[True],#, False],
     '(nx,nvx)':[(64,64), (128,128), (256,256), (512,512), (1024,1024), (1024, 4096), (1024, 8192), (1024, 8192), (1024, 16384), (1024, 32768)],
 }

@@ -2,7 +2,7 @@ import configparser
 from optparse import OptionParser
 import sys
 
-#python3 edit_ini_file.py --inifile=advection.ini --kernel=BasicRange2D --gpu --nx=512 --nvx=65000
+#python3 edit_ini_file.py --inifile=advection.ini --kernel=BasicRange3D --gpu --nx=512 --nvx=65000
 
 def edit_ini_file(
     inifile : str,
