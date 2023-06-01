@@ -1,5 +1,5 @@
 #pragma once
-#include "IAdvectorX.h"
+#include <IAdvectorX.h>
 
 /* Contains headers for different implementations of advector interface */
 namespace AdvX {
