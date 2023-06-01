@@ -1,13 +1,15 @@
 #!/bin/bash 
 #SBATCH --job-name=adv1dsycl
 #SBATCH --output=%x.o%j
-#SBATCH --time=00:59:00
 #SBATCH --nodes=1
-##BATCH --exclusive
-#SBATCH --partition=gpua100
-#SBATCH --gres=gpu:1
+#SBATCH --exclusive
+#SBATCH --time=03:59:00
+#SBATCH --partition=cpu_med
 
-NB_RUNS=50
+#####SBATCH --gres=gpu:1
+#####SBATCH --partition=gpua100
+
+NB_RUNS=5
 
 #main program to run
 EXECUTABLE=$1
@@ -26,7 +28,7 @@ PREFIX=$5
 
 
 # load modules here
-module load llvm/13.0.0/gcc-11.2.0 cuda/11.5.0/gcc-11.2.0 cmake/3.21.4/gcc-11.2.0 gcc/11.2.0/gcc-4.8.5
+module load cuda/11.7.0/gcc-11.2.0 cmake/3.21.4/gcc-11.2.0 gcc/11.2.0/gcc-4.8.5
 
 # call run script with input parameters
 ./script/run $EXECUTABLE $INI_FILE $LOG_PATH $NB_RUNS $PREFIX

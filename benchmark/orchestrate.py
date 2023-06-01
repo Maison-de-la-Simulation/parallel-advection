@@ -19,19 +19,13 @@ INIFILE_ROOTDIR = "/gpfs/users/millana/source/parallel-advection/benchmark/scrip
 BASE_INIFILE = INIFILE_ROOTDIR + "/" + "advection.ini"
 
 #the main output file used to store the mean, std, and all infos for each run
-GLOBAL_CSV_FILE="/gpfs/workdir/millana/ADVECTION_LOGS/describe_all.csv"
-
-#The configurations we want to bench
-# SETS={
-#     'kernelImpl':["Hierarchical"],
-#     'use_gpu':[True, False],
-#     '(nx,nvx)':[(128,64), (256,64), (512,64)],
-# }
+GLOBAL_CSV_FILE="/gpfs/users/millana/source/parallel-advection/benchmark/log/describe_all_ruche_cpu.csv"
 
 SETS={
     'kernelImpl':["BasicRange2D", "BasicRange1D", "Hierarchical" , "Scoped", "NDRange"],
-    'use_gpu':[True],#, False],
-    '(nx,nvx)':[(64,64), (128,128), (256,256), (512,512), (1024,1024), (1024, 4096), (1024, 8192), (1024, 8192), (1024, 16384), (1024, 32768)],
+    # 'kernelImpl':["BasicRange2D", "Hierarchical" , "Scoped", "NDRange"],
+    'use_gpu':[False],
+    '(nx,nvx)':[(64,64), (128,128), (256,256), (512,512), (1024,1024), (1024, 4096), (1024, 8192), (1024, 16384), (1024, 32768), (1024, 32768*2), (1024, 32768*2*2), (1024, 32768*2*2*2)],
 }
 
 if __name__ == "__main__":
