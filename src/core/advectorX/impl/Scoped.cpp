@@ -5,12 +5,12 @@ advector::x::Scoped::operator()(sycl::queue &Q,
                                 sycl::buffer<double, 2> &buff_fdistrib,
                                 const ADVParams &params) noexcept {
     auto const nx = params.nx;
-    auto const nVx = params.nVx;
+    auto const nvx = params.nvx;
     auto const minRealx = params.minRealx;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    sycl::range<1> nb_wg{nVx};
+    sycl::range<1> nb_wg{nvx};
     sycl::range<1> wg_size{nx};
 
     return Q.submit([&](sycl::handler &cgh) {

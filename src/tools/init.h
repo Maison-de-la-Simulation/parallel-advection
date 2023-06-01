@@ -26,10 +26,10 @@ x_advector_factory(const ADVParams &params) {
         return sref::make_unique<advector::x::Sequential>();
     case str2int("BasicRange2D"):
         return sref::make_unique<advector::x::BasicRange2D>(params.nx,
-                                                            params.nVx);
+                                                            params.nvx);
     case str2int("BasicRange1D"):
         return sref::make_unique<advector::x::BasicRange1D>(params.nx,
-                                                            params.nVx);
+                                                            params.nvx);
     case str2int("Hierarchical"):
         return sref::make_unique<advector::x::Hierarchical>();
     case str2int("HierarchicalAlloca"):

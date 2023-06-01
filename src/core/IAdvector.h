@@ -60,12 +60,12 @@ class IAdvector {
         auto const minRealx = params.minRealx;
         auto const minRealVx = params.minRealVx;
         auto const dx = params.dx;
-        auto const dVx = params.dVx;
+        auto const dvx = params.dvx;
         auto const dt = params.dt;
         auto const realWidthx = params.realWidthx;
 
         double const x = coord(ix, minRealx, dx);
-        double const vx = coord(ivx, minRealVx, dVx);
+        double const vx = coord(ivx, minRealVx, dvx);
 
         double const displx = dt * vx;
 

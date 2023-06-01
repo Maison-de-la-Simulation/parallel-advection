@@ -23,7 +23,7 @@ struct ADVParams {
   size_t nx;
 
   // Number of points for speeds (Vx)
-  size_t nVx;
+  size_t nvx;
 
   // Sizes of the SYCL work groups
   size_t wg_size;
@@ -31,9 +31,10 @@ struct ADVParams {
   // Deltas : taille physique d'une cellule discrète (en x, vx, t)
   double dt;
   double dx;
-  double dVx;
+  double dvx;
 
   double inv_dx; // precompute inverse of dx
+  double inv_dvx;
 
   // Min/max physical values of x (i.e., x[0] and x[-1])
   double minRealx;
@@ -43,6 +44,7 @@ struct ADVParams {
   // Min/max physical value of Vx
   double minRealVx;
   double maxRealVx;
+  double realWidthVx;
 
   //! setup / initialization
   void setup(const ConfigMap& configMap); 

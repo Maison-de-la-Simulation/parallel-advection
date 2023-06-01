@@ -74,12 +74,12 @@ main(int argc, char **argv) {
               << Q.get_device().get_info<sycl::info::device::name>() << "\n";
 
     const auto nx = params.nx;
-    const auto nVx = params.nVx;
+    const auto nvx = params.nvx;
     const auto maxIter = params.maxIter;
 
     /* Buffer for the distribution function containing the probabilities of
     having a particle at a particular speed and position */
-    sycl::buffer<double, 2> buff_fdistrib(sycl::range<2>(nVx, nx));
+    sycl::buffer<double, 2> buff_fdistrib(sycl::range<2>(nvx, nx));
     fill_buffer(Q, buff_fdistrib, params);
 
     auto x_advector = x_advector_factory(params);
@@ -101,10 +101,10 @@ main(int argc, char **argv) {
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::cout << "elapsed_time: " << elapsed_seconds.count() << " s\n";
 
-    auto gcells = ((nVx * nx * maxIter) / elapsed_seconds.count()) / 1e9;
+    auto gcells = ((nvx * nx * maxIter) / elapsed_seconds.count()) / 1e9;
     std::cout << "upd_cells_per_sec: " << gcells << " Gcell/sec\n";
     std::cout << "estimated_throughput: " << gcells * sizeof(double) * 2
               << " GB/s" << std::endl;
-    std::cout << "parsing;" << nVx * nx << ";" << nx << ";" << nVx << std::endl;
+    std::cout << "parsing;" << nvx * nx << ";" << nx << ";" << nvx << std::endl;
     return 0;
 }

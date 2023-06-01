@@ -5,12 +5,12 @@ advector::x::HierarchicalAlloca::operator()(
     sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
     const ADVParams &params) noexcept {
     auto const nx = params.nx;
-    auto const nVx = params.nVx;
+    auto const nvx = params.nvx;
     auto const minRealx = params.minRealx;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    const sycl::range<1> nb_wg{nVx};
+    const sycl::range<1> nb_wg{nvx};
     const sycl::range<1> wg_size{params.wg_size};
 
     return Q.submit([&](sycl::handler &cgh) {

@@ -5,7 +5,7 @@ advector::x::Sequential::operator()([[maybe_unused]] sycl::queue &Q,
                                     sycl::buffer<double, 2> &buff_fdistrib,
                                     const ADVParams &params) noexcept {
     auto const nx = params.nx;
-    size_t const nVx = params.nVx;
+    size_t const nvx = params.nvx;
     auto const minRealx = params.minRealx;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
@@ -13,7 +13,7 @@ advector::x::Sequential::operator()([[maybe_unused]] sycl::queue &Q,
     std::vector<double> slice_ftmp(nx);
     sycl::host_accessor fdist(buff_fdistrib, sycl::read_write);
 
-    for (auto iv = 0; iv < nVx; ++iv) {
+    for (auto iv = 0; iv < nvx; ++iv) {
 
         for (int iix = 0; iix < nx; ++iix) {
             // slice_x[iix] = fdist[iix][iv];

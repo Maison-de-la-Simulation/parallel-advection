@@ -6,7 +6,7 @@ advector::x::BasicRange1D::operator()(sycl::queue &Q,
                                       const ADVParams &params) noexcept {
 
     auto const nx = params.nx;
-    auto const nVx = params.nVx;
+    auto const nvx = params.nvx;
     auto const minRealx = params.minRealx;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
@@ -16,7 +16,7 @@ advector::x::BasicRange1D::operator()(sycl::queue &Q,
         sycl::accessor<double, 2> ftmp(m_global_buff_ftmp, cgh,
                                        sycl::write_only, sycl::no_init);
 
-        cgh.parallel_for(sycl::range<1>(nVx), [=](sycl::id<1> itm) {
+        cgh.parallel_for(sycl::range<1>(nvx), [=](sycl::id<1> itm) {
             const int ivx = itm[0];
 
             for (int ix = 0; ix < nx; ++ix) {

@@ -2,10 +2,10 @@
 
 sycl::event
 advector::x::Sequential::operator()(sycl::queue &Q,
-                             sycl::buffer<double, 2> &buff_fdistrib,
-                             const ADVParams &params) noexcept {
+                                    sycl::buffer<double, 2> &buff_fdistrib,
+                                    const ADVParams &params) noexcept {
     auto const nx = params.nx;
-    auto const nVx = params.nVx;
+    auto const nvx = params.nvx;
     auto const minRealx = params.minRealx;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
@@ -20,7 +20,7 @@ advector::x::Sequential::operator()(sycl::queue &Q,
 
         cgh.single_task([=]() {
             // For each Vx
-            for (int ivx = 0; ivx < nVx; ++ivx) {
+            for (int ivx = 0; ivx < nvx; ++ivx) {
 
                 // std::array<double, Nx> ftmp{};
                 // double* x_slice = sycl::malloc_device(sizeof(double)*Nx,);

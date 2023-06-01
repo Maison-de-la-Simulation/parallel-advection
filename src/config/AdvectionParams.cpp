@@ -6,7 +6,7 @@ void ADVParams::setup(const ConfigMap& configMap)
 {
   // geometry
   nx  = configMap.getInteger("geometry", "nx",  512);
-  nVx = configMap.getInteger("geometry", "nVx", 1024);
+  nvx = configMap.getInteger("geometry", "nvx", 1024);
 
   // run parameters
   maxIter = configMap.getInteger("run", "maxIter", 1000);
@@ -25,10 +25,12 @@ void ADVParams::setup(const ConfigMap& configMap)
   maxRealVx= configMap.getFloat("discretization", "maxRealVx", 1.0);
 
   realWidthx = maxRealx - minRealx;
+  realWidthVx = maxRealVx - minRealVx;
   dx = realWidthx / nx;
-  dVx = (maxRealVx - minRealVx) / nVx;
+  dvx = (maxRealVx - minRealVx) / nvx;
 
   inv_dx     = 1/dx;
+  inv_dvx     = 1/dvx;
 } // ADVParams::setup
 
 // ======================================================
@@ -43,10 +45,10 @@ void ADVParams::print()
   printf( "gpu        : %d\n", gpu);
   printf( "maxIter    : %zu\n", maxIter);
   printf( "nx         : %zu\n", nx);
-  printf( "nVx        : %zu\n", nVx);
+  printf( "nvx        : %zu\n", nvx);
   printf( "dt         : %f\n", dt);
   printf( "dx         : %f\n", dx);
-  printf( "dVx        : %f\n", dVx);
+  printf( "dvx        : %f\n", dvx);
   printf( "minRealx   : %f\n", minRealx );
   printf( "maxRealx   : %f\n", maxRealx);
   printf( "minRealVx  : %f\n", minRealVx);

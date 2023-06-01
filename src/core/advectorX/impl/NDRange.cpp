@@ -5,12 +5,12 @@ advector::x::NDRange::operator()(sycl::queue &Q,
                                  sycl::buffer<double, 2> &buff_fdistrib,
                                  const ADVParams &params) noexcept {
     auto const nx = params.nx;
-    auto const nVx = params.nVx;
+    auto const nvx = params.nvx;
     auto const minRealx = params.minRealx;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    const sycl::range<2> global_size{nVx, nx};
+    const sycl::range<2> global_size{nvx, nx};
     const sycl::range<2> local_size{1, nx};
 
     return Q.submit([&](sycl::handler &cgh) {
