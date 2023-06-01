@@ -1,9 +1,9 @@
 #include "advectors.h"
 
 sycl::event
-AdvX::BasicRange1D::operator()(sycl::queue &Q,
-                               sycl::buffer<double, 2> &buff_fdistrib,
-                               const ADVParams &params) noexcept {
+advector::x::BasicRange1D::operator()(sycl::queue &Q,
+                                      sycl::buffer<double, 2> &buff_fdistrib,
+                                      const ADVParams &params) noexcept {
 
     auto const nx = params.nx;
     auto const nVx = params.nVx;
@@ -12,8 +12,7 @@ AdvX::BasicRange1D::operator()(sycl::queue &Q,
     auto const inv_dx = params.inv_dx;
 
     Q.submit([&](sycl::handler &cgh) {
-        auto fdist =
-            buff_fdistrib.get_access<sycl::access::mode::read>(cgh);
+        auto fdist = buff_fdistrib.get_access<sycl::access::mode::read>(cgh);
         sycl::accessor<double, 2> ftmp(m_global_buff_ftmp, cgh,
                                        sycl::write_only, sycl::no_init);
 
@@ -31,7 +30,7 @@ AdvX::BasicRange1D::operator()(sycl::queue &Q,
                     LAG_OFFSET + inv_dx * (xFootCoord - coord(LeftDiscreteNode,
                                                               minRealx, dx));
 
-                auto coef =  lag_basis(d_prev1);
+                auto coef = lag_basis(d_prev1);
 
                 const int ipos1 = LeftDiscreteNode - LAG_OFFSET;
 

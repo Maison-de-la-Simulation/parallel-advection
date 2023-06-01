@@ -1,7 +1,7 @@
 #include "advectors.h"
 
 sycl::event
-AdvX::Sequential::operator()(sycl::queue &Q,
+advector::x::Sequential::operator()(sycl::queue &Q,
                              sycl::buffer<double, 2> &buff_fdistrib,
                              const ADVParams &params) noexcept {
     auto const nx = params.nx;

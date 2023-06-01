@@ -4,4 +4,4 @@
 #include "AdvectionParams.h"
 #include <sycl/sycl.hpp>
 
-class IAdvectorX : public IAdvector {};
+class IAdvectorVx : public IAdvector {};

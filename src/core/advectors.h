@@ -1,8 +1,11 @@
 #pragma once
-#include <IAdvectorX.h>
+#include "advectorX/IAdvectorX.h"
+#include "advectorVx/IAdvectorVx.h"
 
 /* Contains headers for different implementations of advector interface */
-namespace AdvX {
+namespace advector {
+
+namespace x {
 
 class Sequential : public IAdvectorX {
     using IAdvectorX::IAdvectorX;   // Inheriting constructor
@@ -90,4 +93,25 @@ class FixedMemoryFootprint : public IAdvectorX {
                            const ADVParams &params) noexcept override;
 };
 
-}   // namespace AdvX
+}   // namespace x
+
+// ==========================================
+// ==========================================
+// ==========================================
+// ==========================================
+namespace vx {
+
+class Hierarchical : public IAdvectorVx {
+    using IAdvectorVx::IAdvectorVx;
+
+  public:
+    sycl::event operator()(sycl::queue &Q,
+                           sycl::buffer<double, 2> &buff_fdistrib,
+                           const ADVParams &params) noexcept override;
+};
+
+}   // namespace vx
+
+}   // namespace advector
+
+

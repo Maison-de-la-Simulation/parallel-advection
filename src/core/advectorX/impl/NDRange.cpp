@@ -1,9 +1,9 @@
 #include "advectors.h"
 
 sycl::event
-AdvX::NDRange::operator()(sycl::queue &Q,
-                          sycl::buffer<double, 2> &buff_fdistrib,
-                          const ADVParams &params) noexcept {
+advector::x::NDRange::operator()(sycl::queue &Q,
+                                 sycl::buffer<double, 2> &buff_fdistrib,
+                                 const ADVParams &params) noexcept {
     auto const nx = params.nx;
     auto const nVx = params.nVx;
     auto const minRealx = params.minRealx;
