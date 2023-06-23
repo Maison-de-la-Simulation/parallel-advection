@@ -20,19 +20,19 @@ static constexpr auto error_str =
 // // ==========================================
 // // ==========================================
 [[nodiscard]] sref::unique_ref<IAdvectorX>
-x_advector_factory(const ADVParams &params) {
-    std::string kernel_name = params.kernelImpl.data();
+x_advector_factory(const ADVParams &adParams, const InitParams &initParams) {
+    std::string kernel_name = initParams.kernelImpl.data();
     switch (str2int(kernel_name.data())) {
     case str2int("Sequential"):
         return sref::make_unique<advector::x::Sequential>();
     case str2int("BasicRange3D"):
-        return sref::make_unique<advector::x::BasicRange3D>(params.n_fict_dim,
-                                                            params.nvx,
-                                                            params.nx);
+        return sref::make_unique<advector::x::BasicRange3D>(adParams.n_fict_dim,
+                                                            adParams.nvx,
+                                                            adParams.nx);
     case str2int("BasicRange1D"):
-        return sref::make_unique<advector::x::BasicRange1D>(params.n_fict_dim,
-                                                            params.nvx,
-                                                            params.nx);
+        return sref::make_unique<advector::x::BasicRange1D>(adParams.n_fict_dim,
+                                                            adParams.nvx,
+                                                            adParams.nx);
     case str2int("Hierarchical"):
         return sref::make_unique<advector::x::Hierarchical>();
     case str2int("HierarchicalAlloca"):

@@ -11,10 +11,10 @@ void ADVParams::setup(const ConfigMap& configMap)
 
   // run parameters
   maxIter = configMap.getInteger("run", "maxIter", 1000);
-  gpu = configMap.getBool("run", "gpu", false);
-  outputSolution = configMap.getBool("run", "outputSolution", false);
+  // gpu = configMap.getBool("run", "gpu", false);
+  // outputSolution = configMap.getBool("run", "outputSolution", false);
 
-  kernelImpl = configMap.getString("run", "kernelImpl", "BasicRange3D");
+  // kernelImpl = configMap.getString("run", "kernelImpl", "BasicRange3D");
   wg_size = configMap.getInteger("run", "workGroupSize", 512);
 
   // discretization parameters
@@ -38,12 +38,12 @@ void ADVParams::setup(const ConfigMap& configMap)
 // ======================================================
 void ADVParams::print()
 {
-  printf( "##########################\n");
-  printf( "Simulation run parameters:\n");
-  printf( "##########################\n");
-  std::cout << "kernelImpl : " << kernelImpl << std::endl;
+  printf( "############################\n");
+  printf( "Advection kernel parameters:\n");
+  printf( "############################\n");
+  // std::cout << "kernelImpl : " << kernelImpl << std::endl;
   std::cout << "wgSize     : " << wg_size << std::endl;
-  printf( "gpu        : %d\n", gpu);
+  // printf( "gpu        : %d\n", gpu);
   printf( "maxIter    : %zu\n", maxIter);
   printf( "nx         : %zu\n", nx);
   printf( "nvx        : %zu\n", nvx);

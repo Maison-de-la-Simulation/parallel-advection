@@ -6,6 +6,7 @@ target_sources(config
   inih/ini.cpp
   inih/INIReader.cpp
   AdvectionParams.cpp
+  InitParams.cpp
   )
 
 target_include_directories(config
