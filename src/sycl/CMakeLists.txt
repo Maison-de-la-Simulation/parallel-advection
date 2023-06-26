@@ -27,4 +27,4 @@ target_link_libraries(advection-sycl
     adv1d::core
     adv1d::tools)
 
-set_target_properties(advection-sycl PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
+# set_target_properties(advection-sycl PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)

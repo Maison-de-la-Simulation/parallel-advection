@@ -20,6 +20,20 @@ message(FATAL_ERROR "BACKEND is not defined, available backends are ${AVAILABLE_
 endif()
 
 # we will copy the .ini file and binaries inside BIN_DIR
-set(BIN_DIR "${PROJECT_SOURCE_DIR}/bin")
+
+if("${BACKEND}" STREQUAL "sycl")
+    set(INIFILE_LOCATION "${CMAKE_BINARY_DIR}/src/sycl")
+    endif()
+if("${BACKEND}" STREQUAL "kokkos")
+    set(INIFILE_LOCATION "${CMAKE_BINARY_DIR}/src/kokkos")
+endif()
 
 add_subdirectory(src)
+
+if("${BACKEND}" STREQUAL "sycl")
+    add_subdirectory(src/sycl)
+endif()
+if("${BACKEND}" STREQUAL "kokkos")
+    add_subdirectory(vendor/kokkos)
+    add_subdirectory(src/kokkos)
+endif()
