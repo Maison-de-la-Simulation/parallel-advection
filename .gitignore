@@ -6,3 +6,4 @@ benchmark/pandas
 *.xlsx#
 adv_*
 venv*
+bin/*

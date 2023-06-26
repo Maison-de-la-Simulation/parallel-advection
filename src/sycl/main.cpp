@@ -7,6 +7,7 @@
 #include <iostream>
 #include <sycl/sycl.hpp>
 #include <validation.h>
+#include <filesystem>
 
 // ==========================================
 // ==========================================

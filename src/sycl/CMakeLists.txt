@@ -19,12 +19,12 @@ endif()
 ################################################
 #                  Executables                 #
 ################################################
-add_executable(advection main.cpp)
-target_link_libraries(advection
+add_executable(advection-sycl main.cpp)
+target_link_libraries(advection-sycl
     PUBLIC
     compiler_wrapper
     adv1d::config
     adv1d::core
     adv1d::tools)
 
-set_target_properties(advection PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
+set_target_properties(advection-sycl PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
