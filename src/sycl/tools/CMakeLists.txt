@@ -8,6 +8,6 @@ target_sources(tools
 
 target_include_directories(core
   PUBLIC
-  ${CMAKE_SOURCE_DIR}/src/tools)
+  ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(adv1d::tools ALIAS tools)

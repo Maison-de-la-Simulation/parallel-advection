@@ -11,7 +11,7 @@ target_sources(config
 
 target_include_directories(config
   PUBLIC
-  ${CMAKE_SOURCE_DIR}/src/config
+  ${CMAKE_CURRENT_SOURCE_DIR}
   ) 
 
 #Add an alias so that library can be used inside the build tree

@@ -20,7 +20,7 @@ TODO: fill README
 ```sh
 mkdir build
 cd build
-cmake .. -DCMAKE_CXX_COMPILER=/path/to/sycl/compiler
+cmake .. -DCMAKE_CXX_COMPILER=/path/to/sycl/compiler -DBACKEND={sycl/kokkos}
 make
 ```
 

@@ -12,4 +12,14 @@ include(initBuildType)
 include(print_target_properties)
 
 
+set(AVAILABLE_BACKENDS "sycl;kokkos")
+set(BACKEND "" CACHE STRING "Choose the dimension, options are ${AVAILABLE_BACKENDS}")
+set_property(CACHE BACKEND PROPERTY STRINGS "${AVAILABLE_BACKENDS}")
+if(NOT ("${BACKEND}"  IN_LIST AVAILABLE_BACKENDS))
+message(FATAL_ERROR "BACKEND is not defined, available backends are ${AVAILABLE_BACKENDS}")
+endif()
+
+# we will copy the .ini file and binaries inside BIN_DIR
+set(BIN_DIR "${PROJECT_SOURCE_DIR}/bin")
+
 add_subdirectory(src)

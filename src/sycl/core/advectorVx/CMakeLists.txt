@@ -8,7 +8,7 @@ target_sources(vxadvec
 
 target_include_directories(vxadvec
   PUBLIC #need public so we can include "advectors.h" in impl/
-  ${CMAKE_SOURCE_DIR}/src/core
+  ${CMAKE_SOURCE_DIR}/src/sycl/core
   ${CMAKE_CURRENT_SOURCE_DIR}
   ) 
 
