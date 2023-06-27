@@ -9,7 +9,7 @@ namespace x {
 
 class MDRange : public IAdvectorX {
     // copy of fdist buffer because MDRange has to be done out-of-place
-    mutable KV_double_3d m_ftmp;
+    KV_double_3d m_ftmp;
 
   public:
     MDRange(const size_t n_fict_dim, const size_t nvx, const size_t nx)

@@ -58,13 +58,12 @@ main(int argc, char **argv) {
     const auto n_fict_dim = runParams.n_fict_dim;
     const auto maxIter = runParams.maxIter;
 
-    Kokkos::View<double ***, Kokkos::LayoutRight> fdist("fdist",
-                                                        n_fict_dim, nvx, nx);
+    KV_double_3d fdist("fdist", n_fict_dim, nvx, nx);
 
 
     /* Fictive electric field to advect along vx */
     // std::vector<double> elec{nx, 0};
-    Kokkos::View<double *, Kokkos::LayoutRight> efield("efield", nx);
+    KV_double_1d efield("efield", nx);
 
     fill_buffers(fdist, efield, runParams);
 

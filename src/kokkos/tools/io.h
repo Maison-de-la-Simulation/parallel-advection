@@ -10,7 +10,7 @@
 void
 export_result_to_file(KV_double_3d &fdist, const ADVParams &params) noexcept {
     auto str = "solution.log";
-    std::cout << "Exporting result to file " << str << "...\n" << std::endl;
+    std::cout << "Exporting result to file " << str << "..." << std::endl;
 
     KV_double_3d::HostMirror hostView = Kokkos::create_mirror_view(fdist);
 
@@ -35,7 +35,7 @@ void
 export_error_to_file(KV_double_3d &fdist, const ADVParams &params) noexcept {
 
     auto str = "error.log";
-    std::cout << "Exporting error to file " << str << "...\n" << std::endl;
+    std::cout << "Exporting error to file " << str << "..." << std::endl;
 
     KV_double_3d::HostMirror hostView = Kokkos::create_mirror_view(fdist);
 

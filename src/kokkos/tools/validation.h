@@ -11,11 +11,6 @@ void
 validate_result(KV_double_3d &fdist, const ADVParams &params,
                 const InitParams &initParams) noexcept {
 
-    const int n = 10;
-
-    // Compute the sum of squares of integers from 0 to n-1, in
-    // parallel, using Kokkos.
-
     const Kokkos::Array<int, 3> begin{0, 0, 0};
     const Kokkos::Array<int, 3> end{fdist.extent_int(0), fdist.extent_int(1),
                                     fdist.extent_int(2)};
