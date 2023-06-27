@@ -9,18 +9,17 @@
 // ==========================================
 void
 export_result_to_file(KV_double_3d &fdist, const ADVParams &params) noexcept {
-
     auto str = "solution.log";
     std::cout << "Exporting result to file " << str << "...\n" << std::endl;
 
-    KV_double_3d::HostMirror hostView =
-        Kokkos::create_mirror_view(fdist);
+    KV_double_3d::HostMirror hostView = Kokkos::create_mirror_view(fdist);
 
     std::ofstream outfile(str);
 
     for (int iv = 0; iv < params.nvx; ++iv) {
         for (int ix = 0; ix < params.nx; ++ix) {
-            outfile << *(hostView.data() + iv*params.nx + ix);
+            // we only take first slice in dim fict
+            outfile << *(hostView.data() + iv * params.nx + ix);
 
             if (ix != params.nx - 1)
                 outfile << ",";
@@ -38,24 +37,25 @@ export_error_to_file(KV_double_3d &fdist, const ADVParams &params) noexcept {
     auto str = "error.log";
     std::cout << "Exporting error to file " << str << "...\n" << std::endl;
 
-    // sycl::host_accessor fdist(buff_fdistrib, sycl::read_only);
+    KV_double_3d::HostMirror hostView = Kokkos::create_mirror_view(fdist);
 
-    // std::ofstream outfile(str);
+    std::ofstream outfile(str);
 
-    // for (int iv = 0; iv < params.nvx; ++iv) {
-    //     for (int ix = 0; ix < params.nx; ++ix) {
+    for (int iv = 0; iv < params.nvx; ++iv) {
+        for (int ix = 0; ix < params.nx; ++ix) {
 
-    //         double const x = params.minRealx + ix * params.dx;
-    //         double const v = params.minRealVx + iv * params.dvx;
-    //         double const t = params.maxIter * params.dt;
-    //         auto value = sycl::sin(4 * M_PI * (x - v * t));
+            double const x = params.minRealx + ix * params.dx;
+            double const v = params.minRealVx + iv * params.dvx;
+            double const t = params.maxIter * params.dt;
+            auto value = Kokkos::sin(4 * Kokkos::numbers::pi * (x - v * t));
 
-    //         outfile << sycl::fabs(fdist[0][iv][ix] - value);
+            auto f = *(hostView.data() + iv * params.nx + ix);
+            outfile << Kokkos::fabs(f - value);
 
-    //         if (ix != params.nx - 1)
-    //             outfile << ",";
-    //     }
-    //     outfile << std::endl;
-    // }
-    // outfile.close();
+            if (ix != params.nx - 1)
+                outfile << ",";
+        }
+        outfile << std::endl;
+    }
+    outfile.close();
 }

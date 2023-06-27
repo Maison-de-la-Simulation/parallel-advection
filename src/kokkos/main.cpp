@@ -79,10 +79,10 @@ main(int argc, char **argv) {
     std::cout << "\nRESULTS_VALIDATION:" << std::endl;
     validate_result(fdist, runParams, initParams);
 
-    // if (initParams.outputSolution) {
+    if (initParams.outputSolution) {
         export_result_to_file(fdist, runParams);
         export_error_to_file(fdist, runParams);
-    // }
+    }
 
     std::cout << "PERF_DIAGS:" << std::endl;
     std::chrono::duration<double> elapsed_seconds = end - start;

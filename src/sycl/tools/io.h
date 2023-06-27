@@ -12,7 +12,7 @@ export_result_to_file(sycl::buffer<double, 3> &buff_fdistrib,
                       const ADVParams &params) noexcept {
 
     auto str = "solution.log";
-    std::cout << "Exporting result to file " << str << "...\n" << std::endl;
+    std::cout << "Exporting result to file " << str << "..." << std::endl;
 
     sycl::host_accessor fdist(buff_fdistrib, sycl::read_only);
 
@@ -37,7 +37,7 @@ export_error_to_file(sycl::buffer<double, 3> &buff_fdistrib,
                      const ADVParams &params) noexcept {
 
     auto str = "error.log";
-    std::cout << "Exporting error to file " << str << "...\n" << std::endl;
+    std::cout << "Exporting error to file " << str << "..." << std::endl;
 
     sycl::host_accessor fdist(buff_fdistrib, sycl::read_only);
 
