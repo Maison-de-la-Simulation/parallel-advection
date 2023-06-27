@@ -1,107 +1,98 @@
-//@HEADER
-// ************************************************************************
-//
-//                        Kokkos v. 4.0
-//       Copyright (2022) National Technology & Engineering
-//               Solutions of Sandia, LLC (NTESS).
-//
-// Under the terms of Contract DE-NA0003525 with NTESS,
-// the U.S. Government retains certain rights in this software.
-//
-// Part of Kokkos, under the Apache License v2.0 with LLVM Exceptions.
-// See https://kokkos.org/LICENSE for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-//
-//@HEADER
+#include "kokkos_shortcut.hpp"
+#include <AdvectionParams.h>
+#include <InitParams.h>
+#include <init.h>
 
-#include <Kokkos_Core.hpp>
-#include <cstdio>
-#include <typeinfo>
 
-//
-// "Hello world" parallel_for example:
-//   1. Start up Kokkos
-//   2. Execute a parallel for loop in the default execution space,
-//      using a functor to define the loop body
-//   3. Shut down Kokkos
-//
-// If Kokkos was built with C++11 enabled, try comparing this example
-// to 01_hello_world_lambda.  The latter uses C++11 lambdas (anonymous
-// functions) to define the loop body of the parallel_for.  That makes
-// the code much more concise and readable.  On the other hand,
-// breaking out the loop body into an explicit functor makes it easier
-// to test the loop independently of the parallel pattern.
-//
+#include "unique_ref.h"
 
-// Functor that defines the parallel_for's loop body.
-//
-// A "functor" is just a class or struct with a public operator()
-// instance method.
-struct hello_world {
-  // If a functor has an "execution_space" (or "execution_space", for
-  // backwards compatibility) public alias, parallel_* will only run
-  // the functor in that execution space.  That's a good way to mark a
-  // functor as specific to an execution space.  If the functor lacks
-  // this alias, parallel_for will run it in the default execution
-  // space, unless you tell it otherwise (that's an advanced topic;
-  // see "execution policies").
 
-  // The functor's operator() defines the loop body.  It takes an
-  // integer argument which is the parallel for loop index.  Other
-  // arguments are possible; see the "hierarchical parallelism" part
-  // of the tutorial.
-  //
-  // The operator() method must be const, and must be marked with the
-  // KOKKOS_INLINE_FUNCTION macro.  If building with CUDA, this macro
-  // will mark your method as suitable for running on the CUDA device
-  // (as well as on the host).  If not building with CUDA, the macro
-  // is unnecessary but harmless.
-  KOKKOS_INLINE_FUNCTION
-  void operator()(const int i) const {
-    // FIXME_SYCL needs workaround for printf
-#ifndef __SYCL_DEVICE_ONLY__
-    printf("Hello from i = %i\n", i);
-#else
-    (void)i;
-#endif
-  }
-};
+// ==========================================
+// ==========================================
+void
+advection(KV_double_3d &fdistrib,
+          KV_double_1d &efield,
+          sref::unique_ref<double> &x_advector,
+        //   sref::unique_ref<IAdvectorVx> &vx_advector,
+          const ADVParams &runParams) {
 
-int main(int argc, char* argv[]) {
-  // You must call initialize() before you may call Kokkos.
-  //
-  // With no arguments, this initializes the default execution space
-  // (and potentially its host execution space) with default
-  // parameters.  You may also pass in argc and argv, analogously to
-  // MPI_Init().  It reads and removes command-line arguments that
-  // start with "--kokkos-".
-  Kokkos::initialize(argc, argv);
+    // auto static const maxIter = runParams.maxIter;
+    
+    // // Time loop, cannot parallelize this
+    // for (auto t = 0; t < maxIter; ++t) {
+    //     x_advector(fdistrib, runParams);
 
-  // Print the name of Kokkos' default execution space.  We're using
-  // typeid here, so the name might get a bit mangled by the linker,
-  // but you should still be able to figure out what it is.
-  printf("Hello World on Kokkos execution space %s\n",
-         typeid(Kokkos::DefaultExecutionSpace).name());
+    //     // If it's last iteration, we wait
+    //     if (t == maxIter - 1)
+    //         vx_advector(fdistrib, efield, runParams).wait_and_throw();
+    //     else
+    //         vx_advector(fdistrib, efield, runParams);
+    // }   // end for t < T
 
-  // Run the above functor on the default Kokkos execution space in
-  // parallel, with a parallel for loop count of 15.
-  //
-  // The Kokkos::DefaultExecutionSpace alias gives the default
-  // execution space.  Depending on how Kokkos was configured, this
-  // could be OpenMP, Threads, Cuda, Serial, or even some other
-  // execution space.
-  //
-  // The following line of code would look like this in OpenMP:
-  //
-  // #pragma omp parallel for
-  // for (int i = 0; i < 15; ++i) {
-  //   printf ("Hello from i = %i\n", i);
-  // }
-  //
-  // You may notice that the printed numbers do not print out in
-  // order.  Parallel for loops may execute in any order.
-  Kokkos::parallel_for("HelloWorld", 15, hello_world());
+}   // end advection
 
-  // You must call finalize() after you are done using Kokkos.
-  Kokkos::finalize();
+
+// ==========================================
+// ==========================================
+int
+main(int argc, char **argv) {
+    Kokkos::initialize(argc, argv);
+
+    /* Display infos */
+    Kokkos::print_configuration(std::cout);
+
+    /* Read input parameters */
+    std::string input_file = argc > 1 ? std::string(argv[1]) : "advection.ini";
+    ConfigMap configMap(input_file);
+    ADVParams runParams = ADVParams();
+    runParams.setup(configMap);
+    runParams.print();
+
+    InitParams initParams = InitParams(); //only needed for output_solution bool
+    initParams.setup(configMap); //so we are not printing
+
+    const auto nx = runParams.nx;
+    const auto nvx = runParams.nvx;
+    const auto n_fict_dim = runParams.n_fict_dim;
+    const auto maxIter = runParams.maxIter;
+
+    Kokkos::View<double ***, Kokkos::LayoutRight> fdist("fdist",
+                                                        n_fict_dim, nvx, nx);
+
+
+    /* Fictive electric field to advect along vx */
+    // std::vector<double> elec{nx, 0};
+    Kokkos::View<double *, Kokkos::LayoutRight> efield("efield", nx);
+
+    fill_buffers(fdist, efield, runParams);
+
+    auto x_advector = x_advector_factory(runParams, initParams);
+    // auto vx_advector = vx_advector_factory();
+
+    auto start = std::chrono::high_resolution_clock::now();
+    x_advector(fdist, runParams);
+    // advection(fdist, efield, x_advector, vx_advector, runParams);
+    auto end = std::chrono::high_resolution_clock::now();
+
+    std::cout << "\nRESULTS_VALIDATION:" << std::endl;
+    // validate_result(Q, buff_fdistrib, runParams, initParams);
+
+    if (initParams.outputSolution) {
+        // export_result_to_file(buff_fdistrib, runParams);
+        // export_error_to_file(buff_fdistrib, runParams);
+    }
+
+    std::cout << "PERF_DIAGS:" << std::endl;
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    std::cout << "elapsed_time: " << elapsed_seconds.count() << " s\n";
+
+    auto gcells = ((nvx * nx * maxIter) / elapsed_seconds.count()) / 1e9;
+    std::cout << "upd_cells_per_sec: " << gcells << " Gcell/sec\n";
+    std::cout << "estimated_throughput: " << gcells * sizeof(double) * 2
+              << " GB/s" << std::endl;
+    std::cout << "parsing;" << nvx * nx << ";" << nx << ";" << nvx << std::endl;
+
+    Kokkos::finalize();
+    return 0;
+
 }

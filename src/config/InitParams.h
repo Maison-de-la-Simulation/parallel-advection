@@ -20,5 +20,4 @@ struct InitParams {
 
   //! print parameters on screen
   void print();
-
 }; // struct InitParams
