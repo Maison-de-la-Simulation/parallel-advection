@@ -6,9 +6,11 @@ The following is the advection operator algorithm for one time-step:
 ![Advection process](fig/AdvectionProcess.png)
 
 TODO: fill README
+
 TODO: fill infos on .ini file (KernelType, gpu on/off, etc...)
 
 # Kernels
+## SYCL
 - Basic Range
   - 1D
   - 2D
@@ -16,6 +18,10 @@ TODO: fill infos on .ini file (KernelType, gpu on/off, etc...)
 - Hierarchical
 - Scoped
 - ...
+
+## Kokkos
+- MDRange
+- TeamPolicy
 
 ### To build the project:
 ```sh
