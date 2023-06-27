@@ -47,5 +47,5 @@ advector::x::MDRange::operator()(KV_double_3d &fdist,
             }
         });
 
-        Kokkos::deep_copy(m_ftmp, fdist);
+        Kokkos::deep_copy(fdist, m_ftmp);
 }

@@ -21,14 +21,22 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
              // Input values to reductions are standard accessors
              auto fdist =
                  buff_fdistrib.get_access<sycl::access_mode::read>(cgh);
+
+
+
+#ifdef __INTEL_LLVM_COMPILER   // for DPCPP
+             auto reduc_errorL1 =
+                 sycl::reduction(buff_errorL1, cgh, sycl::plus<>());
+#else   // for openSYCL
              auto acc_errorL1 =
                  buff_errorL1.get_access<sycl::access_mode::write>(cgh);
-
              auto reduc_errorL1 =
                  sycl::reduction(acc_errorL1, sycl::plus<double>());
+#endif
+
 
              cgh.parallel_for(
-                 buff_fdistrib.get_range() , reduc_errorL1,
+                 buff_fdistrib.get_range(), reduc_errorL1,
                  [=](auto itm, auto &reduc_errorL1) {
                      auto ix = itm[2];
                      auto ivx = itm[1];
@@ -36,7 +44,7 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
 
                      double const x = params.minRealx + ix * params.dx;
                      double const v = params.minRealVx + ivx * params.dvx;
-                     double const t = params.maxIter * params.dt;
+                     double const t = iniparams.maxIter * params.dt;
 
                      auto value = sycl::sin(4 * M_PI * (x - v * t));
 
