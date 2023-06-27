@@ -12,22 +12,22 @@
 void
 advection(KV_double_3d &fdistrib,
           KV_double_1d &efield,
-          sref::unique_ref<double> &x_advector,
+          sref::unique_ref<IAdvectorX> &x_advector,
         //   sref::unique_ref<IAdvectorVx> &vx_advector,
           const ADVParams &runParams) {
 
-    // auto static const maxIter = runParams.maxIter;
+    auto static const maxIter = runParams.maxIter;
     
-    // // Time loop, cannot parallelize this
-    // for (auto t = 0; t < maxIter; ++t) {
-    //     x_advector(fdistrib, runParams);
+    // Time loop, cannot parallelize this
+    for (auto t = 0; t < maxIter; ++t) {
+        x_advector(fdistrib, runParams);
 
-    //     // If it's last iteration, we wait
-    //     if (t == maxIter - 1)
-    //         vx_advector(fdistrib, efield, runParams).wait_and_throw();
-    //     else
-    //         vx_advector(fdistrib, efield, runParams);
-    // }   // end for t < T
+        // If it's last iteration, we wait
+        // if (t == maxIter - 1)
+        //     vx_advector(fdistrib, efield, runParams);
+        // else
+        //     vx_advector(fdistrib, efield, runParams);
+    }   // end for t < T
 
 }   // end advection
 
@@ -70,8 +70,8 @@ main(int argc, char **argv) {
     // auto vx_advector = vx_advector_factory();
 
     auto start = std::chrono::high_resolution_clock::now();
-    x_advector(fdist, runParams);
     // advection(fdist, efield, x_advector, vx_advector, runParams);
+    advection(fdist, efield, x_advector, runParams);
     auto end = std::chrono::high_resolution_clock::now();
 
     std::cout << "\nRESULTS_VALIDATION:" << std::endl;
