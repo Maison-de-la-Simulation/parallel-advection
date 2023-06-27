@@ -24,7 +24,9 @@ x_advector_factory(const ADVParams &adParams, const InitParams &initParams) {
 
     switch (str2int(kernel_name.data())) {
     case str2int("MDRange"):
-        return sref::make_unique<advector::x::MDRange>();
+        return sref::make_unique<advector::x::MDRange>(adParams.n_fict_dim,
+                                                       adParams.nvx,
+                                                       adParams.nx);
     default:
         auto str = kernel_name + " is not a valid kernel name.\n" + error_str;
         throw std::runtime_error(str);

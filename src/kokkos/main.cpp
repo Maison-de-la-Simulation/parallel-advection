@@ -2,6 +2,7 @@
 #include <AdvectionParams.h>
 #include <InitParams.h>
 #include <init.h>
+#include <validation.h>
 
 
 #include "unique_ref.h"
@@ -75,7 +76,7 @@ main(int argc, char **argv) {
     auto end = std::chrono::high_resolution_clock::now();
 
     std::cout << "\nRESULTS_VALIDATION:" << std::endl;
-    // validate_result(Q, buff_fdistrib, runParams, initParams);
+    validate_result(fdist, runParams, initParams);
 
     if (initParams.outputSolution) {
         // export_result_to_file(buff_fdistrib, runParams);

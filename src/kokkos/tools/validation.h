@@ -1,9 +1,9 @@
 #pragma once
 
+#include "../kokkos_shortcut.hpp"
 #include "init.h"
 #include <AdvectionParams.h>
 #include <iostream>
-#include "../kokkos_shortcut.hpp"
 
 // ==========================================
 // ==========================================
@@ -11,49 +11,37 @@ void
 validate_result(KV_double_3d &fdist, const ADVParams &params,
                 const InitParams &initParams) noexcept {
 
-    //     int errCount = 0;
-    //     double errorL1 = 0.0;
-    //     {
-    //         sycl::buffer<double> buff_errorL1{&errorL1, 1};
+    const int n = 10;
 
-    //         Q.submit([&](sycl::handler &cgh) {
-    //              // Input values to reductions are standard accessors
-    //              auto fdist =
-    //                  buff_fdistrib.get_access<sycl::access_mode::read>(cgh);
+    // Compute the sum of squares of integers from 0 to n-1, in
+    // parallel, using Kokkos.
 
-    // #ifdef __INTEL_LLVM_COMPILER   // for DPCPP
-    //              auto reduc_errorL1 =
-    //                  sycl::reduction(buff_errorL1, cgh, sycl::plus<>());
-    // #else   // for openSYCL
-    //              auto acc_errorL1 =
-    //                  buff_errorL1.get_access<sycl::access_mode::write>(cgh);
-    //              auto reduc_errorL1 =
-    //                  sycl::reduction(acc_errorL1, sycl::plus<double>());
-    // #endif
+    const Kokkos::Array<int, 3> begin{0, 0, 0};
+    const Kokkos::Array<int, 3> end{fdist.extent_int(0), fdist.extent_int(1),
+                                    fdist.extent_int(2)};
+    double sumL1 = 0;
+    Kokkos::parallel_reduce(
+        Kokkos::MDRangePolicy<Kokkos::Rank<3>>(begin, end),
+        KOKKOS_LAMBDA(const int i, const int j, const int k, double &lsum) {
+            auto ix = k;
+            auto ivx = j;
+            auto f = fdist(i, j, k);
 
-    //              cgh.parallel_for(
-    //                  buff_fdistrib.get_range(), reduc_errorL1,
-    //                  [=](auto itm, auto &reduc_errorL1) {
-    //                      auto ix = itm[2];
-    //                      auto ivx = itm[1];
-    //                      auto f = fdist[itm];
+            double const x = params.minRealx + ix * params.dx;
+            double const v = params.minRealVx + ivx * params.dvx;
+            double const t = params.maxIter * params.dt;
 
-    //                      double const x = params.minRealx + ix * params.dx;
-    //                      double const v = params.minRealVx + ivx *
-    //                      params.dvx; double const t = iniparams.maxIter *
-    //                      params.dt;
+            auto value = Kokkos::sin(4 * Kokkos::numbers::pi * (x - v * t));
 
-    //                      auto value = sycl::sin(4 * M_PI * (x - v * t));
+            auto err = Kokkos::fabs(f - value);
 
-    //                      auto err = sycl::fabs(f - value);
-    //                      reduc_errorL1 += err;
-    //                  });
-    //          }).wait_and_throw();
-    //     }
+            lsum += err;
+        },
+        sumL1);
 
-    //     std::cout << "Total cumulated error: "
-    //               << (errorL1 * params.dx * params.dvx) / params.n_fict_dim
-    //               << "\n"
-    //               << std::endl;
+    std::cout << "Total cumulated error: "
+              << (sumL1 * params.dx * params.dvx) / params.n_fict_dim << "\n"
+              << std::endl;
+
 
 }   // end validate_results

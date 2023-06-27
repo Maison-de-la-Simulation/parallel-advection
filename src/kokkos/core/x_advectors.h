@@ -8,8 +8,6 @@ namespace advector {
 namespace x {
 
 class MDRange : public IAdvectorX {
-    using IAdvectorX::IAdvectorX;   // Inheriting constructor
-
     // copy of fdist buffer because MDRange has to be done out-of-place
     mutable KV_double_3d m_ftmp;
 
