@@ -10,7 +10,6 @@ advector::x::MDRange::operator()(KV_double_3d &fdist,
     auto const inv_dx = params.inv_dx;
 
     const Kokkos::Array<int, 3> begin{0, 0, 0};
-    // const Kokkos::Array<int, 3> end{2, 2, 2};
     const Kokkos::Array<int, 3> end{fdist.extent_int(0), fdist.extent_int(1),
                                     fdist.extent_int(2)};
 

@@ -50,9 +50,6 @@ fill_buffers(KV_double_3d &fdist, KV_double_1d &efield,
         Kokkos::Array<int, 3> end{fdist.extent_int(0),
                                   fdist.extent_int(1),
                                   fdist.extent_int(2)};
-        // Kokkos::Array<int, 3> end{fdist.extent(0),
-        //                           fdist.extent(1),
-        //                           fdist.extent(2)};
 
         Kokkos::parallel_for(
         "fill_buffers",

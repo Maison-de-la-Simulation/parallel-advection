@@ -43,5 +43,21 @@ validate_result(KV_double_3d &fdist, const ADVParams &params,
               << (sumL1 * params.dx * params.dvx) / params.n_fict_dim << "\n"
               << std::endl;
 
+    // double seqSum = 0;
+    // for(int i_fict = 0; i_fict < params.n_fict_dim; ++i_fict)
+    //     for(int ivx=0; ivx<params.nvx; ++ivx)
+    //         for(int ix=0; ix<params.nx; ++ix)
+    //         {
+    //             auto f = fdist(i_fict, ivx, ix);
+    //             double const x = params.minRealx + ix * params.dx;
+    //             double const v = params.minRealVx + ivx * params.dvx;
+    //             double const t = params.maxIter * params.dt;
+    //             auto value = sin(4 * Kokkos::numbers::pi * (x - v * t));
 
+    //             auto err = fabs(f - value);
+    //             seqSum += err;
+    //         }
+    // std::cout << "Total Sequential error L1: "
+    //           << (seqSum * params.dx * params.dvx) / params.n_fict_dim << "\n"
+    //           << std::endl;
 }   // end validate_results
