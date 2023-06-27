@@ -1,5 +1,5 @@
 add_subdirectory(advectorX)
-# add_subdirectory(advectorVx)
+add_subdirectory(advectorVx)
 
 add_library(core "")
 
@@ -9,7 +9,7 @@ target_sources(core PUBLIC x_advectors.h IAdvector.h)
 target_link_libraries(core
   PUBLIC
   xadvec
-  # vxadvec
+  vxadvec
   adv1d::config
   Kokkos::kokkos
 )
