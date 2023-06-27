@@ -13,64 +13,46 @@ advector::vx::MDRange::operator()(KV_double_3d &fdist, KV_double_1d &elec_field,
     auto const inv_dvx = params.inv_dvx;
     auto const realWidthVx = params.realWidthVx;
 
-    // const sycl::range<3> nb_wg{n_fict, 1, nx};
-    // const sycl::range<3> wg_size{1, params.wg_size, 1};
+    const Kokkos::Array<int, 3> begin{0, 0, 0};
+    const Kokkos::Array<int, 3> end{fdist.extent_int(0), fdist.extent_int(1),
+                                    fdist.extent_int(2)};
 
-    // return Q.submit([&](sycl::handler &cgh) {
-    //     auto fdist =
-    //         buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
-    //     auto efield =
-    //         buff_electric_field.get_access<sycl::access::mode::read>(cgh);
+    Kokkos::MDRangePolicy<Kokkos::Rank<3>> mdrange_policy(begin, end);
 
-    //     sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>{nvx}, cgh);
+    Kokkos::parallel_for(
+        "MDrange_advectionVx", mdrange_policy,
+        KOKKOS_CLASS_LAMBDA(int i, int j, int k) {
+            const auto i_fict = i;
+            const auto ivx = j;
+            const auto ix = k;
 
-    //     cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<3> g) {
-    //         const int ix = g.get_group_id(2);
-    //         const int i_fict = g.get_group_id(0);
+            auto const ex = elec_field(ix);
+            auto const displx = dt * ex;
+            double const vx = coord(ivx, minRealVx, dvx);
 
-    //         g.parallel_for_work_item(
-    //             sycl::range<3>(1, nvx, 1), [&](sycl::h_item<3> it) {
-    //                 const int ivx = it.get_local_id(1);
+            auto const vxFootCoord =
+                minRealVx + Kokkos::fmod(realWidthVx + vx - displx - minRealVx,
+                                         realWidthVx);
 
-    //                 auto const ex = efield[ix];
-    //                 auto const displx = dt * ex;
-    //                 double const vx = coord(ivx, minRealVx, dvx);
+            const int LeftDiscreteNode =
+                Kokkos::floor((vxFootCoord - minRealVx) * inv_dvx);
 
-    //                 auto const vxFootCoord =
-    //                     minRealVx +
-    //                     sycl::fmod(realWidthVx + vx - displx - minRealVx,
-    //                                realWidthVx);
+            const double d_prev1 =
+                LAG_OFFSET + inv_dvx * (vxFootCoord - coord(LeftDiscreteNode,
+                                                            minRealVx, dvx));
 
-    //                 const int LeftDiscreteNode =
-    //                     sycl::floor((vxFootCoord - minRealVx) * inv_dvx);
+            auto coef = lag_basis(d_prev1);
 
-    //                 const double d_prev1 =
-    //                     LAG_OFFSET +
-    //                     inv_dvx * (vxFootCoord -
-    //                               coord(LeftDiscreteNode, minRealVx, dvx));
+            const int ipos1 = LeftDiscreteNode - LAG_OFFSET;
 
-    //                 auto coef = lag_basis(d_prev1);
+            m_ftmp(i_fict, ivx, ix) = 0;
+            for (int k = 0; k <= LAG_ORDER; k++) {
+                int idx_coef = (nvx + ipos1 + k) % nvx;
 
-    //                 const int ipos1 = LeftDiscreteNode - LAG_OFFSET;
+                m_ftmp(i_fict, ivx, ix) +=
+                    coef[k] * fdist(i_fict, idx_coef, ix);
+            }
+        });
 
-    //                 slice_ftmp[ivx] = 0;
-    //                 for (int k = 0; k <= LAG_ORDER; k++) {
-    //                     int idx_coef = (nvx + ipos1 + k) % nvx;
-
-    //                     slice_ftmp[ivx] += coef[k] *
-    //                     fdist[i_fict][idx_coef][ix];
-    //                 }
-    //             });   // end parallel_for_work_item --> Implicit barrier
-
-    //         //Copy not contiguous slice
-    //         g.parallel_for_work_item(sycl::range<3>(1, nvx, 1),
-    //                                  [&](sycl::h_item<3> it) {
-    //                                      const int ivx = it.get_local_id(1);
-
-    //                                      fdist[i_fict][ivx][ix] =
-    //                                      slice_ftmp[ivx];
-    //                                  });
-
-    //     });   // end parallel_for_work_group
-    // });       // end Q.submit
+    Kokkos::deep_copy(fdist, m_ftmp);
 }

@@ -16,7 +16,7 @@ advector::x::MDRange::operator()(KV_double_3d &fdist,
     Kokkos::MDRangePolicy<Kokkos::Rank<3>> mdrange_policy(begin, end);
 
     Kokkos::parallel_for(
-        "MDrange_advection", mdrange_policy,
+        "MDrange_advectionX", mdrange_policy,
         KOKKOS_CLASS_LAMBDA(int i, int j, int k) {
             const auto i_fict = i;
             const auto ivx = j;
