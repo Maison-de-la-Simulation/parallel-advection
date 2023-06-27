@@ -5,7 +5,8 @@ The following is the advection operator algorithm for one time-step:
 
 ![Advection process](fig/AdvectionProcess.png)
 
-TODO: fill README 
+TODO: fill README
+TODO: fill infos on .ini file (KernelType, gpu on/off, etc...)
 
 # Kernels
 - Basic Range
