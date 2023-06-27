@@ -4,10 +4,7 @@
 #include <init.h>
 #include <validation.h>
 #include <io.h>
-
-
 #include "unique_ref.h"
-
 
 // ==========================================
 // ==========================================
@@ -15,7 +12,7 @@ void
 advection(KV_double_3d &fdistrib,
           KV_double_1d &efield,
           sref::unique_ref<IAdvectorX> &x_advector,
-        //   sref::unique_ref<IAdvectorVx> &vx_advector,
+          sref::unique_ref<IAdvectorVx> &vx_advector,
           const ADVParams &runParams) {
 
     auto static const maxIter = runParams.maxIter;
@@ -24,11 +21,7 @@ advection(KV_double_3d &fdistrib,
     for (auto t = 0; t < maxIter; ++t) {
         x_advector(fdistrib, runParams);
 
-        // If it's last iteration, we wait
-        // if (t == maxIter - 1)
-        //     vx_advector(fdistrib, efield, runParams);
-        // else
-        //     vx_advector(fdistrib, efield, runParams);
+        vx_advector(fdistrib, efield, runParams);
     }   // end for t < T
 
 }   // end advection
@@ -68,11 +61,11 @@ main(int argc, char **argv) {
     fill_buffers(fdist, efield, runParams);
 
     auto x_advector = x_advector_factory(runParams, initParams);
-    // auto vx_advector = vx_advector_factory();
+    auto vx_advector = vx_advector_factory(runParams);
 
     auto start = std::chrono::high_resolution_clock::now();
-    // advection(fdist, efield, x_advector, vx_advector, runParams);
-    advection(fdist, efield, x_advector, runParams);
+    advection(fdist, efield, x_advector, vx_advector, runParams);
+    // advection(fdist, efield, x_advector, runParams);
     auto end = std::chrono::high_resolution_clock::now();
 
     std::cout << "\nRESULTS_VALIDATION:" << std::endl;
