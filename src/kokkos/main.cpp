@@ -31,7 +31,7 @@ advection(KV_double_3d &fdistrib,
 // ==========================================
 int
 main(int argc, char **argv) {
-    Kokkos::initialize(argc, argv);
+    Kokkos::ScopeGuard const kguard;
 
     /* Display infos */
     Kokkos::print_configuration(std::cout);
@@ -86,7 +86,5 @@ main(int argc, char **argv) {
               << " GB/s" << std::endl;
     std::cout << "parsing;" << nvx * nx << ";" << nx << ";" << nvx << std::endl;
 
-    Kokkos::finalize();
     return 0;
-
 }
