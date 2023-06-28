@@ -13,9 +13,9 @@ advector::vx::MDRange::operator()(KV_double_3d &fdist, KV_double_1d &elec_field,
     auto const inv_dvx = params.inv_dvx;
     auto const realWidthVx = params.realWidthVx;
 
-    const Kokkos::Array<int, 3> begin{0, 0, 0};
-    const Kokkos::Array<int, 3> end{fdist.extent_int(0), fdist.extent_int(1),
-                                    fdist.extent_int(2)};
+    const Kokkos::Array<size_t, 3> begin{0, 0, 0};
+    const Kokkos::Array<size_t, 3> end{fdist.extent(0), fdist.extent(1),
+                                       fdist.extent(2)};
 
     Kokkos::MDRangePolicy<Kokkos::Rank<3>> mdrange_policy(begin, end);
 

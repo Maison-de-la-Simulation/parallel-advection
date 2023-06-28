@@ -9,18 +9,15 @@ advector::x::MDRange::operator()(KV_double_3d &fdist,
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    const Kokkos::Array<int, 3> begin{0, 0, 0};
-    const Kokkos::Array<int, 3> end{fdist.extent_int(0), fdist.extent_int(1),
-                                    fdist.extent_int(2)};
+    const Kokkos::Array<size_t, 3> begin{0, 0, 0};
+    const Kokkos::Array<size_t, 3> end{fdist.extent(0), fdist.extent(1),
+                                       fdist.extent(2)};
 
     Kokkos::MDRangePolicy<Kokkos::Rank<3>> mdrange_policy(begin, end);
 
     Kokkos::parallel_for(
         "MDrange_advectionX", mdrange_policy,
-        KOKKOS_CLASS_LAMBDA(int i, int j, int k) {
-            const auto i_fict = i;
-            const auto ivx = j;
-            const auto ix = k;
+        KOKKOS_CLASS_LAMBDA(int i_fict, int ivx, int ix) {
 
             double const xFootCoord = displ(ix, ivx, params);
 
@@ -47,5 +44,5 @@ advector::x::MDRange::operator()(KV_double_3d &fdist,
             }
         });
 
-        Kokkos::deep_copy(fdist, m_ftmp);
+    Kokkos::deep_copy(fdist, m_ftmp);
 }

@@ -42,8 +42,9 @@ main(int argc, char **argv) {
     runParams.setup(configMap);
     runParams.print();
 
-    InitParams initParams = InitParams(); //only needed for output_solution bool
-    initParams.setup(configMap); //so we are not printing
+    InitParams initParams = InitParams();
+    initParams.setup(configMap);
+    initParams.print_kokkos();
 
     const auto nx = runParams.nx;
     const auto nvx = runParams.nvx;

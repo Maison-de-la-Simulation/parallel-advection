@@ -11,9 +11,9 @@ void
 validate_result(KV_double_3d &fdist, const ADVParams &params,
                 const InitParams &initParams) noexcept {
 
-    const Kokkos::Array<int, 3> begin{0, 0, 0};
-    const Kokkos::Array<int, 3> end{fdist.extent_int(0), fdist.extent_int(1),
-                                    fdist.extent_int(2)};
+    const Kokkos::Array<size_t, 3> begin{0, 0, 0};
+    const Kokkos::Array<size_t, 3> end{fdist.extent(0), fdist.extent(1),
+                                       fdist.extent(2)};
     double sumL1 = 0;
     Kokkos::parallel_reduce(
         Kokkos::MDRangePolicy<Kokkos::Rank<3>>(begin, end),
@@ -53,6 +53,7 @@ validate_result(KV_double_3d &fdist, const ADVParams &params,
     //             seqSum += err;
     //         }
     // std::cout << "Total Sequential error L1: "
-    //           << (seqSum * params.dx * params.dvx) / params.n_fict_dim << "\n"
+    //           << (seqSum * params.dx * params.dvx) / params.n_fict_dim <<
+    //           "\n"
     //           << std::endl;
 }   // end validate_results

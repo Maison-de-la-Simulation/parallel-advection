@@ -19,6 +19,7 @@ export_result_to_file(KV_double_3d &fdist, const ADVParams &params) noexcept {
     for (int iv = 0; iv < params.nvx; ++iv) {
         for (int ix = 0; ix < params.nx; ++ix) {
             // we only take first slice in dim fict
+            // carefull of LayoutType of Kokkos, this is for LayoutRight
             outfile << *(hostView.data() + iv * params.nx + ix);
 
             if (ix != params.nx - 1)

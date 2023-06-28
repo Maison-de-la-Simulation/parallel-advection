@@ -23,9 +23,8 @@ x_advector_factory(const ADVParams &adParams, const InitParams &initParams) {
 
     switch (str2int(kernel_name.data())) {
     case str2int("MDRange"):
-        return sref::make_unique<advector::x::MDRange>(adParams.n_fict_dim,
-                                                       adParams.nvx,
-                                                       adParams.nx);
+        return sref::make_unique<advector::x::MDRange>(
+            adParams.n_fict_dim, adParams.nvx, adParams.nx);
     case str2int("ThreadTeam"):
         return sref::make_unique<advector::x::ThreadTeam>();
     default:
@@ -38,9 +37,8 @@ x_advector_factory(const ADVParams &adParams, const InitParams &initParams) {
 // ==========================================
 [[nodiscard]] sref::unique_ref<IAdvectorVx>
 vx_advector_factory(const ADVParams &adParams) {
-       return sref::make_unique<advector::vx::MDRange>(adParams.n_fict_dim,
-                                                       adParams.nvx,
-                                                       adParams.nx);
+    return sref::make_unique<advector::vx::MDRange>(adParams.n_fict_dim,
+                                                    adParams.nvx, adParams.nx);
 }
 
 // ==========================================
@@ -49,9 +47,9 @@ void
 fill_buffers(KV_double_3d &fdist, KV_double_1d &efield,
              const ADVParams &params) noexcept {
 
-    Kokkos::Array<int, 3> begin{0, 0, 0};
-    Kokkos::Array<int, 3> end{fdist.extent_int(0), fdist.extent_int(1),
-                              fdist.extent_int(2)};
+    Kokkos::Array<size_t, 3> begin{0, 0, 0};
+    Kokkos::Array<size_t, 3> end{fdist.extent(0), fdist.extent(1),
+                                 fdist.extent(2)};
 
     Kokkos::parallel_for(
         "fill_buffers", Kokkos::MDRangePolicy<Kokkos::Rank<3>>(begin, end),

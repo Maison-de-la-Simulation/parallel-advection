@@ -20,4 +20,5 @@ struct InitParams {
 
   //! print parameters on screen
   void print();
+  void print_kokkos();
 }; // struct InitParams
