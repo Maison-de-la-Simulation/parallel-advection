@@ -7,6 +7,8 @@ namespace advector {
 
 namespace x {
 
+// ==========================================
+// ==========================================
 class MDRange : public IAdvectorX {
     // copy of fdist buffer because MDRange has to be done out-of-place
     KV_double_3d m_ftmp;
@@ -15,6 +17,16 @@ class MDRange : public IAdvectorX {
     MDRange(const size_t n_fict_dim, const size_t nvx, const size_t nx)
         : m_ftmp{"ftmp", n_fict_dim, nvx, nx} {}
 
+    void operator()(KV_double_3d &fdistrib,
+                    const ADVParams &params) noexcept override;
+};
+
+// ==========================================
+// ==========================================
+class ThreadTeam : public IAdvectorX {
+    using IAdvectorX::IAdvectorX;
+
+  public:
     void operator()(KV_double_3d &fdistrib,
                     const ADVParams &params) noexcept override;
 };

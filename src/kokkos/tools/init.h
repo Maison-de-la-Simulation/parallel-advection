@@ -13,7 +13,7 @@ str2int(const char *str, int h = 0) noexcept {
     return !str[h] ? 5381 : (str2int(str, h + 1) * 33) ^ str[h];
 }
 
-static constexpr auto error_str = "Should be one of: {MDRange}";
+static constexpr auto error_str = "Should be one of: {MDRange, ThreadTeam}";
 
 // // ==========================================
 // // ==========================================
@@ -26,6 +26,8 @@ x_advector_factory(const ADVParams &adParams, const InitParams &initParams) {
         return sref::make_unique<advector::x::MDRange>(adParams.n_fict_dim,
                                                        adParams.nvx,
                                                        adParams.nx);
+    case str2int("ThreadTeam"):
+        return sref::make_unique<advector::x::ThreadTeam>();
     default:
         auto str = kernel_name + " is not a valid kernel name.\n" + error_str;
         throw std::runtime_error(str);

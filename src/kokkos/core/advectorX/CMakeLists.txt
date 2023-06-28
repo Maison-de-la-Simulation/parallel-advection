@@ -4,6 +4,7 @@ target_sources(xadvec
   PRIVATE
   IAdvectorX.h
   impl/MDRange.cpp
+  impl/ThreadTeam.cpp
 )
 
 target_include_directories(xadvec
