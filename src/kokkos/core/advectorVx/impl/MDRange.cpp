@@ -4,9 +4,9 @@ void
 advector::vx::MDRange::operator()(KV_double_3d &fdist, KV_double_1d &elec_field,
                                   const ADVParams &params) noexcept {
 
-    auto const nx = params.nx;
+    // auto const nx = params.nx;
     auto const nvx = params.nvx;
-    auto const n_fict = params.n_fict_dim;
+    // auto const n_fict = params.n_fict_dim;
     auto const minRealVx = params.minRealVx;
     auto const dvx = params.dvx;
     auto const dt = params.dt;

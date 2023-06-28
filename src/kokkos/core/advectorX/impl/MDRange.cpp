@@ -4,7 +4,7 @@ void
 advector::x::MDRange::operator()(KV_double_3d &fdist,
                                  const ADVParams &params) noexcept {
     auto const nx = params.nx;
-    auto const nvx = params.nvx;
+    // auto const nvx = params.nvx;
     auto const minRealx = params.minRealx;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
@@ -24,7 +24,7 @@ advector::x::MDRange::operator()(KV_double_3d &fdist,
 
             double const xFootCoord = displ(ix, ivx, params);
 
-            const double x = params.minRealx + ix * params.dx;
+            // const double x = params.minRealx + ix * params.dx;
 
             // Corresponds to the index of the cell to the left of footCoord
             const int LeftDiscreteNode =

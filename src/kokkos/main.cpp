@@ -20,7 +20,6 @@ advection(KV_double_3d &fdistrib,
     // Time loop, cannot parallelize this
     for (auto t = 0; t < maxIter; ++t) {
         x_advector(fdistrib, runParams);
-
         vx_advector(fdistrib, efield, runParams);
     }   // end for t < T
 

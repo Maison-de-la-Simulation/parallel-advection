@@ -1,14 +1,14 @@
 #pragma once
 
-#include "AdvectionParams.h"
 #include "../kokkos_shortcut.hpp"
+#include "AdvectionParams.h"
 
 /* Lagrange variables, order, number of points, offset from the current point */
 int static constexpr LAG_ORDER = 5;
 int static constexpr LAG_PTS = 6;
 int static constexpr LAG_OFFSET = 2;
-double static constexpr loc[] = {-1. / 24, 1. / 24.,  -1. / 12.,
-                                 1. / 12., -1. / 24., 1. / 24.};
+static constexpr Kokkos::Array<double, 6> loc{-1. / 24, 1. / 24.,  -1. / 12.,
+                                              1. / 12., -1. / 24., 1. / 24.};
 
 class IAdvector {
   public:
@@ -17,18 +17,17 @@ class IAdvector {
     // ==========================================
     // ==========================================
     /* Computes the real position of x or speed of vx based on discretization */
-    [[nodiscard]] static inline __attribute__((always_inline)) double
-    coord(const int i, const double &minValue,
-          const double &delta) noexcept {
+    [[nodiscard]] static KOKKOS_FORCEINLINE_FUNCTION double
+    coord(const int i, const double &minValue, const double &delta) noexcept {
         return minValue + i * delta;
     }
 
     // ==========================================
     // ==========================================
     /* Computes the coefficient for semi lagrangian interp of order 5 */
-    [[nodiscard]] static inline __attribute__((always_inline))
-    Kokkos::Array<double, LAG_PTS>
-    lag_basis(double px) noexcept {
+    [[nodiscard]] static KOKKOS_FORCEINLINE_FUNCTION
+        Kokkos::Array<double, LAG_PTS>
+        lag_basis(double px) noexcept {
         Kokkos::Array<double, LAG_PTS> coef;
 
         const double pxm2 = px - 2.;
@@ -51,7 +50,7 @@ class IAdvector {
     // ==========================================
     // ==========================================
     /* Computes the covered distance by x during dt. returns the feet coord */
-    [[nodiscard]] static inline __attribute__((always_inline)) double
+    [[nodiscard]] static KOKKOS_FORCEINLINE_FUNCTION double
     displ(const int ix, const int ivx, const ADVParams &params) noexcept {
         auto const minRealx = params.minRealx;
         auto const minRealVx = params.minRealVx;
