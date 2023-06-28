@@ -19,8 +19,6 @@ if(NOT ("${BACKEND}"  IN_LIST AVAILABLE_BACKENDS))
 message(FATAL_ERROR "BACKEND is not defined, available backends are ${AVAILABLE_BACKENDS}")
 endif()
 
-# we will copy the .ini file and binaries inside BIN_DIR
-
 if("${BACKEND}" STREQUAL "sycl")
     set(INIFILE_LOCATION "${CMAKE_BINARY_DIR}/src/sycl")
     endif()
