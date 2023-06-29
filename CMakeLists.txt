@@ -1,6 +1,8 @@
 cmake_minimum_required (VERSION 3.21)
 
 project(SYCL-Advection LANGUAGES CXX)
+# Add warnings
+add_compile_options(-Wall -Wextra -Wpedantic)
 
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
@@ -34,6 +36,3 @@ if("${BACKEND}" STREQUAL "kokkos")
     add_subdirectory(vendor/kokkos)
     add_subdirectory(src/kokkos)
 endif()
-
-# Add warnings
-add_compile_options(${TARGET_NAME} PRIVATE -Wall -Wextra -Wpedantic)
