@@ -24,23 +24,25 @@ advector::x::ThreadTeam::operator()(KV_double_3d &fdist,
                                 Kokkos::AUTO);   // not sure about AUTO
     // const Kokkos::TeamPolicy<> policy(nvx, nx);
 
-
-    typedef Kokkos::DefaultExecutionSpace::scratch_memory_space
-    ScratchSpace;
     // Define a view type in ScratchSpace
-    typedef Kokkos::View<double*,ScratchSpace,
-            Kokkos::MemoryTraits<Kokkos::Unmanaged>> shared_double_1d;
+    typedef Kokkos::View<double*,
+                         Kokkos::DefaultExecutionSpace::scratch_memory_space,
+                         Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+            ScratchViewType;
+    
+    //this line is actually allocating, segfault if not
+    int scratch_size = ScratchViewType::shmem_size(nx);
 
     // scr_t::shmem
     Kokkos::parallel_for(
         "advector::x::ThreadTeam::operator()::parallel_for",
-        policy.set_scratch_size(0, Kokkos::PerTeam(nx)),
+        policy.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
         KOKKOS_CLASS_LAMBDA(const team_member &team_h) {
             const auto i_fict = team_h.league_rank() % n_fict;
             const auto ivx = (team_h.league_rank() / n_fict);
 
             // scratch memory, 0 means shared memory, 1 means global mem
-            shared_double_1d x_shared_slice(team_h.team_scratch(0), nx);
+            ScratchViewType x_shared_slice(team_h.team_scratch(0), nx);
 
             // auto x_slice = Kokkos::subview(fdist, i_fict, ivx, Kokkos::ALL);
             // Kokkos::deep_copy(x_shared_slice, x_slice);
@@ -70,7 +72,7 @@ advector::x::ThreadTeam::operator()(KV_double_3d &fdist,
 
                     const int ipos1 = LeftDiscreteNode - LAG_OFFSET;
 
-                    x_shared_slice(0) = 0;
+                    // x_shared_slice(0) = 0;
                     // fdist(i_fict, ivx, ix) = 0;   // initializing slice
                     for (int k = 0; k <= LAG_ORDER; k++) {
                         int idx_ipos1 = (nx + ipos1 + k) % nx;
