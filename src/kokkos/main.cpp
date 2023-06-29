@@ -63,10 +63,13 @@ main(int argc, char **argv) {
     auto x_advector = x_advector_factory(runParams, initParams);
     auto vx_advector = vx_advector_factory(runParams);
 
-    auto start = std::chrono::high_resolution_clock::now();
+    Kokkos::Timer timer;
+    timer.reset();
+    auto start = timer.seconds();
+    // auto start = std::chrono::high_resolution_clock::now();
     advection(fdist, efield, x_advector, vx_advector, runParams);
-    // advection(fdist, efield, x_advector, runParams);
-    auto end = std::chrono::high_resolution_clock::now();
+    auto end = timer.seconds();
+    // auto end = std::chrono::high_resolution_clock::now();
 
     Kokkos::fence("main_scope_fence"); //not sure about that
 
@@ -79,11 +82,12 @@ main(int argc, char **argv) {
     }
 
     std::cout << "PERF_DIAGS:" << std::endl;
-    std::chrono::duration<double> elapsed_seconds = end - start;
-    std::cout << "elapsed_time: " << elapsed_seconds.count() << " s\n";
+    // std::chrono::duration<double> elapsed_seconds = end - start;
+    double elapsed_seconds = end - start;
+    std::cout << "elapsed_time: " << elapsed_seconds << " s\n";
 
     auto gcells =
-        ((nvx * nx * n_fict_dim * maxIter) / elapsed_seconds.count()) / 1e9;
+        ((nvx * nx * n_fict_dim * maxIter) / elapsed_seconds) / 1e9;
     std::cout << "upd_cells_per_sec: " << gcells << " Gcell/sec\n";
     std::cout << "estimated_throughput: " << gcells * sizeof(double) * 2
               << " GB/s" << std::endl;
