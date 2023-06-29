@@ -18,21 +18,41 @@ advector::x::ThreadTeam::operator()(KV_double_3d &fdist,
 
     using team_member = typename Kokkos::TeamPolicy<>::member_type;
 
-    KV_double_3d ftmp("TMPARRAY_TO_BE_REMOVED", n_fict, nvx, nx);
+    // KV_double_3d ftmp("TMPARRAY_TO_BE_REMOVED", n_fict, nvx, nx);
 
-    Kokkos::TeamPolicy<> policy(nvx*n_fict, Kokkos::AUTO); // not sure about AUTO
+    Kokkos::TeamPolicy<> policy(nvx * n_fict,
+                                Kokkos::AUTO);   // not sure about AUTO
     // const Kokkos::TeamPolicy<> policy(nvx, nx);
 
-    using scr_t = Kokkos::View<double*, Kokkos::ScratchMemorySpace<class ExecSpace>>;
-    // scr_t::shmem
-    policy.set_scratch_size(0, Kokkos::PerTeam(nx));
 
+    typedef Kokkos::DefaultExecutionSpace::scratch_memory_space
+    ScratchSpace;
+    // Define a view type in ScratchSpace
+    typedef Kokkos::View<double*,ScratchSpace,
+            Kokkos::MemoryTraits<Kokkos::Unmanaged>> shared_double_1d;
+
+    // scr_t::shmem
     Kokkos::parallel_for(
-        "advector::x::ThreadTeam::operator()::parallel_for", policy,
+        "advector::x::ThreadTeam::operator()::parallel_for",
+        policy.set_scratch_size(0, Kokkos::PerTeam(nx)),
         KOKKOS_CLASS_LAMBDA(const team_member &team_h) {
             const auto i_fict = team_h.league_rank() % n_fict;
             const auto ivx = (team_h.league_rank() / n_fict);
-            // Kokkos::floor(team_h.team_rank() / n_fict);
+
+            // scratch memory, 0 means shared memory, 1 means global mem
+            shared_double_1d x_shared_slice(team_h.team_scratch(0), nx);
+
+            // auto x_slice = Kokkos::subview(fdist, i_fict, ivx, Kokkos::ALL);
+            // Kokkos::deep_copy(x_shared_slice, x_slice);
+
+            //copy content into shared slice
+            // Kokkos::parallel_for(
+            //     Kokkos::TeamThreadRange(team_h, nx), [&](const int ix) {
+            //         // x_shared_slice(ix) = 0;
+            //         // x_shared_slice(ix) = fdist(i_fict, ivx, ix);
+            //     }
+            // );
+            // team_h.team_barrier();
 
             Kokkos::parallel_for(
                 Kokkos::TeamThreadRange(team_h, nx), [&](const int ix) {
@@ -50,12 +70,13 @@ advector::x::ThreadTeam::operator()(KV_double_3d &fdist,
 
                     const int ipos1 = LeftDiscreteNode - LAG_OFFSET;
 
-                    ftmp(i_fict, ivx, ix) = 0;   // initializing slice
+                    x_shared_slice(0) = 0;
+                    // fdist(i_fict, ivx, ix) = 0;   // initializing slice
                     for (int k = 0; k <= LAG_ORDER; k++) {
                         int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-                        ftmp(i_fict, ivx, ix) +=
-                            coef[k] * fdist(i_fict, ivx, idx_ipos1);
+                        // fdist(i_fict, ivx, ix) +=
+                            // coef[k] * x_shared_slice(idx_ipos1);
                     }
 
                     // std::cout << "ifict, ivx, ix= " << i_fict  << "," << ivx
@@ -65,5 +86,5 @@ advector::x::ThreadTeam::operator()(KV_double_3d &fdist,
             team_h.team_barrier();
         });
 
-    Kokkos::deep_copy(fdist, ftmp);
+    // Kokkos::deep_copy(fdist, ftmp);
 }
