@@ -68,10 +68,9 @@ main(int argc, char **argv) {
     auto start = timer.seconds();
     // auto start = std::chrono::high_resolution_clock::now();
     advection(fdist, efield, x_advector, vx_advector, runParams);
+    Kokkos::fence("main_scope_fence"); //not sure about that
     auto end = timer.seconds();
     // auto end = std::chrono::high_resolution_clock::now();
-
-    Kokkos::fence("main_scope_fence"); //not sure about that
 
     std::cout << "\nRESULTS_VALIDATION:" << std::endl;
     validate_result(fdist, runParams, initParams);
