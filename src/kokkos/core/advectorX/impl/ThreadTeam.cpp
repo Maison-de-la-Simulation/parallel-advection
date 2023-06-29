@@ -10,19 +10,10 @@ advector::x::ThreadTeam::operator()(KV_double_3d &fdist,
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    // const Kokkos::Array<int, 3> begin{0, 0, 0};
-    // const Kokkos::Array<int, 3> end{fdist.extent_int(0), fdist.extent_int(1),
-    //                                 fdist.extent_int(2)};
-
-    // Kokkos::MDRangePolicy<Kokkos::Rank<3>> mdrange_policy(begin, end);
-
     using team_member = typename Kokkos::TeamPolicy<>::member_type;
-
-    // KV_double_3d ftmp("TMPARRAY_TO_BE_REMOVED", n_fict, nvx, nx);
 
     Kokkos::TeamPolicy<> policy(nvx * n_fict,
                                 Kokkos::AUTO);   // not sure about AUTO
-    // const Kokkos::TeamPolicy<> policy(nvx, nx);
 
     // Define a view type in ScratchSpace
     typedef Kokkos::View<double*,
