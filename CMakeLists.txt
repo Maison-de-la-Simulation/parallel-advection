@@ -11,7 +11,6 @@ include(initBuildType)
 # useful for debugging cmake
 include(print_target_properties)
 
-
 set(AVAILABLE_BACKENDS "sycl;kokkos")
 set(BACKEND "" CACHE STRING "Choose the dimension, options are ${AVAILABLE_BACKENDS}")
 set_property(CACHE BACKEND PROPERTY STRINGS "${AVAILABLE_BACKENDS}")
@@ -35,3 +34,6 @@ if("${BACKEND}" STREQUAL "kokkos")
     add_subdirectory(vendor/kokkos)
     add_subdirectory(src/kokkos)
 endif()
+
+# Add warnings
+add_compile_options(${TARGET_NAME} PRIVATE -Wall -Wextra -Wpedantic)
