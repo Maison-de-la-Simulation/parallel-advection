@@ -64,13 +64,10 @@ main(int argc, char **argv) {
     auto vx_advector = vx_advector_factory(runParams);
 
     Kokkos::Timer timer;
-    timer.reset();
     auto start = timer.seconds();
-    // auto start = std::chrono::high_resolution_clock::now();
     advection(fdist, efield, x_advector, vx_advector, runParams);
     Kokkos::fence("main_scope_fence"); //not sure about that
     auto end = timer.seconds();
-    // auto end = std::chrono::high_resolution_clock::now();
 
     std::cout << "\nRESULTS_VALIDATION:" << std::endl;
     validate_result(fdist, runParams, initParams);
