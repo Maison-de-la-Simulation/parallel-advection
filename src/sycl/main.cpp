@@ -26,10 +26,10 @@ advection(sycl::queue &Q,
         x_advector(Q, buff_fdistrib, runParams);
 
         // If it's last iteration, we wait
-        if (t == maxIter - 1)
-            vx_advector(Q, buff_fdistrib, buff_efield, runParams).wait_and_throw();
-        else
-            vx_advector(Q, buff_fdistrib, buff_efield, runParams);
+        // if (t == maxIter - 1)
+        //     vx_advector(Q, buff_fdistrib, buff_efield, runParams).wait_and_throw();
+        // else
+        //     vx_advector(Q, buff_fdistrib, buff_efield, runParams);
     }   // end for t < T
 
 }   // end advection
@@ -116,7 +116,8 @@ main(int argc, char **argv) {
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::cout << "elapsed_time: " << elapsed_seconds.count() << " s\n";
 
-    auto gcells = ((nvx * nx * maxIter) / elapsed_seconds.count()) / 1e9;
+    auto gcells =
+        ((nvx * nx * n_fict_dim * maxIter) / elapsed_seconds.count()) / 1e9;
     std::cout << "upd_cells_per_sec: " << gcells << " Gcell/sec\n";
     std::cout << "estimated_throughput: " << gcells * sizeof(double) * 2
               << " GB/s" << std::endl;
