@@ -20,8 +20,12 @@ advector::x::ThreadTeam::operator()(KV_double_3d &fdist,
 
     KV_double_3d ftmp("TMPARRAY_TO_BE_REMOVED", n_fict, nvx, nx);
 
-    const Kokkos::TeamPolicy<> policy(nvx*n_fict, Kokkos::AUTO); // not sure about AUTO
+    Kokkos::TeamPolicy<> policy(nvx*n_fict, Kokkos::AUTO); // not sure about AUTO
     // const Kokkos::TeamPolicy<> policy(nvx, nx);
+
+    using scr_t = Kokkos::View<double*, Kokkos::ScratchMemorySpace<class ExecSpace>>;
+    // scr_t::shmem
+    policy.set_scratch_size(0, Kokkos::PerTeam(nx));
 
     Kokkos::parallel_for(
         "advector::x::ThreadTeam::operator()::parallel_for", policy,
