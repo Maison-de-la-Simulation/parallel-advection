@@ -44,7 +44,7 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
 
                      double const x = params.minRealx + ix * params.dx;
                      double const v = params.minRealVx + ivx * params.dvx;
-                     double const t = iniparams.maxIter * params.dt;
+                     double const t = initParams.maxIter * params.dt;
 
                      auto value = sycl::sin(4 * M_PI * (x - v * t));
 
