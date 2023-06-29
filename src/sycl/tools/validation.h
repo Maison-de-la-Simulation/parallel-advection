@@ -9,8 +9,7 @@
 // ==========================================
 void
 validate_result(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
-                const ADVParams &params,
-                const InitParams &initParams) noexcept {
+                const ADVParams &params) noexcept {
 
     int errCount = 0;
     double errorL1 = 0.0;
@@ -44,7 +43,7 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
 
                      double const x = params.minRealx + ix * params.dx;
                      double const v = params.minRealVx + ivx * params.dvx;
-                     double const t = initParams.maxIter * params.dt;
+                     double const t = params.maxIter * params.dt;
 
                      auto value = sycl::sin(4 * M_PI * (x - v * t));
 
