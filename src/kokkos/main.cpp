@@ -20,7 +20,7 @@ advection(KV_double_3d &fdistrib,
     // Time loop, cannot parallelize this
     for (auto t = 0; t < maxIter; ++t) {
         x_advector(fdistrib, runParams);
-        vx_advector(fdistrib, efield, runParams);
+        // vx_advector(fdistrib, efield, runParams);
     }   // end for t < T
 
 }   // end advection
@@ -68,6 +68,8 @@ main(int argc, char **argv) {
     // advection(fdist, efield, x_advector, runParams);
     auto end = std::chrono::high_resolution_clock::now();
 
+    Kokkos::fence("main_scope_fence"); //not sure about that
+
     std::cout << "\nRESULTS_VALIDATION:" << std::endl;
     validate_result(fdist, runParams, initParams);
 
@@ -80,7 +82,8 @@ main(int argc, char **argv) {
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::cout << "elapsed_time: " << elapsed_seconds.count() << " s\n";
 
-    auto gcells = ((nvx * nx * maxIter) / elapsed_seconds.count()) / 1e9;
+    auto gcells =
+        ((nvx * nx * n_fict_dim * maxIter) / elapsed_seconds.count()) / 1e9;
     std::cout << "upd_cells_per_sec: " << gcells << " Gcell/sec\n";
     std::cout << "estimated_throughput: " << gcells * sizeof(double) * 2
               << " GB/s" << std::endl;

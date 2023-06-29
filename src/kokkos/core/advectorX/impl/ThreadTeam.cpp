@@ -13,7 +13,7 @@ advector::x::ThreadTeam::operator()(KV_double_3d &fdist,
     using team_member = typename Kokkos::TeamPolicy<>::member_type;
 
     Kokkos::TeamPolicy<> policy(nvx * n_fict,
-                                Kokkos::AUTO);   // not sure about AUTO
+                                Kokkos::AUTO); // not sure about AUTO
 
     // Define a view type in ScratchSpace
     typedef Kokkos::View<double*,
@@ -29,7 +29,7 @@ advector::x::ThreadTeam::operator()(KV_double_3d &fdist,
         policy.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
         KOKKOS_CLASS_LAMBDA(const team_member &team_h) {
             const auto i_fict = team_h.league_rank() % n_fict;
-            const auto ivx = (team_h.league_rank() / n_fict);
+            const auto ivx    = (team_h.league_rank() / n_fict);
 
             // scratch memory, 0 means shared memory, 1 means global mem
             ScratchViewType x_shared_slice(team_h.team_scratch(0), nx);
@@ -61,7 +61,6 @@ advector::x::ThreadTeam::operator()(KV_double_3d &fdist,
 
                     const int ipos1 = LeftDiscreteNode - LAG_OFFSET;
 
-                    // x_shared_slice(0) = 0;
                     fdist(i_fict, ivx, ix) = 0;   // initializing slice
                     for (int k = 0; k <= LAG_ORDER; k++) {
                         int idx_ipos1 = (nx + ipos1 + k) % nx;
@@ -69,11 +68,6 @@ advector::x::ThreadTeam::operator()(KV_double_3d &fdist,
                         fdist(i_fict, ivx, ix) +=
                             coef[k] * x_shared_slice(idx_ipos1);
                     }
-
-                    // std::cout << "ifict, ivx, ix= " << i_fict  << "," << ivx
-                    // << ", " << ix << std::endl;
                 });
         });
-
-    // Kokkos::deep_copy(fdist, ftmp);
 }
