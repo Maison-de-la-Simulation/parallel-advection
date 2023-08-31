@@ -11,5 +11,6 @@ include(initBuildType)
 # useful for debugging cmake
 include(print_target_properties)
 
+find_package(Celerity CONFIG REQUIRED)
 
 add_subdirectory(src)

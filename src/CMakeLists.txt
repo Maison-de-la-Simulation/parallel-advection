@@ -1,6 +1,7 @@
 add_subdirectory(config)
 add_subdirectory(core)
 add_subdirectory(tools)
+add_subdirectory(core/celerity)
 
 ################################################
 #            SYCL Compiler options             #
