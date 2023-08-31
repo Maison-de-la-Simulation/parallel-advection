@@ -4,6 +4,7 @@
 #include <AdvectionParams.h>
 #include <advectors.h>
 #include <sycl/sycl.hpp>
+#include <celerity/celerity.h>
 
 // To switch case on a str
 [[nodiscard]] constexpr unsigned int
@@ -54,6 +55,26 @@ fill_buffer(sycl::queue &q, sycl::buffer<double, 2> &buff_fdist,
         sycl::accessor fdist(buff_fdist, cgh, sycl::write_only, sycl::no_init);
 
         cgh.parallel_for(buff_fdist.get_range(), [=](sycl::id<2> itm) {
+            const int ix = itm[1];
+
+            double x = params.minRealx + ix * params.dx;
+            fdist[itm] = sycl::sin(4 * x * M_PI);
+        });   // end parallel_for
+    });       // end q.submit
+}
+
+// ==========================================
+// ==========================================
+void
+fill_distr_buffer(celerity::distr_queue &q, celerity::buffer<double, 2> &buff_fdist,
+                  const ADVParams &params) noexcept {
+
+    q.submit([&](celerity::handler &cgh) {
+        celerity::accessor fdist(buff_fdist, cgh,
+                                 celerity::access::one_to_one{},
+                                 celerity::write_only, celerity::no_init);
+
+        cgh.parallel_for(buff_fdist.get_range(), [=](celerity::id<2> itm) {
             const int ix = itm[1];
 
             double x = params.minRealx + ix * params.dx;

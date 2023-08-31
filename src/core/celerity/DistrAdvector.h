@@ -4,16 +4,16 @@
 #include <celerity/celerity.h>
 #include <sycl/sycl.hpp>
 
-/* Lagrange variables, order, number of points, offset from the current point */
-int static constexpr LAG_ORDER = 5;
-int static constexpr LAG_PTS = 6;
-int static constexpr LAG_OFFSET = 2;
-double static constexpr loc[] = {-1. / 24, 1. / 24.,  -1. / 12.,
-                                 1. / 12., -1. / 24., 1. / 24.};
 
-class IAdvectorX {
+class DistrAdvector {
+    /* Lagrange variables, order, number of points, offset from the current point */
+    int static constexpr LAG_ORDER = 5;
+    int static constexpr LAG_PTS = 6;
+    int static constexpr LAG_OFFSET = 2;
+    double static constexpr loc[] = {-1. / 24, 1. / 24.,  -1. / 12.,
+                                    1. / 12., -1. / 24., 1. / 24.};
   public:
-    virtual ~IAdvectorX() = default;
+    // virtual ~IAdvectorX() = default;
 
     // virtual sycl::event operator()(sycl::queue &Q,
     //                                sycl::buffer<double, 2> &buff_fdistrib,

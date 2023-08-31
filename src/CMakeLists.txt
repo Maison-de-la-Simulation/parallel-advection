@@ -27,7 +27,10 @@ target_link_libraries(advection
     compiler_wrapper
     adv1d::config
     adv1d::core
-    adv1d::tools)
+    adv1d::tools
+    adv1d::distr-core)
+add_celerity_to_target(TARGET advection SOURCES main.cpp)
+
 
 configure_file(advection.ini advection.ini COPYONLY)
 

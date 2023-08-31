@@ -53,6 +53,77 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
 
 }   // end validate_results
 
+// // ==========================================
+// // ==========================================
+void
+validate_distr_result(celerity::distr_queue &Q,
+                      celerity::buffer<double, 2> &buff_fdistrib,
+                      const ADVParams &params) noexcept {
+    /* for now, get the celerity data and transform to a sycl buffer and
+    then do the usual SYCL reduction in the host */
+
+    Q.submit([&](celerity::handler &cgh) {
+        celerity::accessor acc{buff_fdistrib, cgh, celerity::access::all{},
+                               celerity::read_only_host_task};
+        cgh.host_task(celerity::on_master_node, [=] {
+            sycl::queue q;
+            
+            auto ptr = acc.get_pointer();
+            sycl::buffer<double, 2> syclbuff(
+                ptr, sycl::range<2>(params.nVx, params.nx));
+            
+            validate_result(q, syclbuff, params);
+            q.wait();
+        });
+    });
+
+}   // end validate_distr_result
+// void
+// validate_distr_result(celerity::distr_queue &Q,
+//                       celerity::buffer<double, 2> &buff_fdistrib,
+//                       const ADVParams &params) noexcept {
+
+//     double errorL1 = 0.0;
+//     {
+//         // sycl::buffer<double> buff_errorL1{&errorL1, 1};
+
+//         celerity::buffer<double, 1> buff_errorL1{&errorL1,
+//                                                  celerity::range<1>{1}};
+
+//         Q.submit([&](celerity::handler &cgh) {
+//              celerity::accessor fdist(buff_fdistrib, cgh,
+//                                       celerity::access::one_to_one{},
+//                                       celerity::read_only);
+
+//              auto reduc_errorL1 = celerity::reduction(
+//                  buff_errorL1, cgh, sycl::plus<double>{});
+//                 //  celerity::property::reduction::initialize_to_identity{});
+
+//              cgh.parallel_for(
+//                  buff_fdistrib.get_range(), reduc_errorL1,
+//                  [=](celerity::item<2> itm, auto &reduc_errorL1) {
+//                      auto ix = itm[1];
+//                      auto ivx = itm[0];
+//                      auto f = fdist[itm];
+
+//                      double const x = params.minRealx + ix * params.dx;
+//                      double const v = params.minRealVx + ivx * params.dVx;
+//                      double const t = params.maxIter * params.dt;
+
+//                      auto value = sycl::sin(4 * M_PI * (x - v * t));
+
+//                      auto err = sycl::fabs(f - value);
+//                      reduc_errorL1 += err;
+//                  });
+//          }).wait_and_throw();
+//     }
+
+//     std::cout << "Total cumulated error: "
+//               << errorL1 * params.dx * params.dVx << "\n"
+//               << std::endl;
+
+// }   // end validate_distr_result
+
 // ==========================================
 // ==========================================
 [[nodiscard]] double
