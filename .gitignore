@@ -1,5 +1,5 @@
 .vscode
-*build*
+*[Bb]uild*
 benchmark/log/*
 benchmark/pandas
 *.ods#
