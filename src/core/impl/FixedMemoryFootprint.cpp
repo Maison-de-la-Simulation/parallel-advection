@@ -5,18 +5,18 @@ AdvX::FixedMemoryFootprint::operator()(sycl::queue &Q,
                                        sycl::buffer<double, 2> &buff_fdistrib,
                                        const ADVParams &params) noexcept {
     auto const nx = params.nx;
-    auto const nVx = params.nVx;
-    auto const minRealx = params.minRealx;
+    auto const nvx = params.nvx;
+    auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
     /* All this should be done in ctor not in kernel */
     auto const NB_SLICES_IN_MEMORY = 10;
-    auto const NB_TOTAL_ITERATIONS = nVx / NB_SLICES_IN_MEMORY;
-    auto const REST_ITERATIONS = nVx % NB_SLICES_IN_MEMORY;
+    auto const NB_TOTAL_ITERATIONS = nvx / NB_SLICES_IN_MEMORY;
+    auto const REST_ITERATIONS = nvx % NB_SLICES_IN_MEMORY;
 
     assert(REST_ITERATIONS ==
-           0);   // for now nVx need to be divisible by NB_SLICES
+           0);   // for now nvx need to be divisible by NB_SLICES
 
     // sycl::buffer<double, 2> FTMP_BUFF{sycl::range<2>{NB_SLICES_IN_MEMORY,
     // nx}};
@@ -24,7 +24,7 @@ AdvX::FixedMemoryFootprint::operator()(sycl::queue &Q,
         nx * NB_SLICES_IN_MEMORY * sizeof(double), Q);
 
 
-    // const sycl::range<2> global_size{nVx, nx};
+    // const sycl::range<2> global_size{nvx, nx};
     // const sycl::range<2> local_size(1, nx);
 
     const sycl::range<2> nb_wg{NB_TOTAL_ITERATIONS, 1};
@@ -63,12 +63,12 @@ AdvX::FixedMemoryFootprint::operator()(sycl::queue &Q,
                         // Corresponds to the index of the cell to the left of
                         // footCoord
                         const int LeftDiscreteNode =
-                            sycl::floor((xFootCoord - minRealx) * inv_dx);
+                            sycl::floor((xFootCoord - minRealX) * inv_dx);
 
                         const double d_prev1 =
                             LAG_OFFSET +
                             inv_dx * (xFootCoord -
-                                      coord(LeftDiscreteNode, minRealx, dx));
+                                      coord(LeftDiscreteNode, minRealX, dx));
 
                         auto coef = lag_basis(d_prev1);
 

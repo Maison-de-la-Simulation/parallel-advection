@@ -6,18 +6,20 @@ AdvX::BasicRange1D::operator()(sycl::queue &Q,
                                const ADVParams &params) noexcept {
 
     auto const nx = params.nx;
-    auto const nVx = params.nVx;
-    auto const minRealx = params.minRealx;
+    auto const nvx = params.nvx;
+    auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
     Q.submit([&](sycl::handler &cgh) {
         auto fdist =
             buff_fdistrib.get_access<sycl::access::mode::read>(cgh);
-        sycl::accessor<double, 2> ftmp(m_global_buff_ftmp, cgh,
-                                       sycl::write_only, sycl::no_init);
+        
+        auto ftmp = m_global_buff_ftmp.get_access<sycl::access::mode::write>(cgh);
+        // sycl::accessor<double, 2> ftmp(m_global_buff_ftmp, cgh,
+        //                                sycl::write_only);
 
-        cgh.parallel_for(sycl::range<1>(nVx), [=](sycl::id<1> itm) {
+        cgh.parallel_for(sycl::range<1>(nvx), [=](sycl::id<1> itm) {
             const int ivx = itm[0];
 
             for (int ix = 0; ix < nx; ++ix) {
@@ -25,11 +27,11 @@ AdvX::BasicRange1D::operator()(sycl::queue &Q,
 
                 // Corresponds to the index of the cell to the left of footCoord
                 const int LeftDiscreteNode =
-                    sycl::floor((xFootCoord - minRealx) * inv_dx);
+                    sycl::floor((xFootCoord - minRealX) * inv_dx);
 
                 const double d_prev1 =
                     LAG_OFFSET + inv_dx * (xFootCoord - coord(LeftDiscreteNode,
-                                                              minRealx, dx));
+                                                              minRealX, dx));
 
                 auto coef =  lag_basis(d_prev1);
 

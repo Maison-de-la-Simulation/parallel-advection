@@ -5,13 +5,13 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
                                sycl::buffer<double, 2> &buff_fdistrib,
                                const ADVParams &params) noexcept {
     auto const nx = params.nx;
-    auto const nVx = params.nVx;
-    auto const minRealx = params.minRealx;
+    auto const nvx = params.nvx;
+    auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    // assert(nVx % 512 == 0);
-    const sycl::range<1> nb_wg{nVx};
+    // assert(nvx % 512 == 0);
+    const sycl::range<1> nb_wg{nvx};
     const sycl::range<1> wg_size{params.wg_size};
 
     return Q.submit([&](sycl::handler &cgh) {
@@ -29,12 +29,12 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
                     // Corresponds to the index of the cell to the left of
                     // footCoord
                     const int LeftDiscreteNode =
-                        sycl::floor((xFootCoord - minRealx) * inv_dx);
+                        sycl::floor((xFootCoord - minRealX) * inv_dx);
 
                     const double d_prev1 =
                         LAG_OFFSET +
                         inv_dx * (xFootCoord -
-                                  coord(LeftDiscreteNode, minRealx, dx));
+                                  coord(LeftDiscreteNode, minRealX, dx));
 
                     auto coef = lag_basis(d_prev1);
 

@@ -2,6 +2,7 @@
 #include "ConfigMap.h"
 #include <unordered_map>
 #include <iostream>
+#include <sycl/sycl.hpp>
 
 /**
  * Advection Parameters (declaration)
@@ -23,7 +24,7 @@ struct ADVParams {
   size_t nx;
 
   // Number of points for speeds (Vx)
-  size_t nVx;
+  size_t nvx;
 
   // Sizes of the SYCL work groups
   size_t wg_size;
@@ -31,14 +32,14 @@ struct ADVParams {
   // Deltas : taille physique d'une cellule discrète (en x, vx, t)
   double dt;
   double dx;
-  double dVx;
+  double dvx;
 
   double inv_dx; // precompute inverse of dx
 
   // Min/max physical values of x (i.e., x[0] and x[-1])
-  double minRealx;
-  double maxRealx;
-  double realWidthx;
+  double minRealX;
+  double maxRealX;
+  double realWidthX;
 
   // Min/max physical value of Vx
   double minRealVx;
@@ -50,3 +51,11 @@ struct ADVParams {
   //! print parameters on screen
   void print();
 }; // struct ADVParams
+
+// #ifdef SYCL_DEVICE_COPYABLE 
+template<>
+struct sycl::is_device_copyable<const ADVParams> : std::true_type {};
+
+template<>
+struct sycl::is_device_copyable<ADVParams> : std::true_type {};
+// #endif

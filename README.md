@@ -62,8 +62,8 @@ n_fict_dim = 1  # nb of points in the fictive dimension
 [discretization]
 dt  = 0.001
 
-minRealx  = 0
-maxRealx  = 1
+minRealX  = 0
+maxRealX  = 1
 minRealVx = -1
 maxRealVx = 1
 ```

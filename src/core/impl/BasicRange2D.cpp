@@ -5,7 +5,7 @@ AdvX::BasicRange2D::operator()(sycl::queue &Q,
                                sycl::buffer<double, 2> &buff_fdistrib,
                                const ADVParams &params) noexcept {
     auto const nx = params.nx;
-    auto const minRealx = params.minRealx;
+    auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
@@ -24,11 +24,11 @@ AdvX::BasicRange2D::operator()(sycl::queue &Q,
 
             // Corresponds to the index of the cell to the left of footCoord
             const int LeftDiscreteNode =
-                sycl::floor((xFootCoord - minRealx) * inv_dx);
+                sycl::floor((xFootCoord - minRealX) * inv_dx);
 
             const double d_prev1 =
                 LAG_OFFSET +
-                inv_dx * (xFootCoord - coord(LeftDiscreteNode, minRealx, dx));
+                inv_dx * (xFootCoord - coord(LeftDiscreteNode, minRealX, dx));
 
             auto coef = lag_basis(d_prev1);
 

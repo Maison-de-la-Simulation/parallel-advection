@@ -5,8 +5,8 @@ AdvX::Sequential::operator()(sycl::queue &Q,
                              sycl::buffer<double, 2> &buff_fdistrib,
                              const ADVParams &params) noexcept {
     auto const nx = params.nx;
-    auto const nVx = params.nVx;
-    auto const minRealx = params.minRealx;
+    auto const nvx = params.nvx;
+    auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
@@ -20,7 +20,7 @@ AdvX::Sequential::operator()(sycl::queue &Q,
 
         cgh.single_task([=]() {
             // For each Vx
-            for (int ivx = 0; ivx < nVx; ++ivx) {
+            for (int ivx = 0; ivx < nvx; ++ivx) {
 
                 // std::array<double, Nx> ftmp{};
                 // double* x_slice = sycl::malloc_device(sizeof(double)*Nx,);
@@ -39,7 +39,7 @@ AdvX::Sequential::operator()(sycl::queue &Q,
                     // Corresponds to the index of the cell to the left of
                     // footCoord
                     const int LeftDiscreteNode =
-                        sycl::floor((xFootCoord - minRealx) * inv_dx);
+                        sycl::floor((xFootCoord - minRealX) * inv_dx);
 
                     // d_prev1 : dist entre premier point utilisé pour
                     // l'interpolation et xFootCoord (dans l'espace de coord
@@ -50,7 +50,7 @@ AdvX::Sequential::operator()(sycl::queue &Q,
                     const double d_prev1 =
                         LAG_OFFSET +
                         inv_dx *
-                            (xFootCoord - (minRealx + LeftDiscreteNode * dx));
+                            (xFootCoord - (minRealX + LeftDiscreteNode * dx));
 
                     auto coef = lag_basis(d_prev1);
 

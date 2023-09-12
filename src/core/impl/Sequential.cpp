@@ -5,15 +5,15 @@ AdvX::Sequential::operator()([[maybe_unused]] sycl::queue &Q,
                              sycl::buffer<double, 2> &buff_fdistrib,
                              const ADVParams &params) noexcept {
     auto const nx = params.nx;
-    size_t const nVx = params.nVx;
-    auto const minRealx = params.minRealx;
+    size_t const nvx = params.nvx;
+    auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
     std::vector<double> slice_ftmp(nx);
     sycl::host_accessor fdist(buff_fdistrib, sycl::read_write);
 
-    for (auto iv = 0; iv < nVx; ++iv) {
+    for (auto iv = 0; iv < nvx; ++iv) {
 
         for (int iix = 0; iix < nx; ++iix) {
             // slice_x[iix] = fdist[iix][iv];
@@ -26,11 +26,11 @@ AdvX::Sequential::operator()([[maybe_unused]] sycl::queue &Q,
             double const xFootCoord = displ(ix, iv, params);
 
             const int LeftDiscreteNode =
-                sycl::floor((xFootCoord - minRealx) * inv_dx);
+                sycl::floor((xFootCoord - minRealX) * inv_dx);
 
             const double d_prev1 =
                 LAG_OFFSET +
-                inv_dx * (xFootCoord - coord(LeftDiscreteNode, minRealx, dx));
+                inv_dx * (xFootCoord - coord(LeftDiscreteNode, minRealX, dx));
 
             auto coef = lag_basis(d_prev1);
 

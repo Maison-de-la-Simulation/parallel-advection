@@ -12,7 +12,7 @@ print_buffer(sycl::buffer<double, 2> &fdist, const ADVParams &params) noexcept {
     sycl::host_accessor tab(fdist, sycl::read_only);
 
     for (int ix = 0; ix < params.nx; ++ix) {
-        for (int iv = 0; iv < params.nVx; ++iv) {
+        for (int iv = 0; iv < params.nvx; ++iv) {
             std::cout << tab[ix][iv] << " ";
         }
         std::cout << std::endl;
@@ -32,7 +32,7 @@ export_result_to_file(sycl::buffer<double, 2> &buff_fdistrib,
 
     std::ofstream outfile(str);
 
-    for (int iv = 0; iv < params.nVx; ++iv) {
+    for (int iv = 0; iv < params.nvx; ++iv) {
         for (int ix = 0; ix < params.nx; ++ix) {
             outfile << fdist[iv][ix];
 
@@ -57,11 +57,11 @@ export_error_to_file(sycl::buffer<double, 2> &buff_fdistrib,
 
     std::ofstream outfile(str);
 
-    for (int iv = 0; iv < params.nVx; ++iv) {
+    for (int iv = 0; iv < params.nvx; ++iv) {
         for (int ix = 0; ix < params.nx; ++ix) {
 
-            double const x = params.minRealx + ix * params.dx;
-            double const v = params.minRealVx + iv * params.dVx;
+            double const x = params.minRealX + ix * params.dx;
+            double const v = params.minRealVx + iv * params.dvx;
             double const t = params.maxIter * params.dt;
             auto value = sycl::sin(4 * M_PI * (x - v * t));
 

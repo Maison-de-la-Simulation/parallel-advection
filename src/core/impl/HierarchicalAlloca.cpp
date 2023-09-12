@@ -5,12 +5,12 @@ AdvX::HierarchicalAlloca::operator()(sycl::queue &Q,
                                      sycl::buffer<double, 2> &buff_fdistrib,
                                      const ADVParams &params) noexcept {
     auto const nx = params.nx;
-    auto const nVx = params.nVx;
-    auto const minRealx = params.minRealx;
+    auto const nvx = params.nvx;
+    auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    const sycl::range<1> nb_wg{nVx};
+    const sycl::range<1> nb_wg{nvx};
     const sycl::range<1> wg_size{params.wg_size};
 
     return Q.submit([&](sycl::handler &cgh) {
@@ -28,12 +28,12 @@ AdvX::HierarchicalAlloca::operator()(sycl::queue &Q,
                     double const xFootCoord = displ(ix, ivx, params);
 
                     const int LeftDiscreteNode =
-                        sycl::floor((xFootCoord - minRealx) * inv_dx);
+                        sycl::floor((xFootCoord - minRealX) * inv_dx);
 
                     const double d_prev1 =
                         LAG_OFFSET +
                         inv_dx * (xFootCoord -
-                                  coord(LeftDiscreteNode, minRealx, dx));
+                                  coord(LeftDiscreteNode, minRealX, dx));
 
                     auto coef = lag_basis(d_prev1);
 

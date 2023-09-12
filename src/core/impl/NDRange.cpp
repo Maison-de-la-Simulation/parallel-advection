@@ -5,12 +5,12 @@ AdvX::NDRange::operator()(sycl::queue &Q,
                           sycl::buffer<double, 2> &buff_fdistrib,
                           const ADVParams &params) noexcept {
     auto const nx = params.nx;
-    auto const nVx = params.nVx;
-    auto const minRealx = params.minRealx;
+    auto const nvx = params.nvx;
+    auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    const sycl::range<2> global_size{nVx, nx};
+    const sycl::range<2> global_size{nvx, nx};
     const sycl::range<2> local_size{1, nx};
 
     return Q.submit([&](sycl::handler &cgh) {
@@ -28,11 +28,11 @@ AdvX::NDRange::operator()(sycl::queue &Q,
                 double const xFootCoord = displ(ix, ivx, params);
 
                 const int LeftDiscreteNode =
-                    sycl::floor((xFootCoord - minRealx) * inv_dx);
+                    sycl::floor((xFootCoord - minRealX) * inv_dx);
 
                 const double d_prev1 =
                     LAG_OFFSET + inv_dx * (xFootCoord - coord(LeftDiscreteNode,
-                                                              minRealx, dx));
+                                                              minRealX, dx));
 
                 auto coef = lag_basis(d_prev1);
 

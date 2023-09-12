@@ -57,19 +57,19 @@ class IAdvectorX {
     /* Computes the covered distance by x during dt. returns the feet coord */
     [[nodiscard]] static inline __attribute__((always_inline)) double
     displ(const int ix, const int ivx, const ADVParams &params) noexcept {
-        auto const minRealx = params.minRealx;
+        auto const minRealX = params.minRealX;
         auto const minRealVx = params.minRealVx;
         auto const dx = params.dx;
-        auto const dVx = params.dVx;
+        auto const dvx = params.dvx;
         auto const dt = params.dt;
-        auto const realWidthx = params.realWidthx;
+        auto const realWidthX = params.realWidthX;
 
-        double const x = coord(ix, minRealx, dx);
-        double const vx = coord(ivx, minRealVx, dVx);
+        double const x = coord(ix, minRealX, dx);
+        double const vx = coord(ivx, minRealVx, dvx);
 
         double const displx = dt * vx;
 
-        return minRealx +
-               sycl::fmod(realWidthx + x - displx - minRealx, realWidthx);
+        return minRealX +
+               sycl::fmod(realWidthX + x - displx - minRealX, realWidthX);
     }   // end displ
 };

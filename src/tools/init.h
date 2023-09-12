@@ -25,9 +25,9 @@ kernel_impl_factory(const ADVParams &params) {
     case str2int("Sequential"):
         return sref::make_unique<AdvX::Sequential>();
     case str2int("BasicRange2D"):
-        return sref::make_unique<AdvX::BasicRange2D>(params.nx, params.nVx);
+        return sref::make_unique<AdvX::BasicRange2D>(params.nx, params.nvx);
     case str2int("BasicRange1D"):
-        return sref::make_unique<AdvX::BasicRange1D>(params.nx, params.nVx);
+        return sref::make_unique<AdvX::BasicRange1D>(params.nx, params.nvx);
     case str2int("Hierarchical"):
         return sref::make_unique<AdvX::Hierarchical>();
     case str2int("HierarchicalAlloca"):
@@ -56,7 +56,7 @@ fill_buffer(sycl::queue &q, sycl::buffer<double, 2> &buff_fdist,
         cgh.parallel_for(buff_fdist.get_range(), [=](sycl::id<2> itm) {
             const int ix = itm[1];
 
-            double x = params.minRealx + ix * params.dx;
+            double x = params.minRealX + ix * params.dx;
             fdist[itm] = sycl::sin(4 * x * M_PI);
         });   // end parallel_for
     });       // end q.submit
