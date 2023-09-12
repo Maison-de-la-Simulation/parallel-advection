@@ -1,0 +1,32 @@
+name: Publish docker images for SYCL
+
+on:
+  push: { branches: [ 'containers' ] }
+
+jobs:
+  push-hipsycl:
+    strategy:
+      matrix:
+        implem: ['hipsycl0.9.4']
+        backend: ['cuda11.8']
+        # backend: ['rocm5.3.0', 'cuda11.8']
+        # exclude:
+        # - implem: 'dpcpp'
+        #   backend: 'cuda'
+        # - implem: 'dpcpp'
+        #   backend: 'hip'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout built branch
+        uses: actions/checkout@v3
+      - name: Build and push
+        run: |
+          echo ${{ secrets.GH_ACCESS_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker pull ghcr.io/maison-de-la-simulation/${{matrix.implem}}-${{matrix.backend}}
+          docker build \
+            --cache-from ghcr.io/maison-de-la-simulation/${{matrix.implem}}-${{matrix.backend}} \
+            --tag ghcr.io/maison-de-la-simulation/${{matrix.implem}}-${{matrix.backend}} \
+            containers/${{matrix.implem}}-${{matrix.backend}}
+          docker push ghcr.io/maison-de-la-simulation/${{matrix.image}}-${{matrix.backend}}
+  # push-dpcpp:
+  #   runs-on: ubuntu-latest
