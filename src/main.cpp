@@ -39,7 +39,7 @@ main(int argc, char **argv) {
     const auto run_on_gpu = params.gpu;
 
     /* Use different queues depending on SYCL implem */
-#ifdef __INTEL_LLVM_COMPILER
+#if (defined(SYCL_IMPLEMENTATION_ONEAPI) || defined(__INTEL_LLVM_COMPILER))
     std::cout << "Running with DPCPP" << std::endl;
     /* Double not supported on IntelGraphics so we choose the CPU
     if not with OpenSYCL */

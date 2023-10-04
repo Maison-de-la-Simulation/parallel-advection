@@ -72,4 +72,26 @@ class IAdvectorX {
         return minRealX +
                sycl::fmod(realWidthX + x - displx - minRealX, realWidthX);
     }   // end displ
+
+    // ==========================================
+    // ==========================================
+    [[nodiscard]] static inline __attribute__((always_inline)) double
+    displ(const int ix,
+          const int ivx,
+          const double minRealX,
+          const double minRealVx,
+          const double realWidthX,
+          const double dx,
+          const double dvx,
+          const double dt
+          ) noexcept {
+
+        double const x = coord(ix, minRealX, dx);
+        double const vx = coord(ivx, minRealVx, dvx);
+
+        double const displx = dt * vx;
+
+        return minRealX +
+               sycl::fmod(realWidthX + x - displx - minRealX, realWidthX);
+    }   // end displ
 };

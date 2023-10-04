@@ -52,10 +52,10 @@ struct ADVParams {
   void print();
 }; // struct ADVParams
 
-// #ifdef SYCL_DEVICE_COPYABLE 
-template<>
-struct sycl::is_device_copyable<const ADVParams> : std::true_type {};
-
+#ifdef SYCL_DEVICE_COPYABLE 
 template<>
 struct sycl::is_device_copyable<ADVParams> : std::true_type {};
-// #endif
+#endif
+
+// template<>
+// struct sycl::is_device_copyable<ADVParams> : std::true_type {};

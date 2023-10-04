@@ -20,7 +20,7 @@ AdvX::Sequential::operator()([[maybe_unused]] sycl::queue &Q,
             slice_ftmp[iix] = 0;
         }
 
-        // For each x with regards to current Vx
+        // For each x with regards to current 
         for (auto ix = 0; ix < nx; ++ix) {
 
             double const xFootCoord = displ(ix, iv, params);
