@@ -8,6 +8,7 @@ RUN apt install -y python3 python3-venv python3-dev python3-pip
 RUN apt install -y lsb-release software-properties-common gnupg
 RUN apt install -y cmake ninja-build
 RUN apt install -y libboost-all-dev
+RUN apt install -y vim
 
 WORKDIR /opt
 
@@ -66,13 +67,10 @@ RUN sudo apt update \
 
 #esimd requirement
 RUN sudo apt install -y libva-dev libffi-dev libtool
-
 #OpenCL requirement
 RUN sudo apt install -y clinfo intel-opencl-icd opencl-headers
-
 #check clinfo
 RUN clinfo
-
 
 
 ############################

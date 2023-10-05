@@ -9,8 +9,8 @@ target_sources(core
   impl/Hierarchical.cpp
   impl/NDRange.cpp
   impl/Scoped.cpp
-  impl/HierarchicalAlloca.cpp
-  impl/FixedMemoryFootprint.cpp
+  # impl/HierarchicalAlloca.cpp
+  # impl/FixedMemoryFootprint.cpp
 )
 
 target_include_directories(core
@@ -18,6 +18,8 @@ target_include_directories(core
   ${CMAKE_SOURCE_DIR}/src/core
   ${CMAKE_SOURCE_DIR}/src/config
   ) 
+
+target_link_libraries(core PUBLIC compiler_wrapper)
 
 #Add an alias so that library can be used inside the build tree
 add_library(adv1d::core ALIAS core)

@@ -15,7 +15,7 @@ get_filename_component(NAME "${CMAKE_CXX_COMPILER}"
 add_executable(advection main.cpp)
 target_link_libraries(advection
     PUBLIC
-    # compiler_wrapper
+    compiler_wrapper
     adv1d::config
     adv1d::core
     adv1d::tools)

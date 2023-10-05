@@ -39,12 +39,12 @@ main(int argc, char **argv) {
     const auto run_on_gpu = params.gpu;
 
     /* Use different queues depending on SYCL implem */
-#if (defined(SYCL_IMPLEMENTATION_ONEAPI) || defined(__INTEL_LLVM_COMPILER))
-    std::cout << "Running with DPCPP" << std::endl;
+// #if (defined(SYCL_IMPLEMENTATION_ONEAPI) || defined(__INTEL_LLVM_COMPILER))
+    // std::cout << "Running with DPCPP" << std::endl;
     /* Double not supported on IntelGraphics so we choose the CPU
     if not with OpenSYCL */
-    sycl::queue Q{sycl::cpu_selector_v};
-#else   //__HIPSYCL__
+    // sycl::queue Q{sycl::cpu_selector_v};
+// #else   //__HIPSYCL__
     sycl::device d;
     if (run_on_gpu)
         try {
@@ -62,7 +62,7 @@ main(int argc, char **argv) {
         d = sycl::device{sycl::cpu_selector_v};
 
     sycl::queue Q{d};
-#endif
+// #endif
 
     params.print();
 

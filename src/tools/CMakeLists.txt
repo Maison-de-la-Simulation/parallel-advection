@@ -1,10 +1,13 @@
 add_library(tools INTERFACE) #INTERFACE so we don't need source .cpp files
 
+# target_link_libraries(tools PUBLIC compiler_wrapper)
+
 target_sources(tools
   PRIVATE
   init.h
   unique_ref.h
   validation.h)
+
 
 target_include_directories(core
   PUBLIC

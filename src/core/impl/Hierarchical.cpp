@@ -21,7 +21,11 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
     const sycl::range<1> nb_wg{nvx};
     const sycl::range<1> wg_size{params.wg_size};
 
+
     return Q.submit([&](sycl::handler &cgh) {
+#ifdef SYCL_IMPLEMENTATION_ONEAPI   // for DPCPP
+throw std::logic_error("Hierarchical kernel is not compatible with DPCPP");
+#else   // for acpp
         auto fdist =
             buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
 
@@ -61,14 +65,7 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
                                     slice_ftmp.get_pointer(), nx)
                 .wait();
 
-            // // g.parallel_for_work_item(sycl::range<1>(nx),
-            // //                          [&](sycl::h_item<1> it) {
-            // //                              const int ix = it.get_local_id(0);
-            // //                              const int ivx = g.get_group_id(0);
-            // //                              fdist[ivx][ix] = slice_ftmp[ix];
-            // //                          });
-
-            // g.async_work_group_copy(); doesn't work in hierarhical dunno why
         });   // end parallel_for_work_group
+#endif
     });       // end Q.submit
 }

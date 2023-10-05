@@ -71,23 +71,23 @@ class Scoped : public IAdvectorX {
                            const ADVParams &params) noexcept override;
 };
 
-class HierarchicalAlloca : public IAdvectorX {
-    using IAdvectorX::IAdvectorX;
+// class HierarchicalAlloca : public IAdvectorX {
+//     using IAdvectorX::IAdvectorX;
 
-  public:
-    sycl::event operator()(sycl::queue &Q,
-                           sycl::buffer<double, 2> &buff_fdistrib,
-                           const ADVParams &params) noexcept override;
-};
+//   public:
+//     sycl::event operator()(sycl::queue &Q,
+//                            sycl::buffer<double, 2> &buff_fdistrib,
+//                            const ADVParams &params) noexcept override;
+// };
 
-/* Fixed memory footprint using a basic range */
-class FixedMemoryFootprint : public IAdvectorX {
-    using IAdvectorX::IAdvectorX;
+// /* Fixed memory footprint using a basic range */
+// class FixedMemoryFootprint : public IAdvectorX {
+//     using IAdvectorX::IAdvectorX;
 
-  public:
-    sycl::event operator()(sycl::queue &Q,
-                           sycl::buffer<double, 2> &buff_fdistrib,
-                           const ADVParams &params) noexcept override;
-};
+//   public:
+//     sycl::event operator()(sycl::queue &Q,
+//                            sycl::buffer<double, 2> &buff_fdistrib,
+//                            const ADVParams &params) noexcept override;
+// };
 
 }   // namespace AdvX
