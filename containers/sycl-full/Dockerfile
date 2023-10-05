@@ -145,3 +145,5 @@ RUN rm -rf source
 RUN git clone https://github.com/Maison-de-la-Simulation/parallel-advection.git -b containers
 
 LABEL org.opencontainers.image.source=https://github.com/maison-de-la-simulation/parallel-advection
+
+COPY scripts/setenv.sh /opt/setenv.sh

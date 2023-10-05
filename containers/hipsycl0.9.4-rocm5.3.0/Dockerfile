@@ -9,7 +9,9 @@ ENV SPACK_SOURCE=/opt/spack/share/spack/setup-env.sh
 WORKDIR /opt
 
 RUN apt update && apt install git -y \
-&& git clone https://github.com/OpenSYCL/OpenSYCL.git --branch=v0.9.4 \
+&& git clone https://github.com/AdaptiveCpp/AdaptiveCpp.git \
+&& cd AdaptiveCpp && git checkout aa00030be7ace53ea5716c6237e210a56e2227de \
+&& cd .. \
 && git clone https://github.com/Maison-de-la-Simulation/parallel-advection.git \
 && git clone https://github.com/spack/spack.git && cd spack \
 && git checkout 9d00bcb2864ee5a4c841f2178435aaec9f25a808  && cd /opt \

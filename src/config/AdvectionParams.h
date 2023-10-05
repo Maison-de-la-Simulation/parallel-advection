@@ -56,6 +56,3 @@ struct ADVParams {
 template<>
 struct sycl::is_device_copyable<ADVParams> : std::true_type {};
 #endif
-
-// template<>
-// struct sycl::is_device_copyable<ADVParams> : std::true_type {};

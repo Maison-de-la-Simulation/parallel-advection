@@ -56,10 +56,10 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
                     }
                 });   // end parallel_for_work_item --> Implicit barrier
 
-            // g.async_work_group_copy(fdist.get_pointer() +
-            //                             nx * g.get_group_id(0),
-            //                         slice_ftmp.get_pointer(), nx)
-            //     .wait();
+            g.async_work_group_copy(fdist.get_pointer() +
+                                        nx * g.get_group_id(0),
+                                    slice_ftmp.get_pointer(), nx)
+                .wait();
 
             // // g.parallel_for_work_item(sycl::range<1>(nx),
             // //                          [&](sycl::h_item<1> it) {
