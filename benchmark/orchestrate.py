@@ -23,9 +23,8 @@ GLOBAL_CSV_FILE="/gpfs/users/millana/source/parallel-advection/benchmark/log/des
 
 SETS={
     'kernelImpl':["BasicRange2D", "BasicRange1D", "Hierarchical" , "Scoped", "NDRange"],
-    # 'kernelImpl':["BasicRange2D", "Hierarchical" , "Scoped", "NDRange"],
-    'use_gpu':[False],
-    '(nx,nvx)':[(64,64), (128,128), (256,256), (512,512), (1024,1024), (1024, 4096), (1024, 8192), (1024, 16384), (1024, 32768), (1024, 32768*2), (1024, 32768*2*2), (1024, 32768*2*2*2)],
+    'use_gpu':[True],
+    '(nx,nvx)':[(1024,1024), (1024, 4096), (1024, 8192), (1024, 16384), (1024, 32768), (1024, 32768*2), (1024, 32768*2*2), (1024, 32768*2*2*2)],
 }
 
 if __name__ == "__main__":

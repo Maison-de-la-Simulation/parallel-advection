@@ -3,13 +3,13 @@
 #SBATCH --output=%x.o%j
 #SBATCH --nodes=1
 #SBATCH --exclusive
-#SBATCH --time=03:59:00
-#SBATCH --partition=cpu_med
+#SBATCH --gres=gpu:1
+#SBATCH --partition=gpua100
+#SBATCH --time=01:59:00
+######SBATCH --partition=cpu_med
 
-#####SBATCH --gres=gpu:1
-#####SBATCH --partition=gpua100
 
-NB_RUNS=5
+NB_RUNS=10
 
 #main program to run
 EXECUTABLE=$1
