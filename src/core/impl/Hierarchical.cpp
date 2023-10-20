@@ -23,9 +23,6 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
 
 
     return Q.submit([&](sycl::handler &cgh) {
-#ifdef SYCL_IMPLEMENTATION_ONEAPI   // for DPCPP
-throw std::logic_error("Hierarchical kernel is not compatible with DPCPP");
-#else   // for acpp
         auto fdist =
             buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
 
@@ -60,12 +57,21 @@ throw std::logic_error("Hierarchical kernel is not compatible with DPCPP");
                     }
                 });   // end parallel_for_work_item --> Implicit barrier
 
+
+#ifdef SYCL_IMPLEMENTATION_ONEAPI   // for DPCPP
+            g.parallel_for_work_item(
+                sycl::range<1>(nx), [&](sycl::h_item<1> it) {
+                    const int ix = it.get_local_id(0);
+                    const int ivx = g.get_group_id(0);
+                    fdist[ivx][ix] = slice_ftmp[ix];
+                }); 
+#else   // for acpp
             g.async_work_group_copy(fdist.get_pointer() +
                                         nx * g.get_group_id(0),
                                     slice_ftmp.get_pointer(), nx)
                 .wait();
+#endif
 
         });   // end parallel_for_work_group
-#endif
     });       // end Q.submit
 }
