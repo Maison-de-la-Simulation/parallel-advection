@@ -10,18 +10,18 @@
 // ==========================================
 void
 advection(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
-          sref::unique_ref<IAdvectorX> &advector, const ADVParams &params) {
+          sref::unique_ref<IAdvectorX> &advector, const ADVParams &strParams) {
 
-    auto static const maxIter = params.maxIter;
+    auto static const maxIter = strParams.maxIter;
 
     // Time loop, cannot parallelize this
     for (auto t = 0; t < maxIter; ++t) {
 
         // If it's last iteration, we wait
         if (t == maxIter - 1)
-            advector(Q, buff_fdistrib, params).wait_and_throw();
+            advector(Q, buff_fdistrib, strParams).wait_and_throw();
         else
-            advector(Q, buff_fdistrib, params);
+            advector(Q, buff_fdistrib, strParams);
     }   // end for t < T
 
 }   // end advection
@@ -33,10 +33,12 @@ main(int argc, char **argv) {
     /* Read input parameters */
     std::string input_file = argc > 1 ? std::string(argv[1]) : "advection.ini";
     ConfigMap configMap(input_file);
-    ADVParams params = ADVParams();
-    params.setup(configMap);
 
-    const auto run_on_gpu = params.gpu;
+    
+    ADVParamsNonCopyable strParams;// = ADVParamsNonCopyable();
+    strParams.setup(configMap);
+
+    const auto run_on_gpu = strParams.gpu;
 
     /* Use different queues depending on SYCL implem */
 // #if (defined(SYCL_IMPLEMENTATION_ONEAPI) || defined(__INTEL_LLVM_COMPILER))
@@ -56,7 +58,7 @@ main(int argc, char **argv) {
                 << std::endl;
             d = sycl::device{sycl::cpu_selector_v};
             // d = sycl::device{sycl::};
-            params.gpu = false;
+            strParams.gpu = false;
         }
     else
         d = sycl::device{sycl::cpu_selector_v};
@@ -64,7 +66,8 @@ main(int argc, char **argv) {
     sycl::queue Q{d};
 // #endif
 
-    params.print();
+    strParams.print();
+    ADVParams params(strParams);
 
     /* Display infos on current device */
     std::cout << "Using device: "
@@ -79,7 +82,8 @@ main(int argc, char **argv) {
     sycl::buffer<double, 2> buff_fdistrib(sycl::range<2>(nvx, nx));
     fill_buffer(Q, buff_fdistrib, params);
 
-    auto advector = kernel_impl_factory(params);
+    auto advector = kernel_impl_factory(strParams);
+
 
     auto start = std::chrono::high_resolution_clock::now();
     advection(Q, buff_fdistrib, advector, params);

@@ -1,8 +1,32 @@
 #include "AdvectionParams.h"
 
+ADVParams::ADVParams(ADVParamsNonCopyable &other){
+  nx = other.nx;
+  nvx = other.nvx;
+
+  maxIter = other.maxIter;
+  gpu = other.gpu;
+  outputSolution = other.outputSolution;
+
+  wg_size = other.wg_size;
+
+  dt = other.dt;
+
+  minRealX   = other.minRealX;
+  maxRealX   = other.maxRealX;
+  minRealVx  = other.minRealVx;
+  maxRealVx  = other.maxRealVx;
+
+  realWidthX = other.realWidthX;
+  dx         = other.dx        ;
+  dvx        = other.dvx       ;
+
+  inv_dx     = other.inv_dx;
+};
+
 // ======================================================
 // ======================================================
-void ADVParams::setup(const ConfigMap& configMap)
+void ADVParamsNonCopyable::setup(const ConfigMap& configMap)
 {
   // geometry
   nx  = configMap.getInteger("geometry", "nx",  512);
@@ -33,7 +57,7 @@ void ADVParams::setup(const ConfigMap& configMap)
 
 // ======================================================
 // ======================================================
-void ADVParams::print()
+void ADVParamsNonCopyable::print()
 {
   printf( "##########################\n");
   printf( "Simulation run parameters:\n");

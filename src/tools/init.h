@@ -19,8 +19,9 @@ static constexpr auto error_str =
 // // ==========================================
 // // ==========================================
 [[nodiscard]] sref::unique_ref<IAdvectorX>
-kernel_impl_factory(const ADVParams &params) {
-    std::string kernel_name = params.kernelImpl.data();
+kernel_impl_factory(const ADVParamsNonCopyable &params) {
+    std::string kernel_name(params.kernelImpl.begin(), params.kernelImpl.end());
+
     switch (str2int(kernel_name.data())) {
     case str2int("Sequential"):
         return sref::make_unique<AdvX::Sequential>();
