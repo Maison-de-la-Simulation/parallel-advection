@@ -41,23 +41,16 @@ main(int argc, char **argv) {
     const auto run_on_gpu = strParams.gpu;
 
     /* Use different queues depending on SYCL implem */
-// #if (defined(SYCL_IMPLEMENTATION_ONEAPI) || defined(__INTEL_LLVM_COMPILER))
-    // std::cout << "Running with DPCPP" << std::endl;
-    /* Double not supported on IntelGraphics so we choose the CPU
-    if not with OpenSYCL */
-    // sycl::queue Q{sycl::cpu_selector_v};
-// #else   //__HIPSYCL__
     sycl::device d;
     if (run_on_gpu)
         try {
             d = sycl::device{sycl::gpu_selector_v};
-        } catch (const sycl::runtime_error e) {
+        } catch (const std::runtime_error e) {
             std::cout
                 << "GPU was requested but none is available, running kernels "
                    "on the CPU\n"
                 << std::endl;
             d = sycl::device{sycl::cpu_selector_v};
-            // d = sycl::device{sycl::};
             strParams.gpu = false;
         }
     else
