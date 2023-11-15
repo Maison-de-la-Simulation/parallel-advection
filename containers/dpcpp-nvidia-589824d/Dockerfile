@@ -30,11 +30,6 @@ RUN mkdir -p /opt/sycl/source \
 && cd llvm \
 && git checkout 589824d \
 && mv /llvm /opt/sycl/source
-# COPY llvm /opt/sycl/source/llvm
-
-# Remove cuda from PATH and LD_LIBRARY_PATH
-# ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-# ENV LD_LIBRARY_PATH=
 
 # Build DPC++ compiler
 ENV CUDA_LIB_PATH=/usr/local/cuda/lib64/stubs
@@ -54,15 +49,15 @@ ENV LD_LIBRARY_PATH=/opt/sycl/lib:$LD_LIBRARY_PATH
 
 # setup non-root user
 # https://code.visualstudio.com/remote/advancedcontainers/add-nonroot-user#_creating-a-nonroot-user
-ARG USERNAME=vscode
-ARG USER_UID=1000
-ARG USER_GID=$USER_UID
-RUN groupadd --gid ${USER_GID} ${USERNAME} \
-    && useradd --uid ${USER_UID} --gid ${USER_GID} -m ${USERNAME} \
-    && apt-get update \
-    && apt-get install -y sudo \
-    && echo ${USERNAME} ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/${USERNAME} \
-    && chmod 0440 /etc/sudoers.d/${USERNAME} \
-    && rm -rf /var/lib/apt/lists/*
+# ARG USERNAME=vscode
+# ARG USER_UID=1000
+# ARG USER_GID=$USER_UID
+# RUN groupadd --gid ${USER_GID} ${USERNAME} \
+#     && useradd --uid ${USER_UID} --gid ${USER_GID} -m ${USERNAME} \
+#     && apt-get update \
+#     && apt-get install -y sudo \
+#     && echo ${USERNAME} ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/${USERNAME} \
+#     && chmod 0440 /etc/sudoers.d/${USERNAME} \
+#     && rm -rf /var/lib/apt/lists/*
 
-USER vscode
+# USER vscode
