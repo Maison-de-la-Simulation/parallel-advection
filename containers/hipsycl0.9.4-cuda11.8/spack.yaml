@@ -1,6 +1,0 @@
-spack:
-  concretizer:
-    unify: true
-  specs:
-    - 'hipsycl@0.9.4 +cuda ^cuda@11.8'
-    - 'cmake@3.21.0:3'

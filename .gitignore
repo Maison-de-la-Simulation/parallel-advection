@@ -6,3 +6,8 @@ benchmark/pandas
 *.xlsx#
 adv_*
 venv*
+*.tgz
+*.tar.gz
+*.tar
+pp.pdf
+multiplot.pdf
