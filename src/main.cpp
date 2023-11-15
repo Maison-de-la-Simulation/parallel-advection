@@ -8,22 +8,29 @@
 
 // ==========================================
 // ==========================================
-void
+// returns duration for maxIter-1 iterations
+std::chrono::duration<double>
 advection(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
-          sref::unique_ref<IAdvectorX> &advector, const ADVParams &strParams) {
+          sref::unique_ref<IAdvectorX> &advector, const ADVParams &params) {
 
-    auto static const maxIter = strParams.maxIter;
+    auto static const maxIter = params.maxIter;
 
-    // Time loop, cannot parallelize this
-    for (auto t = 0; t < maxIter; ++t) {
+    /* First iteration not timed */
+    advector(Q, buff_fdistrib, params);
+
+    auto start = std::chrono::high_resolution_clock::now();
+    // Time loop
+    for (auto t = 0; t < maxIter-1; ++t) {
 
         // If it's last iteration, we wait
-        if (t == maxIter - 1)
-            advector(Q, buff_fdistrib, strParams).wait_and_throw();
+        if (t == maxIter - 2)
+            advector(Q, buff_fdistrib, params).wait_and_throw();
         else
-            advector(Q, buff_fdistrib, strParams);
+            advector(Q, buff_fdistrib, params);
     }   // end for t < T
+    auto end = std::chrono::high_resolution_clock::now();
 
+    return (end - start);
 }   // end advection
 
 // ==========================================
@@ -40,7 +47,6 @@ main(int argc, char **argv) {
 
     const auto run_on_gpu = strParams.gpu;
 
-    /* Use different queues depending on SYCL implem */
     sycl::device d;
     if (run_on_gpu)
         try {
@@ -57,8 +63,8 @@ main(int argc, char **argv) {
         d = sycl::device{sycl::cpu_selector_v};
 
     sycl::queue Q{d};
-// #endif
 
+    /* Make trivially copyable params based on strParams*/
     strParams.print();
     ADVParams params(strParams);
 
@@ -78,9 +84,9 @@ main(int argc, char **argv) {
     auto advector = kernel_impl_factory(strParams);
 
 
-    auto start = std::chrono::high_resolution_clock::now();
-    advection(Q, buff_fdistrib, advector, params);
-    auto end = std::chrono::high_resolution_clock::now();
+    // auto start = std::chrono::high_resolution_clock::now();
+    auto elapsed_seconds = advection(Q, buff_fdistrib, advector, params);
+    // auto end = std::chrono::high_resolution_clock::now();
 
     std::cout << "\nRESULTS_VALIDATION:" << std::endl;
     validate_result(Q, buff_fdistrib, params);
@@ -91,10 +97,10 @@ main(int argc, char **argv) {
     }
 
     std::cout << "PERF_DIAGS:" << std::endl;
-    std::chrono::duration<double> elapsed_seconds = end - start;
+    // std::chrono::duration<double> elapsed_seconds = end - start;
     std::cout << "elapsed_time: " << elapsed_seconds.count() << " s\n";
 
-    auto gcells = ((nvx * nx * maxIter) / elapsed_seconds.count()) / 1e9;
+    auto gcells = ((nvx * nx * (maxIter-1)) / elapsed_seconds.count()) / 1e9;
     std::cout << "upd_cells_per_sec: " << gcells << " Gcell/sec\n";
     std::cout << "estimated_throughput: " << gcells * sizeof(double) * 2
               << " GB/s" << std::endl;
