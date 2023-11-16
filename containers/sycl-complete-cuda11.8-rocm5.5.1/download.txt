@@ -1,0 +1,5 @@
+cmake-3.27.7-linux-x86_64.sh: https://cmake.org/download/
+
+oclcpuexp-2023.16.6.0.28_rel.tar.gz: https://github.com/intel/llvm/blob/sycl/devops/dependencies.json#L33C7
+
+oneapi-tbb-2021.10.0-lin.tgz: https://github.com/intel/llvm/blob/sycl/devops/dependencies.json#L27
