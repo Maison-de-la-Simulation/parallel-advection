@@ -23,8 +23,10 @@ do
   if [[ "$i" == "0" ]]
   then
     $EXECUTABLE $ARGS
+    # singularity exec --nv $CONTAINERSDIR/sycl-complete_latest.sif $EXECUTABLE $ARGS
   else
     $EXECUTABLE $ARGS > $LOG_FILE
+    # singularity exec --nv $CONTAINERSDIR/sycl-complete_latest.sif $EXECUTABLE $ARGS > $LOG_FILE
   fi
 done
 
