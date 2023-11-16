@@ -26,7 +26,7 @@ RUN apt-get update && apt-get install -y \
     libboost-all-dev \
 && rm -rf /var/lib/apt/lists/*
 
-# COPY cmake-3.27.7-linux-x86_64.sh /opt/cmake-3.27.7-linux-x86_64.sh
+#Install cmake 3.27
 RUN cd /opt \
 && wget https://github.com/Kitware/CMake/releases/download/v3.27.7/cmake-3.27.7-linux-x86_64.sh
 RUN cd /usr/local \
@@ -49,11 +49,9 @@ RUN mkdir -p /opt/sycl/source \
 && mv /llvm /opt/sycl/source
 
 #Install OpenCL CPU runtime to get backend available in DPCPP
-# COPY oclcpuexp-2023.16.6.0.28_rel.tar.gz /opt/oclcpuexp-2023.16.6.0.28_rel.tar.gz
 RUN cd /opt \
 && wget https://github.com/intel/llvm/releases/download/2023-WW27/oclcpuexp-2023.16.6.0.28_rel.tar.gz
 
-# COPY oneapi-tbb-2021.10.0-lin.tgz /opt/oneapi-tbb-2021.10.0-lin.tgz
 RUN cd /opt \
 && wget https://github.com/oneapi-src/oneTBB/releases/download/v2021.10.0/oneapi-tbb-2021.10.0-lin.tgz
 
