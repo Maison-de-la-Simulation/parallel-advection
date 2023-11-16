@@ -1,7 +1,7 @@
 name: Publish docker images for SYCL
 
 on:
-  push: { branches: [ 'containers' ] }
+  push: { branches: [ 'main' ] }
 
 jobs:
   build-push-container:
