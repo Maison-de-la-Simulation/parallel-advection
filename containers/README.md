@@ -5,10 +5,15 @@ This container contains an environment to run and compile [SYCL 2020](https://re
 - oneAPI DPC++ [589824d](https://github.com/intel/llvm/tree/589824d74532c85dee50e006cdc6685269eadfef) 
 
 ## How to run
+
+Compilers are installed in `/opt/sycl`. The environment is setup in the `$PATH` so just type in `sycl-ls` or `acpp-info`.
+
 ### Singularity
 ```sh
 singularity pull docker://ghcr.io/maison-de-la-simulation/sycl-complete
 ..
+sycl-ls
+acpp-info
 ```
 
 ### Docker
@@ -39,7 +44,11 @@ Versions of the backend used inside the container:
 - **OpenMP CPUs** (used for AdaptiveCpp CPUs compilation and runtime): [LLVM](https://apt.llvm.org/) 16.0.0
 - **OpenCL Devices** (used for DPC++ CPUs runtime): OpenCL via [oneAPI DPC++ Get Started Guide](https://intel.github.io/llvm-docs/GetStartedGuide.html#install-low-level-runtime)
 
+Tools:
+CMake 3.27, Vim
+
 ## Known issues
+- clang++-16 (llvm) and clang++ (intel llvm) different
 - Intel on this hash commit because `sycl-ls` get_platform segfault on CUDA with multiple backend [cf this issue](https://github.com/intel/llvm/issues/4381) and we need SYCL 2020 features such as local_accessor 
 - TMPDIR on cluster for clang
 - mount /sys /dev depending on singularity configuration
