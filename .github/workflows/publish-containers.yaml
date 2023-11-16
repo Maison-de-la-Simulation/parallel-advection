@@ -7,14 +7,8 @@ jobs:
   push-hipsycl:
     strategy:
       matrix:
-        implem: ['hipsycl0.9.4']
-        backend: ['cuda11.8']
-        # backend: ['rocm5.3.0', 'cuda11.8']
-        # exclude:
-        # - implem: 'dpcpp'
-        #   backend: 'cuda'
-        # - implem: 'dpcpp'
-        #   backend: 'hip'
+        implem: ['sycl']
+        backend: ['complete']
     runs-on: ubuntu-latest
     steps:
       - name: Free Disk Space (Ubuntu)
@@ -31,5 +25,3 @@ jobs:
             --tag ghcr.io/maison-de-la-simulation/${{matrix.implem}}-${{matrix.backend}} \
             containers/${{matrix.implem}}-${{matrix.backend}}
           docker push ghcr.io/maison-de-la-simulation/${{matrix.image}}-${{matrix.backend}}
-  # push-dpcpp:
-  #   runs-on: ubuntu-latest
