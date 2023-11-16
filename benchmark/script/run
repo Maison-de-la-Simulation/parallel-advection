@@ -15,10 +15,17 @@ PREFIX=$5
 
 echo "Running ${NB_RUNS} times"
 
-for i in $(seq 1 $NB_RUNS)
+for i in $(seq 0 $NB_RUNS)
 do
   LOG_FILE=${LOG_PATH}/run${PREFIX}_${i}.log
-  $EXECUTABLE $ARGS > $LOG_FILE
+
+   #if i is 0, we don't time this so we don't output logs
+  if [[ "$i" == "0" ]]
+  then
+    $EXECUTABLE $ARGS
+  else
+    $EXECUTABLE $ARGS > $LOG_FILE
+  fi
 done
 
 echo "${NB_RUNS} runs OK."
