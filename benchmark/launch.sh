@@ -31,7 +31,6 @@ module load cuda/11.7.0/gcc-11.2.0 cmake/3.21.4/gcc-11.2.0 gcc/11.2.0/gcc-4.8.5
 
 # call run script with input parameters
 ./script/run.sh $EXECUTABLE $INI_FILE $LOG_PATH $NB_RUNS $PREFIX
-rm $INI_FILE
 
 # call parse scripts with log_path and out_filename parameters
 ./script/parse.sh $LOG_PATH $OUT_FILENAME $PREFIX

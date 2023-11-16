@@ -116,6 +116,7 @@ if __name__ == "__main__":
                         ]
                     )
 
+
                 if PARSE_MODE:
                     parsed_file = p.LOG_PATH + "/" + out_filename + ".csv"
                     # average results and store into nice csv
