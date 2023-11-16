@@ -10,16 +10,16 @@ import subprocess
 from optparse import OptionParser
 import pandas as pd
 import os.path as path
-from benchmark.bench_ini import *
+import bench_params as p
 
-run_with_container = True if CONTAINER_ROOTDIR != "" else False
+run_with_container = True if p.CONTAINER_ROOTDIR != "" else False
 
 executable = path.join(
-    CONTAINER_ROOTDIR if run_with_container else HOST_ROOTDIR, EXECUTABLE
+    p.CONTAINER_ROOTDIR if run_with_container else p.HOST_ROOTDIR, p.EXECUTABLE
 )
 
 # base file .ini to edit and use for the runtime
-host_base_inifile = path.join(HOST_ROOTDIR, INIFILE_DIR, "advection.ini")
+host_base_inifile = path.join(p.HOST_ROOTDIR, p.INIFILE_DIR, "advection.ini")
 
 if __name__ == "__main__":
     parser = OptionParser()
@@ -29,14 +29,16 @@ if __name__ == "__main__":
         action="store_true",
         dest="run_mode",
         default=False,
-        help="Use the script to RUN the binary and store logs with unique names based on parameters of simulation",
+        help="""Use the script to RUN the binary and store logs with unique
+ names based on parameters of simulation""",
     )
     parser.add_option(
         "--parse",
         action="store_true",
         dest="parse_mode",
         default=False,
-        help="Use the script in PARSE mode to parse the previously generated logs",
+        help="""Use the script in PARSE mode to parse the previously generated
+ logs""",
     )
 
     (options, args) = parser.parse_args()
@@ -55,9 +57,9 @@ if __name__ == "__main__":
     # init a list that we will use to create a pandas DataFrame
     global_data_as_list = []
 
-    for kernelImpl in SETS["kernelImpl"]:
-        for use_gpu in SETS["use_gpu"]:
-            for sizes in SETS["(nx,nvx)"]:
+    for kernelImpl in p.SETS["kernelImpl"]:
+        for use_gpu in p.SETS["use_gpu"]:
+            for sizes in p.SETS["(nx,nvx)"]:
                 nx = sizes[0]
                 nvx = sizes[1]
 
@@ -73,8 +75,8 @@ if __name__ == "__main__":
                 if RUN_MODE:
                     # We copy the advection file and edit the new advection file
                     uid_inifile = f"{unique_prefix}.ini"
-                    new_inifile_host = path.join(HOST_ROOTDIR,
-                                                INIFILE_DIR,
+                    new_inifile_host = path.join(p.HOST_ROOTDIR,
+                                                p.INIFILE_DIR,
                                                 uid_inifile)
 
                     copyfile(host_base_inifile, new_inifile_host)
@@ -97,7 +99,7 @@ if __name__ == "__main__":
                         new_inifile_host
                         if not run_with_container
                         else path.join(
-                            CONTAINER_ROOTDIR, INIFILE_DIR, f"{unique_prefix}.ini"
+                            p.CONTAINER_ROOTDIR, p.INIFILE_DIR, f"{unique_prefix}.ini"
                         )
                     )
 
@@ -107,7 +109,7 @@ if __name__ == "__main__":
                             "sbatch",      # scheduler/runner
                             "launch.sh",   # shell script
                             executable,    # arg #1
-                            LOG_PATH,      # arg #2
+                            p.LOG_PATH,      # arg #2
                             out_filename,  # arg #3
                             run_inifile,   # arg #4
                             unique_prefix, # arg #5
@@ -115,7 +117,7 @@ if __name__ == "__main__":
                     )
 
                 if PARSE_MODE:
-                    parsed_file = LOG_PATH + "/" + out_filename + ".csv"
+                    parsed_file = p.LOG_PATH + "/" + out_filename + ".csv"
                     # average results and store into nice csv
                     try:
                         df = pd.read_csv(parsed_file, sep=";")
@@ -159,5 +161,5 @@ if __name__ == "__main__":
                 "gpu",
             ],
         )
-        global_dataframe.to_csv(GLOBAL_CSV_FILE, index=False)
-        print(f"Write file: {GLOBAL_CSV_FILE}")
+        global_dataframe.to_csv(p.GLOBAL_CSV_FILE, index=False)
+        print(f"Write file: {p.GLOBAL_CSV_FILE}")
