@@ -7,8 +7,8 @@ jobs:
   push-hipsycl:
     strategy:
       matrix:
-        implem: ['sycl']
-        backend: ['complete']
+        implem: ['sycl-complete']
+        backend: ['cuda11.8-rocm5.5.1']
     runs-on: ubuntu-latest
     steps:
       - name: Free Disk Space (Ubuntu)
