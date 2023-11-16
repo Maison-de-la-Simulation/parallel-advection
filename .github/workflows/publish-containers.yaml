@@ -24,4 +24,4 @@ jobs:
             --cache-from ghcr.io/maison-de-la-simulation/${{matrix.implem}}-${{matrix.backend}} \
             --tag ghcr.io/maison-de-la-simulation/${{matrix.implem}}-${{matrix.backend}} \
             --squash .
-          docker push ghcr.io/maison-de-la-simulation/${{matrix.image}}-${{matrix.backend}}
+          docker push ghcr.io/maison-de-la-simulation/${{matrix.implem}}-${{matrix.backend}}
