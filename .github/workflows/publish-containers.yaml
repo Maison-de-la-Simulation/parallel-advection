@@ -4,11 +4,11 @@ on:
   push: { branches: [ 'containers' ] }
 
 jobs:
-  push-hipsycl:
+  build-push-container:
     strategy:
       matrix:
-        implem: ['sycl-complete']
-        backend: ['cuda11.8-rocm5.5.1']
+        implem: ['sycl']
+        backend: ['complete']
     runs-on: ubuntu-latest
     steps:
       - name: Free Disk Space (Ubuntu)
