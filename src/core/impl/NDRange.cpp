@@ -10,11 +10,6 @@ AdvX::NDRange::operator()(sycl::queue &Q,
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    auto const minRealVx = params.minRealVx;
-    auto const dvx = params.dvx;
-    auto const dt = params.dt;
-    auto const realWidthX = params.realWidthX;
-
     const sycl::range<2> global_size{nvx, nx};
     const sycl::range<2> local_size{1, nx};
 
@@ -30,10 +25,7 @@ AdvX::NDRange::operator()(sycl::queue &Q,
                 const int ix = itm.get_local_id(1);
                 const int ivx = itm.get_global_id(0);
 
-                // double const xFootCoord = displ(ix, ivx, params);
-                double const xFootCoord = displ(
-                    ix, ivx, minRealX, minRealVx, realWidthX, dx, dvx, dt);
-
+                double const xFootCoord = displ(ix, ivx, params);
 
                 const int LeftDiscreteNode =
                     sycl::floor((xFootCoord - minRealX) * inv_dx);
@@ -47,7 +39,6 @@ AdvX::NDRange::operator()(sycl::queue &Q,
                 const int ipos1 = LeftDiscreteNode - LAG_OFFSET;
 
                 slice_ftmp[ix] = 0;   // initializing slice for each work item
-                // double ftmp = 0.0;
                 for (int k = 0; k <= LAG_ORDER; k++) {
                     int idx_ipos1 = (nx + ipos1 + k) % nx;
 
