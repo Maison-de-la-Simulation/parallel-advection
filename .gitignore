@@ -12,3 +12,6 @@ venv*
 pp.pdf
 multiplot.pdf
 cmake-3.27.7-linux-x86_64.sh
+*.ipynb
+*.xlsx
+__pycache__
