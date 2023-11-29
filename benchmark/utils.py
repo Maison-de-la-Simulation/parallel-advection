@@ -239,25 +239,25 @@ def create_pp_values(dfs_list: list, ny_size: int):
                 m_lists_impl_rt[impl_name].append(-1)
 
     # best durations for each hardware regardless of the implem
-    # best_rts = {}
-    # for i_hw, hw_name in enumerate(__HW_LIST):
-    #     if m_list_df[i_hw] is not None:
-    #         best_rts[hw_name] = m_list_df[i_hw]["runtime_mean"].min()
-    #     else:
-    #         best_rts[hw_name] = -1
+    best_rts = {}
+    for i_hw, hw_name in enumerate(__HW_LIST):
+        if m_list_df[i_hw] is not None:
+            best_rts[hw_name] = m_list_df[i_hw]["runtime_mean"].min()
+        else:
+            best_rts[hw_name] = -1
 
     # print(best_rts)
 
     # {'mi250': 0.0552265545454545, 'a100': 0.0498033090909091, 'epyc': 0.8109413636363635, 'genoa': 0.4141986363636363, 'xeon': 13.275833333333331}
     # {'mi250': 0.0543997544554455, 'a100': 0.0659189909090909, 'epyc': 0.5355192727272726, 'genoa': 0.3516840909090909, 'xeon': 15.60932}
     # # TODO: fix this
-    best_rts = {
-        "mi250": 0.0543997544554455,
-        "a100": 0.0498033090909091,
-        "epyc": 0.5355192727272726,
-        "genoa": 0.3516840909090909,
-        "xeon": 13.275833333333331,
-    }
+    # best_rts = {
+    #     "mi250": 0.0543997544554455,
+    #     "a100": 0.0498033090909091,
+    #     "epyc": 0.5355192727272726,
+    #     "genoa": 0.3516840909090909,
+    #     "xeon": 13.275833333333331,
+    # }
 
     # now we have the dropped dfs and the pp_val data template
     for key in pp_val:
