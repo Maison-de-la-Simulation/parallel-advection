@@ -11,7 +11,8 @@ LOG_PATH = "/gpfs/workdir/millana/ADVECTION_LOGS"
 EXECUTABLE = "build/src/advection"
 
 # RELATIVE path to direcroty containing the .ini file
-INIFILE_DIR = "benchmark/script"
+INIFILE_DIR = "benchmark/script/ncu-ini"
+# INIFILE_DIR = "benchmark/script"
 
 # FULL path to the main output file with mean, std, and all infos for all runs
 GLOBAL_CSV_FILE = path.join(HOST_ROOTDIR,
@@ -27,3 +28,7 @@ SETS = {
                 False],
     "(nx,nvx)": [(1024, 2**x) for x in range(8, 20)],
 }
+
+## PROFILE MODE OPT
+# IMPL="DPCPP"
+IMPL="ACPP"

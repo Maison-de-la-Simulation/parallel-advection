@@ -40,19 +40,29 @@ if __name__ == "__main__":
         help="""Use the script in PARSE mode to parse the previously generated
  logs""",
     )
+    parser.add_option(
+        "--prof",
+        action="store_true",
+        dest="profile_mode",
+        default=False,
+        help="""Use the script in PROFILE mode to get GPU informations""",
+    )
 
     (options, args) = parser.parse_args()
 
     RUN_MODE = options.__dict__["run_mode"]
     PARSE_MODE = options.__dict__["parse_mode"]
+    PROFILE_MODE = options.__dict__["profile_mode"]
 
-    if not (RUN_MODE or PARSE_MODE):
+    if not (RUN_MODE or PARSE_MODE or PROFILE_MODE):
         exit("Error: missing argument.\nUsage: orchestrate.py --help")
 
     if RUN_MODE:
         print("Running script in RUN mode.")
     if PARSE_MODE:
         print("Running script in PARSE mode.")
+    if PROFILE_MODE:
+        print("Running script in NCU PROFILE mode.")
 
     # init a list that we will use to create a pandas DataFrame
     global_data_as_list = []
@@ -72,7 +82,7 @@ if __name__ == "__main__":
 
                 out_filename = "perfs" + f"{unique_prefix}"
 
-                if RUN_MODE:
+                if RUN_MODE or PROFILE_MODE:
                     # We copy the advection file and edit the new advection file
                     uid_inifile = f"{unique_prefix}.ini"
                     new_inifile_host = path.join(p.HOST_ROOTDIR,
@@ -103,13 +113,16 @@ if __name__ == "__main__":
                         )
                     )
 
+                    if PROFILE_MODE : out_filename = "prof" + f"{unique_prefix}_{p.IMPL}"
+
+                    launch_script = "launch.sh" if not PROFILE_MODE else "launch_ncu_profiling.sh"
                     # run the advection binary with recently modified .ini
                     subprocess.run(
                         [
                             "sbatch",      # scheduler/runner
-                            "launch.sh",   # shell script
+                            launch_script, # shell script
                             executable,    # arg #1
-                            p.LOG_PATH,      # arg #2
+                            p.LOG_PATH,    # arg #2
                             out_filename,  # arg #3
                             run_inifile,   # arg #4
                             unique_prefix, # arg #5
