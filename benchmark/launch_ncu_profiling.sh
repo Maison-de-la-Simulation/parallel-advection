@@ -2,7 +2,7 @@
 #SBATCH --job-name=memprof
 #SBATCH --output=%x.o%j
 #SBATCH --nodes=1
-#SBATCH --exclusive
+#####SBATCH --exclusive
 #SBATCH --partition=gpua100
 #SBATCH --gres=gpu:1
 #SBATCH --time=02:59:00
@@ -23,10 +23,10 @@ INI_FILE=$4
 #prefix to append before logfiles
 PREFIX=$5
 
-
 # load modules here
 module load cuda/11.8.0/gcc-11.2.0 gcc/11.2.0/gcc-4.8.5
 . ~/singularity-env.sh
+export SINGULARITY_BIND="/gpfs/workdir/millana"
 
 echo "Running NCU profiler"
 
@@ -34,13 +34,13 @@ CSV_OUT="${LOG_PATH}/${OUT_FILENAME}.csv"
 
 #will be sent to singularity exec command
 export COMMAND="ncu \
---kernel-name-base mangled \
 --kernel-name regex:AdvX \
---metrics launch__shared_mem_per_block_dynamic,sm__warps_active.avg.per_cycle_active,launch__registers_per_thread,launch__grid_size,launch__block_size \
+--kernel-name-base mangled \
 --target-processes all \
+--metrics launch__shared_mem_per_block_dynamic,sm__warps_active.avg.per_cycle_active,launch__registers_per_thread,launch__grid_size,launch__block_size \
 --csv \
 --log-file $CSV_OUT \
-$EXECUTABLE $ARGS"
+$EXECUTABLE $INI_FILE"
 
 singularity exec \
 --env OMP_NUM_THREADS=36 \
