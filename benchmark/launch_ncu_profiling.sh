@@ -34,13 +34,13 @@ CSV_OUT="${LOG_PATH}/${OUT_FILENAME}.csv"
 
 #will be sent to singularity exec command
 export COMMAND="ncu \
---kernel-name-base mangled \
 --kernel-name regex:AdvX \
---metrics launch__shared_mem_per_block_dynamic,sm__warps_active.avg.per_cycle_active,launch__registers_per_thread,launch__grid_size,launch__block_size \
+--kernel-name-base mangled \
 --target-processes all \
+--metrics launch__shared_mem_per_block_dynamic,sm__warps_active.avg.per_cycle_active,launch__registers_per_thread,launch__grid_size,launch__block_size,sm__maximum_warps_avg_per_active_cycle \
 --csv \
 --log-file $CSV_OUT \
-$EXECUTABLE $ARGS"
+$EXECUTABLE $INI_FILE"
 
 singularity exec \
 --env OMP_NUM_THREADS=36 \

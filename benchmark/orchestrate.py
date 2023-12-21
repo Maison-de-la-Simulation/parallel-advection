@@ -62,7 +62,7 @@ if __name__ == "__main__":
     if PARSE_MODE:
         print("Running script in PARSE mode.")
     if PROFILE_MODE:
-        print("Running script in NCU PROFILE mode.")
+        print("Running script in NCU/ROCM PROFILE mode.")
 
     # init a list that we will use to create a pandas DataFrame
     global_data_as_list = []

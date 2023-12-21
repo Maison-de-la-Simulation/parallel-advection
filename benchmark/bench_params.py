@@ -4,7 +4,8 @@ import os.path as path
 HOST_ROOTDIR = "/gpfs/users/millana/source/parallel-advection"
 CONTAINER_ROOTDIR = "/mnt/parallel-advection"  # or "" if no container
 
-# FULL path to save tmp logs (on the host)
+# FULL path to save tmp logs (on the host if RUN or PARSE)
+# inside container if PROFILE mode
 LOG_PATH = "/gpfs/workdir/millana/ADVECTION_LOGS"
 
 # RELATIVE path to the executable
