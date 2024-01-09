@@ -16,7 +16,7 @@ advection(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
     auto static const maxIter = params.maxIter;
 
     /* First iteration not timed */
-    advector(Q, buff_fdistrib, params);
+    advector(Q, buff_fdistrib, params).wait_and_throw();
 
     auto start = std::chrono::high_resolution_clock::now();
     // Time loop
