@@ -1,7 +1,7 @@
 .vscode
 *[Bb]uild*
-benchmark/log/*
-benchmark/pandas
+diag/log/*
+diag/pandas
 *.ods#
 *.xlsx#
 adv_*
