@@ -92,16 +92,25 @@ BM_Advector(benchmark::State &state) {
     p.dvx = (p.maxRealVx - p.minRealVx) / p.nvx;
     p.inv_dx = 1 / p.dx;
 
+    /* Advector setup */
+    auto kernel_id = static_cast<AdvImpl>(static_cast<int>(state.range(3)));
+    auto advector = advectorFactory(kernel_id, p.nx, p.nvx, state);
+
+    /* Benchmark infos */
+    state.counters.insert({
+        {"gpu", p.gpu},
+        {"nx", p.nx},
+        {"ny", p.nvx},
+        // {"iterations", state.iterations()},
+        {"kernel_id", kernel_id},
+    });
+
     /* SYCL setup */
     auto Q = createSyclQueue(p.gpu, state);
     sycl::buffer<double, 2> fdist(sycl::range<2>(p.nvx, p.nx));
 
     /* Physics setup */
     fill_buffer(Q, fdist, p);
-
-    /* Advector setup */
-    auto kernel_id = static_cast<AdvImpl>(static_cast<int>(state.range(3)));
-    auto advector = advectorFactory(kernel_id, p.nx, p.nvx, state);
 
     /* Benchmark */
     for (auto _ : state){
@@ -122,13 +131,6 @@ BM_Advector(benchmark::State &state) {
         //TODO: add error handling for ONEAPI
     }
 
-    state.counters.insert({
-        {"gpu", p.gpu},
-        {"nx", p.nx},
-        {"ny", p.nvx},
-        // {"iterations", state.iterations()},
-        {"kernel_id", kernel_id},
-    });
     p.maxIter = state.iterations();
 
     //TODO: fix these weird values
@@ -146,12 +148,12 @@ BM_Advector(benchmark::State &state) {
 BENCHMARK(BM_Advector)
     /* ->Args({gpu, nx, nvx, kernel_id}) */
     ->ArgsProduct({
-        {0, 1}, /*gpu*/
+        {0}, /*gpu*/
         // benchmark::CreateRange(2<<5, 2<<20, /*multi=*/2), /*nx*/
-        benchmark::CreateRange(128, 16384, /*multi=*/2), /*nx*/
-        {1024}, /*ny*/
+        {1024}, /*nx*/
+        benchmark::CreateRange(256, 16384, /*multi=*/2), /*ny*/
         {AdvImpl::BR2D, AdvImpl::BR1D, AdvImpl::HIER, AdvImpl::NDRA, AdvImpl::SCOP} /*impl*/
-      })
-                                       ->Unit(benchmark::kMillisecond);
+      });
+                                    //    ->Unit(benchmark::kMillisecond);
 
 BENCHMARK_MAIN();
