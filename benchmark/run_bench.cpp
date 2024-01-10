@@ -62,9 +62,6 @@ advectorFactory(const AdvImpl kernel_id, const size_t nx, const size_t nvx,
         break;
     }
 
-    // std::cout << "KernelID: " << kernel_id << " - " << params.kernelImpl <<
-    // std::endl;
-
     return kernel_impl_factory(params);
 }   // end advectorFactory
 
@@ -112,22 +109,37 @@ BM_Advector(benchmark::State &state) {
         {"kernel_id", kernel_id},
     });
 
-    for (auto _ : state)
-        advector(Q, fdist, p).wait();
+    for (auto _ : state){
+        try
+        {
+          advector(Q, fdist, p).wait();
+        }
+        catch(const std::exception& e)
+        {
+          state.SkipWithError(e.what());
+          break; // REQUIRED to prevent all further iterations.
+        }
+    }
 
     state.SetBytesProcessed(int64_t(state.iterations()) *
                             int64_t(p.nvx * p.nx * sizeof(double)));
+
+  //TODO: Add error to benchmark if validate_result is not right
+  // state.SkipWithError("Validation failled with error > 10e-6.");
+
 }   // end BM_Advector
 
 // TODO : add WG SIZE as bench parameter
 BENCHMARK(BM_Advector)
+    // ->Ranges({{1<<10, 8<<10}, {128, 512}});
+
     /* ->Args({gpu, nx, nvx, kernel_id}) */
     ->Args({0, 128, 64, AdvImpl::BR2D})
     ->Args({0, 128, 64, AdvImpl::BR1D})
     ->Args({0, 128, 64, AdvImpl::HIER})
     ->Args({0, 128, 64, AdvImpl::NDRA})
     ->Args({0, 128, 64, AdvImpl::SCOP})->Unit(benchmark::kMillisecond);
-    // ->ReportAggregatesOnly(true)
+    // ->ReportAggregatesOnly(true) 
     // ->DisplayAggregatesOnly(true);
 
 BENCHMARK_MAIN();
