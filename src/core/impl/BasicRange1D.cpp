@@ -14,10 +14,10 @@ AdvX::BasicRange1D::operator()(sycl::queue &Q,
     Q.submit([&](sycl::handler &cgh) {
         auto fdist =
             buff_fdistrib.get_access<sycl::access::mode::read>(cgh);
-        
-        auto ftmp = m_global_buff_ftmp.get_access<sycl::access::mode::write>(cgh);
-        // sycl::accessor<double, 2> ftmp(m_global_buff_ftmp, cgh,
-        //                                sycl::write_only);
+
+        /* Using the preallocated global buffer */
+        sycl::accessor ftmp(m_global_buff_ftmp, cgh, sycl::write_only,
+                            sycl::no_init);
 
         cgh.parallel_for(sycl::range<1>(nvx), [=](sycl::id<1> itm) {
             const int ivx = itm[0];
