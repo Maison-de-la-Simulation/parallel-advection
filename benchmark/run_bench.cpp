@@ -2,10 +2,9 @@
 
 #include <AdvectionParams.h>
 #include <sycl/sycl.hpp>
-// #include <iostream>
 #include <init.h>
 #include <io.h>
-// #include <validation.h>
+#include <validation.h>
 #include <advectors.h>
 
 enum AdvImpl : int {
@@ -19,14 +18,17 @@ enum AdvImpl : int {
 // =============================================
 // =============================================
 [[nodiscard]] inline sycl::queue
-createSyclQueue(const bool run_on_gpu) {
+createSyclQueue(const bool run_on_gpu, benchmark::State &state) {
     sycl::device d;
 
     if (run_on_gpu)
-        d = sycl::device{sycl::gpu_selector_v};
+        try {
+            d = sycl::device{sycl::gpu_selector_v};
+        } catch (const sycl::runtime_error e) {
+            state.SkipWithError("GPU was requested but none is available, skipping benchmark.");
+        }
     else
         d = sycl::device{sycl::cpu_selector_v};
-
     return sycl::queue{d};
 }   // end createSyclQueue
 
@@ -91,7 +93,7 @@ BM_Advector(benchmark::State &state) {
     p.inv_dx = 1 / p.dx;
 
     /* SYCL setup */
-    auto Q = createSyclQueue(p.gpu);
+    auto Q = createSyclQueue(p.gpu, state);
     sycl::buffer<double, 2> fdist(sycl::range<2>(p.nvx, p.nx));
 
     /* Physics setup */
@@ -102,13 +104,6 @@ BM_Advector(benchmark::State &state) {
     auto advector = advectorFactory(kernel_id, p.nx, p.nvx, state);
 
     /* Benchmark */
-    state.counters.insert({
-        {"gpu", p.gpu},
-        {"nx", p.nx},
-        {"ny", p.nvx},
-        {"kernel_id", kernel_id},
-    });
-
     for (auto _ : state){
         try
         {
@@ -119,27 +114,51 @@ BM_Advector(benchmark::State &state) {
           state.SkipWithError(e.what());
           break; // REQUIRED to prevent all further iterations.
         }
+        catch(const sycl::exception& e)
+        {
+          state.SkipWithError(e.what());
+          break;
+        }
+        //TODO: add error handling for ONEAPI
     }
 
-    state.SetBytesProcessed(int64_t(state.iterations()) *
-                            int64_t(p.nvx * p.nx * sizeof(double)));
+    state.counters.insert({
+        {"gpu", p.gpu},
+        {"nx", p.nx},
+        {"ny", p.nvx},
+        // {"iterations", state.iterations()},
+        {"kernel_id", kernel_id},
+    });
+    p.maxIter = state.iterations();
 
-  //TODO: Add error to benchmark if validate_result is not right
-  // state.SkipWithError("Validation failled with error > 10e-6.");
+    //TODO: fix this weird values
+    state.SetItemsProcessed(int64_t(p.maxIter) * int64_t(p.nvx * p.nx));
+    state.SetBytesProcessed(int64_t(p.maxIter) * int64_t(p.nvx * p.nx * sizeof(double)));
+
+    auto err = validate_result(Q, fdist, p, false);
+    if(err > 10e-6){
+        state.SkipWithError("Validation failled with numerical error > 10e-6.");
+    }
 
 }   // end BM_Advector
 
 // TODO : add WG SIZE as bench parameter
 BENCHMARK(BM_Advector)
-    // ->Ranges({{1<<10, 8<<10}, {128, 512}});
-
     /* ->Args({gpu, nx, nvx, kernel_id}) */
-    ->Args({0, 128, 64, AdvImpl::BR2D})
-    ->Args({0, 128, 64, AdvImpl::BR1D})
-    ->Args({0, 128, 64, AdvImpl::HIER})
-    ->Args({0, 128, 64, AdvImpl::NDRA})
-    ->Args({0, 128, 64, AdvImpl::SCOP})->Unit(benchmark::kMillisecond);
-    // ->ReportAggregatesOnly(true) 
-    // ->DisplayAggregatesOnly(true);
+    ->ArgsProduct({
+        {0, 1},
+        // benchmark::CreateRange(2<<5, 2<<20, /*multi=*/2),
+        benchmark::CreateRange(128, 16384, /*multi=*/2),
+        {1024},
+        {AdvImpl::BR2D, AdvImpl::BR1D, AdvImpl::HIER, AdvImpl::NDRA, AdvImpl::SCOP}
+      })
+                                       ->Unit(benchmark::kMillisecond);
+    // ->Args({0, 128, 64, AdvImpl::BR2D})
+    // ->Args({0, 128, 64, AdvImpl::BR1D})
+    // ->Args({0, 128, 64, AdvImpl::HIER})
+    // ->Args({0, 128, 64, AdvImpl::NDRA})
+    // ->Args({0, 128, 64, AdvImpl::SCOP});
+                                      //  ->ReportAggregatesOnly(true)
+                                      //  ->DisplayAggregatesOnly(true);
 
 BENCHMARK_MAIN();
