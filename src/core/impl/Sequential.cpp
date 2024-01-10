@@ -3,7 +3,7 @@
 sycl::event
 AdvX::Sequential::operator()([[maybe_unused]] sycl::queue &Q,
                              sycl::buffer<double, 2> &buff_fdistrib,
-                             const ADVParams &params) noexcept {
+                             const ADVParams &params) {
     auto const nx = params.nx;
     size_t const nvx = params.nvx;
     auto const minRealX = params.minRealX;

@@ -3,7 +3,7 @@
 sycl::event
 AdvX::BasicRange2D::operator()(sycl::queue &Q,
                                sycl::buffer<double, 2> &buff_fdistrib,
-                               const ADVParams &params) noexcept {
+                               const ADVParams &params) {
     auto const nx = params.nx;
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
