@@ -8,12 +8,13 @@
 // #include <validation.h>
 #include <advectors.h>
 
-enum AdvImpl : int { BR2D, //0
-                     BR1D, //1
-                     HIER, //2
-                     NDRA, //3
-                     SCOP  //4
-                     };
+enum AdvImpl : int {
+    BR2D,   // 0
+    BR1D,   // 1
+    HIER,   // 2
+    NDRA,   // 3
+    SCOP    // 4
+};
 
 // =============================================
 // =============================================
@@ -32,30 +33,37 @@ createSyclQueue(const bool run_on_gpu) {
 // =============================================
 // =============================================
 [[nodiscard]] sref::unique_ref<IAdvectorX>
-advectorFactory(const AdvImpl kernel_id, const size_t nx, const size_t nvx) {
+advectorFactory(const AdvImpl kernel_id, const size_t nx, const size_t nvx,
+                benchmark::State &state) {
     ADVParamsNonCopyable params;
     params.nx = nx;
     params.nvx = nvx;
 
     switch (kernel_id) {
     case AdvImpl::BR2D:
-        params.kernelImpl = "BasicRange2D"; break;
+        params.kernelImpl = "BasicRange2D";
+        break;
     case AdvImpl::BR1D:
-        params.kernelImpl = "BasicRange1D"; break;
+        params.kernelImpl = "BasicRange1D";
+        break;
     case AdvImpl::HIER:
-        params.kernelImpl = "Hierarchical"; break;
+        params.kernelImpl = "Hierarchical";
+        break;
     case AdvImpl::NDRA:
-        params.kernelImpl = "NDRange"; break;
+        params.kernelImpl = "NDRange";
+        break;
     case AdvImpl::SCOP:
-        params.kernelImpl = "Scoped"; break;
+        params.kernelImpl = "Scoped";
+        break;
 
     default:
         auto str = "Error: wrong kernel_id.\n";
         throw std::runtime_error(str);
         break;
     }
-    
-    std::cout << "KernelID: " << kernel_id << " - " << params.kernelImpl << std::endl;
+
+    // std::cout << "KernelID: " << kernel_id << " - " << params.kernelImpl <<
+    // std::endl;
 
     return kernel_impl_factory(params);
 }   // end advectorFactory
@@ -94,14 +102,24 @@ BM_Advector(benchmark::State &state) {
 
     /* Advector setup */
     auto kernel_id = static_cast<AdvImpl>(static_cast<int>(state.range(3)));
-    auto advector = advectorFactory(kernel_id, p.nx, p.nvx);
+    auto advector = advectorFactory(kernel_id, p.nx, p.nvx, state);
+
+    /* Benchmark */
+    state.counters.insert({
+        {"gpu", p.gpu},
+        {"nx", p.nx},
+        {"ny", p.nvx},
+        {"kernel_id", kernel_id},
+    });
 
     for (auto _ : state)
         advector(Q, fdist, p).wait();
 
+    state.SetBytesProcessed(int64_t(state.iterations()) *
+                            int64_t(p.nvx * p.nx * sizeof(double)));
 }   // end BM_Advector
 
-//TODO : add WG SIZE as bench parameter
+// TODO : add WG SIZE as bench parameter
 BENCHMARK(BM_Advector)
     /* ->Args({gpu, nx, nvx, kernel_id}) */
     ->Args({0, 128, 64, AdvImpl::BR2D})
@@ -109,5 +127,7 @@ BENCHMARK(BM_Advector)
     ->Args({0, 128, 64, AdvImpl::HIER})
     ->Args({0, 128, 64, AdvImpl::NDRA})
     ->Args({0, 128, 64, AdvImpl::SCOP})->Unit(benchmark::kMillisecond);
+    // ->ReportAggregatesOnly(true)
+    // ->DisplayAggregatesOnly(true);
 
 BENCHMARK_MAIN();
