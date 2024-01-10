@@ -7,9 +7,9 @@
 
 // ==========================================
 // ==========================================
-void
+double
 validate_result(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
-                const ADVParams &params) noexcept {
+                const ADVParams &params, bool do_print = true) noexcept {
 
 
 
@@ -58,8 +58,13 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
          }).wait_and_throw();
     }
 
-    std::cout << "Total cumulated error: "
-              << errorL1 * dx * dvx << "\n"
-              << std::endl;
+    if(do_print){
+        std::cout << "Total cumulated error: "
+                //   << errorL1 * dx * dvx << "\n"
+                << errorL1 / (params.nx * params.nvx) << "\n"
+                << std::endl;
+    }
 
+    return errorL1 / (params.nx * params.nvx);
+    // return errorL1 * dx * dvx;
 }   // end validate_results
