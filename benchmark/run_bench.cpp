@@ -131,7 +131,7 @@ BM_Advector(benchmark::State &state) {
     });
     p.maxIter = state.iterations();
 
-    //TODO: fix this weird values
+    //TODO: fix these weird values
     state.SetItemsProcessed(int64_t(p.maxIter) * int64_t(p.nvx * p.nx));
     state.SetBytesProcessed(int64_t(p.maxIter) * int64_t(p.nvx * p.nx * sizeof(double)));
 
@@ -146,19 +146,12 @@ BM_Advector(benchmark::State &state) {
 BENCHMARK(BM_Advector)
     /* ->Args({gpu, nx, nvx, kernel_id}) */
     ->ArgsProduct({
-        {0, 1},
-        // benchmark::CreateRange(2<<5, 2<<20, /*multi=*/2),
-        benchmark::CreateRange(128, 16384, /*multi=*/2),
-        {1024},
-        {AdvImpl::BR2D, AdvImpl::BR1D, AdvImpl::HIER, AdvImpl::NDRA, AdvImpl::SCOP}
+        {0, 1}, /*gpu*/
+        // benchmark::CreateRange(2<<5, 2<<20, /*multi=*/2), /*nx*/
+        benchmark::CreateRange(128, 16384, /*multi=*/2), /*nx*/
+        {1024}, /*ny*/
+        {AdvImpl::BR2D, AdvImpl::BR1D, AdvImpl::HIER, AdvImpl::NDRA, AdvImpl::SCOP} /*impl*/
       })
                                        ->Unit(benchmark::kMillisecond);
-    // ->Args({0, 128, 64, AdvImpl::BR2D})
-    // ->Args({0, 128, 64, AdvImpl::BR1D})
-    // ->Args({0, 128, 64, AdvImpl::HIER})
-    // ->Args({0, 128, 64, AdvImpl::NDRA})
-    // ->Args({0, 128, 64, AdvImpl::SCOP});
-                                      //  ->ReportAggregatesOnly(true)
-                                      //  ->DisplayAggregatesOnly(true);
 
 BENCHMARK_MAIN();
