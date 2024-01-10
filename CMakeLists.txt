@@ -27,4 +27,12 @@ else()
 endif()
 
 add_subdirectory(src)
-add_subdirectory(benchmark)
+
+if(DEFINED benchmark_DIR)
+    message(STATUS "Building advection benchmarks.")
+    add_subdirectory(benchmark)
+else()
+    message(STATUS "benchmark_DIR not found.\nSkipping benchmark build. If you "
+    "want to compile advection benchmarks, build google benchmark apart and "
+    "provide the benchmark_DIR cmake variable")
+endif()
