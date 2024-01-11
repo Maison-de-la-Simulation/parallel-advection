@@ -31,7 +31,8 @@ endif()
 add_subdirectory(src)
 
 if(DEFINED benchmark_DIR)
-    message(STATUS "Building advection benchmarks.")
+    message(STATUS "benchmark_DIR variable defined. Will try to build "
+    "advection benchmarks.")
     add_subdirectory(benchmark)
 else()
     message(STATUS "benchmark_DIR not found.\nSkipping benchmark build. If you "
