@@ -22,7 +22,7 @@ createSyclQueue(const bool run_on_gpu, benchmark::State &state) {
     if (run_on_gpu)
         try {
             d = sycl::device{sycl::gpu_selector_v};
-        } catch (const sycl::runtime_error e) {
+        } catch (const sycl::exception e) {
             state.SkipWithError("GPU was requested but none is available, skipping benchmark.");
         }
     else
