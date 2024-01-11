@@ -23,7 +23,9 @@ if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "IntelLLVM") OR (NOT ${DPCPP_FSYCL_TARGE
     target_link_options(compiler_wrapper INTERFACE -fsycl ${DPCPP_FSYCL_TARGETS})
     target_compile_options(compiler_wrapper INTERFACE -fsycl ${DPCPP_FSYCL_TARGETS})
 else()
-    message(STATUS "To add correct flags for DPCPP compiler, use the DPCPP_FSYCL_TARGETS' variable. Example: -DDPCPP_FSYCL_TARGETS='-fsycl-targets=nvptx64-nvidia-cuda'")
+    message(STATUS "To add correct flags for DPCPP compiler, use the "
+    "DPCPP_FSYCL_TARGETS' variable. Example: "
+    "-DDPCPP_FSYCL_TARGETS='-fsycl-targets=nvptx64-nvidia-cuda'")
 endif()
 
 add_subdirectory(src)
