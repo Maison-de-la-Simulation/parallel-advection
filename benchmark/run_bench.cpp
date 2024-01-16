@@ -28,6 +28,7 @@ BM_WgSize(benchmark::State &state){
 
     /* Physics setup */
     fill_buffer(Q, fdist, p);
+    Q.wait();
 
     /* Benchmark */
     for (auto _ : state) {
@@ -55,7 +56,7 @@ BM_WgSize(benchmark::State &state){
 
 BENCHMARK(BM_WgSize)
     ->ArgsProduct({
-        {0},//, 1},            /*gpu*/
+        {1},//, 1},            /*gpu*/
         {1024},                /*nx*/
         {16384, 32768, 65536}, /*ny*/
         {63, 64, 65, 127, 128, 129, 255, 256, 257, 511, 512, 513} /*wg_size*/
@@ -90,6 +91,7 @@ BM_Advector(benchmark::State &state) {
 
     /* Physics setup */
     fill_buffer(Q, fdist, p);
+    Q.wait();
 
     /* Benchmark */
     for (auto _ : state) {
@@ -117,10 +119,10 @@ BM_Advector(benchmark::State &state) {
 
 BENCHMARK(BM_Advector)
     ->ArgsProduct({
-        {0, 1},                                /*gpu*/
+        {1},                                /*gpu*/
         {1024},                                /*nx*/
-        benchmark::CreateRange(256, 16384, 2), /*ny*/
-        // benchmark::CreateRange(2<<5, 2<<20, /*multi=*/2), /*nx*/
+        // benchmark::CreateRange(256, 16384, 2), /*ny*/
+        benchmark::CreateRange(2<<5, 2<<20, /*multi=*/2), /*nx*/
         {AdvImpl::BR2D, AdvImpl::BR1D, AdvImpl::HIER, AdvImpl::NDRA,
          AdvImpl::SCOP} /*impl*/
     })

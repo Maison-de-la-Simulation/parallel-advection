@@ -30,6 +30,7 @@ BM_Advector(benchmark::State &state) {
 
     /* Physics setup */
     fill_buffer(Q, fdist, p);
+    Q.wait();
 
     /* Benchmark */
     for (auto _ : state) {
@@ -56,10 +57,10 @@ BM_Advector(benchmark::State &state) {
 
 BENCHMARK(BM_Advector)
     ->ArgsProduct({
-        {0},                                /*gpu*/
+        {1},                                /*gpu*/
         {1024},                                /*nx*/
         // benchmark::CreateRange(256, 16384, 2), /*ny*/
-        {16384},
+        {16384, 32768, 65536}, /*ny*/
         {AdvImpl::BR2D, AdvImpl::BR1D, AdvImpl::HIER, AdvImpl::NDRA,
          AdvImpl::SCOP}, /*kernel_id*/
         {1, 2, 10, 50, 100, 1000, 10000} /*p.maxIter*/

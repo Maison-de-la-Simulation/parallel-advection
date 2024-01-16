@@ -30,7 +30,7 @@ BM_STREAM(benchmark::State &state){
 
     /* Benchmark */
     for (auto _ : state) {
-        advector(Q, fdist, p).wait();
+            advector(Q, fdist, p).wait();
     }
 
     p.maxIter = state.iterations();
@@ -43,11 +43,19 @@ BM_STREAM(benchmark::State &state){
 
 BENCHMARK(BM_STREAM)
     ->ArgsProduct({
-        {0},     /*gpu*/
+        {1},     /*gpu*/
         {1024},  /*nx*/
         {16384, 32768, 65536}, /*ny*/
     })
-    ->UseRealTime()
+    ->Unit(benchmark::kMillisecond);
+
+BENCHMARK(BM_STREAM)
+    ->ArgsProduct({
+        {1},     /*gpu*/
+        {1024},  /*nx*/
+        {16384, 32768, 65536}, /*ny*/
+    })
+    ->UseRealTime() /* real time benchmark */
     ->Unit(benchmark::kMillisecond);
 
 // ==========================================
