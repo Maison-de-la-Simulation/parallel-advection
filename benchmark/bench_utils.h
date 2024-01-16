@@ -4,6 +4,7 @@
 #include <sycl/sycl.hpp>
 #include <init.h>
 #include <advectors.h>
+#include <benchmark/benchmark.h>
 
 enum AdvImpl : int {
     BR2D,   // 0
@@ -12,6 +13,36 @@ enum AdvImpl : int {
     NDRA,   // 3
     SCOP    // 4
 };
+
+// =============================================
+// =============================================
+[[nodiscard]] inline ADVParams
+createParams(const bool gpu,
+             const size_t &nx,
+             const size_t &nvx) {
+    ADVParams p;
+
+    p.outputSolution = false;
+    p.wg_size = 128;
+
+    /* Static physicals p*/
+    p.dt = 0.001;
+    p.minRealX = 0;
+    p.maxRealX = 1;
+    p.minRealVx = -1;
+    p.maxRealVx = 1;
+    p.realWidthX = p.maxRealX - p.minRealX;
+
+    /* Dynamic benchmark p*/
+    p.gpu = gpu;
+    p.nx = nx;
+    p.nvx = nvx;
+    p.dx = p.realWidthX / p.nx;
+    p.dvx = (p.maxRealVx - p.minRealVx) / p.nvx;
+    p.inv_dx = 1 / p.dx;
+
+    return p;
+}
 
 // =============================================
 // =============================================
@@ -33,7 +64,7 @@ createSyclQueue(const bool run_on_gpu, benchmark::State &state) {
 // =============================================
 // =============================================
 [[nodiscard]] sref::unique_ref<IAdvectorX>
-advectorFactory(const AdvImpl kernel_id, const size_t nx, const size_t nvx,
+advectorFactory(const AdvImpl kernel_id, const size_t &nx, const size_t &nvx,
                 benchmark::State &state) {
     ADVParamsNonCopyable params;
     params.nx = nx;
