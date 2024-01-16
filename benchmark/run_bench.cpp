@@ -55,10 +55,10 @@ BM_WgSize(benchmark::State &state){
 
 BENCHMARK(BM_WgSize)
     ->ArgsProduct({
-        {0},//, 1},                                /*gpu*/
-        {1024},                                /*nx*/
-        benchmark::CreateRange(512, 16384, 2), /*ny*/
-        {64, 128, 256, 512} /*wg_size*/
+        {0},//, 1},            /*gpu*/
+        {1024},                /*nx*/
+        {16384, 32768, 65536}, /*ny*/
+        {63, 64, 65, 127, 128, 129, 255, 256, 257, 511, 512, 513} /*wg_size*/
     })
     ->UseRealTime()
     ->Unit(benchmark::kMillisecond);
