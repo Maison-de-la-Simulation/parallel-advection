@@ -3,6 +3,8 @@
 
 // ==========================================
 // ==========================================
+/* Benchmarks the impact of the queue submission on the runtime
+(we .wait() only for the last iteration) */
 static void
 BM_Advector(benchmark::State &state) {
     /* Params setup */

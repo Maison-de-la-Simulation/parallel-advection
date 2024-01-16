@@ -3,6 +3,7 @@
 
 // ==========================================
 // ==========================================
+/* Benchmark the impact of wg_size on Hierarchical kernel */
 static void
 BM_WgSize(benchmark::State &state){
     auto p = createParams(state.range(0), state.range(1), state.range(2));
@@ -64,6 +65,8 @@ BENCHMARK(BM_WgSize)
 
 // ==========================================
 // ==========================================
+/* Main benchmark, use to determine the duration and bytes processed of
+one advection operation */
 static void
 BM_Advector(benchmark::State &state) {
     /* Params setup */
@@ -124,4 +127,6 @@ BENCHMARK(BM_Advector)
     ->UseRealTime()
     ->Unit(benchmark::kMillisecond);
 
+// ==========================================
+// ==========================================
 BENCHMARK_MAIN();
