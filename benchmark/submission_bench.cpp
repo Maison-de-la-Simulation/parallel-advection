@@ -33,15 +33,10 @@ BM_Advector(benchmark::State &state) {
 
     /* Benchmark */
     for (auto _ : state) {
-        for (size_t i = 0; i < p.maxIter; i++)
-        {
-            if(i != p.maxIter-1){
-                advector(Q, fdist, p);
-            }
-            else{
-                advector(Q, fdist, p).wait();
-            }
-        }
+        for (size_t i = 0; i < p.maxIter-1; i++)
+            advector(Q, fdist, p);
+
+        advector(Q, fdist, p).wait();
     }
 
     state.counters.insert({
@@ -64,10 +59,10 @@ BENCHMARK(BM_Advector)
         {0},                                /*gpu*/
         {1024},                                /*nx*/
         // benchmark::CreateRange(256, 16384, 2), /*ny*/
-        {2048},
+        {16384},
         {AdvImpl::BR2D, AdvImpl::BR1D, AdvImpl::HIER, AdvImpl::NDRA,
          AdvImpl::SCOP}, /*kernel_id*/
-        {100, 1000, 10000} /*p.maxIter*/
+        {1, 2, 10, 50, 100, 1000, 10000} /*p.maxIter*/
     }) 
     ->UseRealTime()
     ->Unit(benchmark::kMillisecond);
