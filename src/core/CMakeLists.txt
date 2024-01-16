@@ -9,6 +9,7 @@ target_sources(core
   impl/Hierarchical.cpp
   impl/NDRange.cpp
   impl/Scoped.cpp
+  impl/FakeAdvector.cpp
   # impl/HierarchicalAlloca.cpp
   # impl/FixedMemoryFootprint.cpp
 )
