@@ -119,6 +119,10 @@ BM_Advector(benchmark::State &state) {
     if (err > 10e-6) {
         state.SkipWithError("Validation failled with numerical error > 10e-6.");
     }
+    if (err == 0) {
+        state.SkipWithError("Validation failled with numerical error == 0. "
+                            "Kernel probably didn't run");
+    }
 }   // end BM_Advector
 
 BENCHMARK(BM_Advector)
