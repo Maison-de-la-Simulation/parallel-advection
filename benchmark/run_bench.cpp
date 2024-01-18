@@ -50,7 +50,7 @@ BM_WgSize(benchmark::State &state){
 
     auto err = validate_result(Q, fdist, p, false);
     if (err > 10e-6) {
-        state.SkipWithError("Validation failled with numerical error > 10e-6.");
+        state.SkipWithError("Validation failed with numerical error > 10e-6.");
     }
 }
 
@@ -117,10 +117,10 @@ BM_Advector(benchmark::State &state) {
 
     auto err = validate_result(Q, fdist, p, false);
     if (err > 10e-6) {
-        state.SkipWithError("Validation failled with numerical error > 10e-6.");
+        state.SkipWithError("Validation failed with numerical error > 10e-6.");
     }
     if (err == 0) {
-        state.SkipWithError("Validation failled with numerical error == 0. "
+        state.SkipWithError("Validation failed with numerical error == 0. "
                             "Kernel probably didn't run");
     }
 }   // end BM_Advector
