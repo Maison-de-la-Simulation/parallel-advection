@@ -72,6 +72,7 @@ static void
 BM_Advector(benchmark::State &state) {
     /* Params setup */
     auto p = createParams(state.range(0), state.range(1), state.range(2));
+    p.wg_size = p.gpu ? 128 : 64;
 
     /* Advector setup */
     auto kernel_id = static_cast<AdvImpl>(static_cast<int>(state.range(3)));
@@ -83,6 +84,7 @@ BM_Advector(benchmark::State &state) {
         {"nx", p.nx},
         {"ny", p.nvx},
         {"kernel_id", kernel_id},
+        {"wg_size", p.wg_size},
     });
 
     /* SYCL setup */
@@ -110,6 +112,8 @@ BM_Advector(benchmark::State &state) {
 
     state.SetItemsProcessed(p.maxIter * p.nvx * p.nx);
     state.SetBytesProcessed(p.maxIter * p.nvx * p.nx * sizeof(double));
+
+    state.counters.insert({{"maxIter", p.maxIter}});
 
     auto err = validate_result(Q, fdist, p, false);
     if (err > 10e-6) {
