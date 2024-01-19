@@ -20,3 +20,16 @@ AdvX::FakeAdvector::operator()(sycl::queue &Q,
         });   // end parallel_for
     });       // end Q.submit
 }
+
+sycl::event
+AdvX::FakeAdvector::stream_bench(sycl::queue &Q,
+                                 sycl::buffer<double, 1> &buff) {
+
+     return Q.submit([&](sycl::handler &cgh) {
+        sycl::accessor acc(buff, cgh, sycl::read_write);
+
+        cgh.parallel_for(buff.get_range(), [=](sycl::id<1> itm){
+            acc[itm] += 1;
+        });
+     });
+}

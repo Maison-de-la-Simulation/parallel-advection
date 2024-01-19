@@ -78,6 +78,9 @@ class FakeAdvector : public IAdvectorX {
     sycl::event operator()(sycl::queue &Q,
                            sycl::buffer<double, 2> &buff_fdistrib,
                            const ADVParams &params) override;
+
+    sycl::event stream_bench(sycl::queue &Q,
+                             sycl::buffer<double, 1> &buff);
 };
 
 // class HierarchicalAlloca : public IAdvectorX {
