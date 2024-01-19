@@ -67,7 +67,7 @@ BM_STREAM(benchmark::State &state){
 
     /* Fill buffer with zeroes */
     Q.submit([&](sycl::handler &cgh) {
-        sycl::accessor acc(fdist, cgh, sycl::read_write);
+        sycl::accessor acc(fdist, cgh, sycl::read_write, sycl::no_init);
         cgh.parallel_for(fdist.get_range(), [=](sycl::id<1> itm){
             acc[itm] = 0;
         });
