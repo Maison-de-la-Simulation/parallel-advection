@@ -12,7 +12,8 @@ INTELLLVM_COMPILER="clang++"
 ACPP_COMPILER="syclcc"
 
 usage() {
-    echo "Simple compilation script. Automatically builds the project for a combination (hw, sycl-impl). For multiple devices compilation flows, please compile manually."
+    echo "Simple compilation script. Automatically builds the project for a combination (hw, sycl-impl)."
+    echo "For multiple devices compilation flows, please compile manually."
     echo "Usage: $0 [--hw <mi250|a100|x86_64>] [--sycl-impl <intel-llvm|acpp|oneapi>] [--benchmark_DIR=<directory>]"
     echo "Compilers must be present in PATH:"
     echo "           intel-llvm : ${INTELLLVM_COMPILER}"
