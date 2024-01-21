@@ -71,7 +71,7 @@ fi
 # =================================================
 if [ "$HARDWARE" == "mi250" ]; then
     if [ "$SYCL_IMPL" == "intel-llvm" ]; then
-        CMAKE_OPTIONS+=' -DDPCPP_FSYCL_TARGETS="-fsycl-targets=amd_gpu_gfx90a"'
+        CMAKE_OPTIONS+=" -DDPCPP_FSYCL_TARGETS='-fsycl-targets=amd_gpu_gfx90a'"
     elif [ "$SYCL_IMPL" == "acpp" ]; then
         export ACPP_TARGETS="hip:gfx90a"
     elif [ "$SYCL_IMPL" == "oneapi" ]; then
@@ -83,7 +83,7 @@ if [ "$HARDWARE" == "mi250" ]; then
 elif [ "$HARDWARE" == "a100" ]; then
     # Add options for a100 and different SYCL implementations
     if [ "$SYCL_IMPL" == "intel-llvm" ]; then
-        CMAKE_OPTIONS+=' -DDPCPP_FSYCL_TARGETS="-fsycl-targets=nvidia_gpu_sm_80"'
+        CMAKE_OPTIONS+=" -DDPCPP_FSYCL_TARGETS='-fsycl-targets=nvidia_gpu_sm_80'"
     elif [ "$SYCL_IMPL" == "acpp" ]; then
         export ACPP_TARGETS="cuda:sm_80"
     elif [ "$SYCL_IMPL" == "oneapi" ]; then
@@ -95,7 +95,7 @@ elif [ "$HARDWARE" == "a100" ]; then
 elif [ "$HARDWARE" == "x86_64" ]; then
     # Add options for x86_64 and different SYCL implementations
     if [ "$SYCL_IMPL" == "intel-llvm" ]; then
-        CMAKE_OPTIONS+=' -DDPCPP_FSYCL_TARGETS="-fsycl-targets=spir64_x86_64"'
+        CMAKE_OPTIONS+=" -DDPCPP_FSYCL_TARGETS='-fsycl-targets=spir64_x86_64'"
     elif [ "$SYCL_IMPL" == "acpp" ]; then
         export ACPP_TARGETS="omp"
     # elif [ "$SYCL_IMPL" == "oneapi" ]; then
