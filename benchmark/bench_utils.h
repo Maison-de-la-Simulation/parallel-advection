@@ -14,6 +14,16 @@ enum AdvImpl : int {
     SCOP    // 4
 };
 
+using bm_vec_t = std::vector<int64_t>;
+static bm_vec_t NY_RANGE = benchmark::CreateRange(2 << 5, 2 << 20, 2);
+static bm_vec_t NY_SMALL_RANGE = {16384, 32768, 65536};
+static bm_vec_t WG_SIZES_RANGE = {1, 4, 8, 64, 128, 256, 512, 1024};
+static int64_t  NX = 1024;
+static bm_vec_t IMPL_RANGE = {AdvImpl::BR2D, AdvImpl::BR1D, AdvImpl::HIER,
+                              AdvImpl::NDRA, AdvImpl::SCOP};
+static bm_vec_t IMPL_NO_SCOPED_RANGE = {AdvImpl::BR2D, AdvImpl::BR1D,
+                                        AdvImpl::HIER, AdvImpl::NDRA};
+
 // =============================================
 // =============================================
 [[nodiscard]] inline ADVParams

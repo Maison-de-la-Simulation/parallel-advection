@@ -54,12 +54,13 @@ BM_WgSize(benchmark::State &state){
     }
 }
 
+// ==========================================
 BENCHMARK(BM_WgSize)
     ->ArgsProduct({
-        {1},//, 1},            /*gpu*/
-        {1024},                /*nx*/
-        {16384, 32768, 65536}, /*ny*/
-        {63, 64, 65, 127, 128, 129, 255, 256, 257, 511, 512, 513} /*wg_size*/
+        {0, 1}, /*gpu*/
+        {NX}, /*nx*/
+        NY_SMALL_RANGE, /*ny*/
+        WG_SIZES_RANGE /*wg_size*/
     })
     ->UseRealTime()
     ->Unit(benchmark::kMillisecond);
@@ -125,14 +126,13 @@ BM_Advector(benchmark::State &state) {
     }
 }   // end BM_Advector
 
+// ================================================
 BENCHMARK(BM_Advector)
     ->ArgsProduct({
-        {1},                                /*gpu*/
-        {1024},                                /*nx*/
-        // benchmark::CreateRange(256, 16384, 2), /*ny*/
-        benchmark::CreateRange(2<<5, 2<<20, /*multi=*/2), /*nx*/
-        {AdvImpl::BR2D, AdvImpl::BR1D, AdvImpl::HIER, AdvImpl::NDRA,
-         AdvImpl::SCOP} /*impl*/
+        {0, 1}, /*gpu USE --benchmark-filter=BM_Advector/0 or BM_Advector/1 */
+        {NX}, /*nx*/
+        NY_RANGE, /*ny*/
+        IMPL_RANGE, /*impl*/
     })
     ->UseRealTime()
     ->Unit(benchmark::kMillisecond);

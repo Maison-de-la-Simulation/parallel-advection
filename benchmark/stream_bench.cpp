@@ -86,20 +86,11 @@ BM_STREAM(benchmark::State &state){
     //No validation because it's FakeAdvector
 }
 
-
-// BENCHMARK(BM_STREAM)
-//     ->ArgsProduct({
-//         {1},     /*gpu*/
-//         {1024},  /*nx*/
-//         {16384, 32768, 65536}, /*ny*/
-//     })
-//     ->Unit(benchmark::kMillisecond);
-
 BENCHMARK(BM_STREAM)
     ->ArgsProduct({
         {1, 0},     /*gpu*/
-        {1024},  /*nx*/
-        benchmark::CreateRange(2<<5, 2<<20, /*multi=*/2), /*nx*/
+        {NX},  /*nx*/
+        NY_RANGE, /*ny*/
     })
     ->UseRealTime() /* real time benchmark */
     ->Unit(benchmark::kMillisecond);

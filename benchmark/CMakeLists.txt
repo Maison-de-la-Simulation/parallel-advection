@@ -1,6 +1,6 @@
 find_package(benchmark REQUIRED)
 
-add_executable(main-bench run_bench.cpp)
+add_executable(main-bench main_bench.cpp)
 
 target_link_libraries(main-bench PUBLIC
 benchmark::benchmark
@@ -20,7 +20,7 @@ adv1d::core
 adv1d::tools)
 
 #
-add_executable(stream-bench bench_stream.cpp)
+add_executable(stream-bench stream_bench.cpp)
 
 target_link_libraries(stream-bench PUBLIC
 benchmark::benchmark

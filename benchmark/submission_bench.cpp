@@ -34,10 +34,20 @@ BM_Advector(benchmark::State &state) {
 
     /* Benchmark */
     for (auto _ : state) {
-        for (size_t i = 0; i < p.maxIter-1; i++)
-            advector(Q, fdist, p);
+        try
+        {
+            for (size_t i = 0; i < p.maxIter-1; i++)
+                advector(Q, fdist, p);
 
-        advector(Q, fdist, p).wait();
+            advector(Q, fdist, p).wait();
+
+        } catch (const std::exception &e) {
+            state.SkipWithError(e.what());
+            break; // REQUIRED to prevent all further iterations.
+        } catch (const sycl::exception &e) {
+            state.SkipWithError(e.what());
+            break;
+        }
     }
 
     state.counters.insert({
@@ -57,12 +67,10 @@ BM_Advector(benchmark::State &state) {
 
 BENCHMARK(BM_Advector)
     ->ArgsProduct({
-        {1},                                /*gpu*/
-        {1024},                                /*nx*/
-        // benchmark::CreateRange(256, 16384, 2), /*ny*/
-        {16384, 32768, 65536}, /*ny*/
-        {AdvImpl::BR2D, AdvImpl::BR1D, AdvImpl::HIER, AdvImpl::NDRA,
-         AdvImpl::SCOP}, /*kernel_id*/
+        {0, 1}, /*gpu*/
+        {NX}, /*nx*/
+        NY_SMALL_RANGE, /*ny*/
+        IMPL_RANGE, /*kernel_id*/
         {1, 2, 10, 50, 100, 1000, 10000} /*p.maxIter*/
     }) 
     ->UseRealTime()
