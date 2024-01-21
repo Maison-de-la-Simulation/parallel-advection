@@ -49,8 +49,8 @@ if [ -z "$HARDWARE" ] || [ -z "$SYCL_IMPL" ]; then
     usage
 fi
 
-ERR_SYCL_UNKNOWN="Error: Unsupported SYCL implementation specified."
-ERR_HW_UNKNOWN="Error: Unsupported hardware architecture specified."
+ERR_SYCL_UNKNOWN="### Error: Unsupported SYCL implementation specified."
+ERR_HW_UNKNOWN="### Error: Unsupported hardware architecture specified."
 
 # =================================================
 # Set right CXX compiler (must be in PATH)
@@ -75,7 +75,7 @@ if [ "$HARDWARE" == "mi250" ]; then
     elif [ "$SYCL_IMPL" == "acpp" ]; then
         export ACPP_TARGETS="hip:gfx90a"
     elif [ "$SYCL_IMPL" == "oneapi" ]; then
-        echo "Warning: Combination not tested: ${SYCL_IMPL} - ${HARDWARE}"
+        echo "### Warning: Combination not tested: ${SYCL_IMPL} - ${HARDWARE}"
     else
         echo $ERR_SYCL_UNKNOWN
         usage
@@ -87,7 +87,7 @@ elif [ "$HARDWARE" == "a100" ]; then
     elif [ "$SYCL_IMPL" == "acpp" ]; then
         export ACPP_TARGETS="cuda:sm_80"
     elif [ "$SYCL_IMPL" == "oneapi" ]; then
-        echo "Warning: Combination not tested: ${SYCL_IMPL} - ${HARDWARE}"
+        echo "### Warning: Combination not tested: ${SYCL_IMPL} - ${HARDWARE}"
     else
         echo $ERR_SYCL_UNKNOWN
         usage
@@ -105,7 +105,7 @@ elif [ "$HARDWARE" == "x86_64" ]; then
         usage
     fi
 else
-    echo "Error: Unsupported hardware specified."
+    echo $ERR_HW_UNKNOWN
     usage
 fi
 
@@ -124,7 +124,7 @@ BUILD_DIR=build_${SYCL_IMPL}_${HARDWARE}
 
 # Check if the build directory exists
 if [ -d "${BUILD_DIR}" ]; then
-    echo "Removing existing build directory: ${BUILD_DIR}"
+    echo "### Removing existing build directory: ${BUILD_DIR}"
     rm -r "${BUILD_DIR}"
 fi
 
@@ -136,7 +136,7 @@ cmake $CMAKE_OPTIONS ..
 
 # Check the exit status of the CMake configuration
 if [ $? -ne 0 ]; then
-    echo "CMake configuration failed. Deleting the build directory."
+    echo "### Error: CMake configuration failed. Deleting the build directory."
     rm -r "$BUILD_DIR"
     exit 1
 fi
@@ -152,7 +152,7 @@ cmake --build . --parallel 24
 
 # Check the exit status of the build
 if [ $? -ne 0 ]; then
-    echo "Build failed."
+    echo "### Error: Build failed."
     exit 1
 fi
 
