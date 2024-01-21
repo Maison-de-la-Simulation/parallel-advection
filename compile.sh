@@ -10,6 +10,7 @@ BENCHMARK_DIR=""
 ONEAPI_COMPILER="icpx"
 INTELLLVM_COMPILER="clang++"
 ACPP_COMPILER="syclcc"
+echo ""
 
 usage() {
     echo "Simple compilation script. Automatically builds the project for a combination (hw, sycl-impl)."
@@ -141,7 +142,6 @@ if [ $? -ne 0 ]; then
     rm -r "$BUILD_DIR"
     exit 1
 fi
-echo ""
 echo "### CMake configuration complete in `pwd`."
 echo ""
 
@@ -157,6 +157,5 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-echo ""
 echo "### Build complete in `pwd`."
 echo ""
