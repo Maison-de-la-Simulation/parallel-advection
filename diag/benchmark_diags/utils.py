@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib
 
 import pprint
+
 pp = pprint.PrettyPrinter(indent=2)
 
 matplotlib.rcParams.update(
@@ -25,39 +26,40 @@ KCOLORS = [
     ("Scoped", "C3"),
 ]
 
-# Hardware peaks
-# peak_xeon = 94    # 192.654 bench STREAM
-# peak_a100 = 1555  # 1330 Papier https://arxiv.org/pdf/2008.08478.pdf et https://www.craigulmer.com/data/2021/SAND2021-1220_uur.pdf
-# peak_mi250= 1638  # 1056.22 result command rocm-bandwidth-test unidirectionnal
-# peak_epyc = 204.8 # 160 bench STREAM
-# peak_genoa= 460.8 # 727.270 benchmark STREAM
-peak_xeon = 192
-peak_a100 = 1330
-peak_mi250 = 1056
-peak_epyc = 160
-peak_genoa = 727
+#items per second peak with STSREAM benchmark
+peak_xeon = 9.8173
+peak_a100 = 86.1848
+peak_mi250 = 59.5168
+peak_epyc = 9.6437
+peak_genoa = 36.5901
+# peak_xeon = 192
+# peak_a100 = 1330
+# peak_mi250 = 1056
+# peak_epyc = 160
+# peak_genoa = 727
 
 # Hw list in the same order as peak
 hw_peak_list = [peak_mi250, peak_a100, peak_epyc, peak_genoa, peak_xeon]
-__HW_LIST   = ["mi250", "a100", "epyc", "genoa", "xeon"]
+__HW_LIST = ["mi250", "a100", "epyc", "genoa", "xeon"]
 
-__CPUS_ONLY = [None   , None  , "epyc", "genoa", "xeon"]
-__GPUS_ONLY = ["mi250", "a100", None  , None   , None]
+__CPUS_ONLY = [None, None, "epyc", "genoa", "xeon"]
+__GPUS_ONLY = ["mi250", "a100", None, None, None]
 
 kernel_id = {
     -1: "FakeAdvector",
-    0:"BasicRange2D",
-    1:"BasicRange1D",
-    2:"Hierarchical",
-    3:"NDRange",
-    4:"Scoped",
+    0: "BasicRange2D",
+    1: "BasicRange1D",
+    2: "Hierarchical",
+    3: "NDRange",
+    4: "Scoped",
 }
+
 
 ################################################################################
 ################################################################################
-def clean_raw_df(df: pd.DataFrame,
-                 perf_name:str = "items_per_second",
-                 magnitude:int = 1e9):
+def clean_raw_df(
+    df: pd.DataFrame, perf_name: str = "items_per_second", magnitude: int = 1e9
+):
     """Cleans the raw data from google benchmark' json into a dataframe ready to
     be used with the plot functions.
 
@@ -76,31 +78,26 @@ def clean_raw_df(df: pd.DataFrame,
     # ===========================================================
     try:
         df = df.drop(df[df.error_occurred == True].index)
-    except Exception :
+    except Exception:
         print("No error occured in Dataframe.")
 
     df = df.drop(df[df["name"].str.endswith("_median")].index)
     df = df.drop(df[df["name"].str.startswith("BM_WgSize")].index)
 
     df["kernel_id"] = df["kernel_id"].map(kernel_id)
-    # df = df.drop(df[df["kernel_id"].str.startswith("NDRa")].index)
 
     # setting up things to work with old utils.py
     df["global_size"] = df["ny"] * df["nx"]
 
-    # df = df.drop(df[df["throughput_mean"] > 100].index)
-    # df["throughput_mean"] = df["throughput_mean"]/10e9
-    # PVC_DPCPP_val = create_dict_from_df(df[df["gpu"] == 1])
-    # XeonMax_DPCPP_val = create_dict_from_df(df[df["gpu"] == 0])
-
-    # df["throughput_mean"] = df["throughput_mean"]/10e9
-    # A100_ACPP_val = create_dict_from_df(df[df["gpu"] == 1])
-    # a100_ACPP_val = create_dict_from_df(df)
-
     grouped_rows = [df.iloc[i : i + 3] for i in range(0, len(df), 3)]
 
     cleaned_df = pd.DataFrame(
-    columns=["kernel", "global_size", "perf_mean", "perf_std", "gpu"]
+        columns=["kernel",
+                 "global_size",
+                 "perf_mean",
+                 "perf_std",
+                 "real_time",
+                 "gpu"]
     )
     # Display the selected groups of rows
     for group in grouped_rows:
@@ -119,26 +116,19 @@ def clean_raw_df(df: pd.DataFrame,
         global_size = df_mean["global_size"]
         kernel_name = df_mean["kernel_id"]
 
-        perf_mean = df_mean[perf_name]/magnitude
-        perf_std = df_stdev[perf_name]/magnitude
-
-        #TODO: fix this in cpp
-        # if(kernel_name.endswith('2D') and perf_mean > 50 and perf_name.endswith("items_per_second"):
-        #     continue
-        # if(kernel_name.endswith('NDRange') and perf_mean > 50):
-        #     continue
+        perf_mean = df_mean[perf_name] / magnitude
+        perf_std = df_stdev[perf_name] / magnitude
 
         new_row = {
             "kernel": kernel_name,
             "global_size": global_size,
             "perf_mean": perf_mean,
             "perf_std": perf_std,
-            "gpu":df_mean["gpu"]
+            "real_time": df_mean['real_time'],
+            "gpu": df_mean["gpu"],
         }
 
-        cleaned_df = pd.concat(
-        [cleaned_df, pd.DataFrame([new_row])],
-        ignore_index=True)
+        cleaned_df = pd.concat([cleaned_df, pd.DataFrame([new_row])], ignore_index=True)
 
     return cleaned_df
 
@@ -168,7 +158,7 @@ def create_dict_from_df(df: pd.DataFrame):
 
 ################################################################################
 ################################################################################
-def plot_values(values: dict, title: str, do_show=False, log_base=2):
+def plot_values(values: dict, title: str, do_show=False, log_base=2, show_peak=False):
     """Generates a plot with errorbar for a dict of values obtained with
     the `create_dict_from_df` function.
 
@@ -180,10 +170,26 @@ def plot_values(values: dict, title: str, do_show=False, log_base=2):
     fig = plt.figure()  # figsize=(12,12)
     ax = fig.add_subplot(111)
 
+    maxs = []
     for key, data in values.items():
         sizes, perf, std = data
 
         ax.errorbar(sizes, perf, capsize=1, yerr=std, label=key)
+        maxs.append(max(perf))
+
+    if show_peak:
+        max_perf = max(maxs)
+        ax.axhline(
+            y=max_perf, color="red", linestyle="--", label=f"{round(max_perf, 4)}"
+        )
+
+        ax.axhline(
+            y=max_perf,
+            alpha=0.01,
+            linestyle="--",
+            color="red",
+            label=f"Estimation *8*2 = {round(max_perf*8*2,4)}",
+        )
 
     ax.set_title(title)
     ax.set_ylabel("Items processed (G/s)")
@@ -258,7 +264,7 @@ def plot_all_general_perf(values: list):
     )
 
     # set common labels (i.e. the labels of the large subplot)
-    ax.set_ylabel("Bytes processed (G/s)")
+    ax.set_ylabel("Items processed (G/s)")
     ax.set_xlabel("Global size ($n_x \\times n_{y}$ with $n_x = 1024 $)")
 
     # Turn off axis for the large subplot
@@ -295,7 +301,7 @@ def create_pp_values(dfs_list: list, ny_size: int):
     Returns:
         dict: A 3D python dictionnary pp_values[implem][hardware][app/arch]
     """
-    pp_val : dict[str, dict[str, dict[str, float]]] = {
+    pp_val: dict[str, dict[str, dict[str, float]]] = {
         "BasicRange2D": {},
         "BasicRange1D": {},
         "NDRange": {},
@@ -315,9 +321,9 @@ def create_pp_values(dfs_list: list, ny_size: int):
     # we have general structure of pp_val dict of dict
     m_list_df = []  # list of dataframes we will use, same order as hw list
     for df in dfs_list:
-        # we only keep the rows with targeted nvx size
+        # we only keep the rows with targeted ny size. ny = global_size/nx and nx = 1024
         m_list_df.append(
-            df.drop(df[(df["nvx"] != ny_size)].index) if df is not None else None
+            df.drop(df[(df["global_size"]/1024 != ny_size)].index) if df is not None else None
         )
 
     # for i_hw, m_df in enumerate(m_list_df):
@@ -329,7 +335,7 @@ def create_pp_values(dfs_list: list, ny_size: int):
         m_lists_impl_rt[impl_name] = []
         for m_df in m_list_df:
             if m_df is not None:
-                values_rt = m_df[m_df["kernel"] == impl_name]["runtime_mean"].values
+                values_rt = m_df[m_df["kernel"] == impl_name]["real_time"].values
                 m_lists_impl_rt[impl_name].append(
                     values_rt[0] if len(values_rt) > 0 else -1
                 )
@@ -341,15 +347,13 @@ def create_pp_values(dfs_list: list, ny_size: int):
     best_rts = {}
     for i_hw, hw_name in enumerate(__HW_LIST):
         if m_list_df[i_hw] is not None:
-            best_rts[hw_name] = m_list_df[i_hw]["runtime_mean"].min()
+            best_rts[hw_name] = m_list_df[i_hw]["real_time"].min()
         else:
             best_rts[hw_name] = -1
 
-    # print(best_rts)
+    print(best_rts)
 
-    # {'mi250': 0.0552265545454545, 'a100': 0.0498033090909091, 'epyc': 0.8109413636363635, 'genoa': 0.4141986363636363, 'xeon': 13.275833333333331}
-    # {'mi250': 0.0543997544554455, 'a100': 0.0659189909090909, 'epyc': 0.5355192727272726, 'genoa': 0.3516840909090909, 'xeon': 15.60932}
-    # # TODO: fix this
+    # # TODO: fix this: we have to manually check which are best runtimes between 2 implementations
     # best_rts = {
     #     "mi250": 0.0543997544554455,
     #     "a100": 0.0498033090909091,
@@ -368,8 +372,8 @@ def create_pp_values(dfs_list: list, ny_size: int):
             if current_df is not None:
                 val = current_df[current_df["kernel"] == key]
                 if val is not None:
-                    pd_series_mem = val["throughput_mean"].values
-                    pd_series_rt = val["runtime_mean"].values
+                    pd_series_mem = val["perf_mean"].values
+                    pd_series_rt = val["real_time"].values
 
                     perf_mem = pd_series_mem[0] if len(pd_series_mem > 0) else -1
                     perf_rt = pd_series_rt[0] if len(pd_series_rt > 0) else -1
@@ -388,6 +392,7 @@ def create_pp_values(dfs_list: list, ny_size: int):
                 pp_val[key][hw]["app"] = -1
 
     return pp_val
+
 
 ################################################################################
 ################################################################################
@@ -411,8 +416,8 @@ def compute_pp(pp_values: dict, hw_subset: list, do_print=False):
         pp.pprint(pp_values)
 
     nb_hw_in_subset = sum(x is not None for x in hw_subset)
-    pp_arch : dict[str, float] = {}
-    pp_app : dict[str, float] = {}
+    pp_arch: dict[str, float] = {}
+    pp_app: dict[str, float] = {}
     for impl in pp_values:
         # pp_arch[impl] = 0
         # pp_app[impl]  = 0
@@ -441,6 +446,7 @@ def compute_pp(pp_values: dict, hw_subset: list, do_print=False):
             print(f"        pp app  : {pp_app[impl]}")
 
     return (pp_arch, pp_app)
+
 
 ################################################################################
 ################################################################################
@@ -484,7 +490,8 @@ def plot_pp(data, data_mean_cpu, data_mean_gpu, data_mean_allsubset):
         ]
 
         # plot bars
-        axs[i].bar(x - bar_width / 2, app_efficiency, bar_width, color="C0"
+        axs[i].bar(
+            x - bar_width / 2, app_efficiency, bar_width, color="C0"
         )  # label='App Efficiency',
         axs[i].bar(
             x + bar_width / 2, arch_efficiency, bar_width, color="C1"
