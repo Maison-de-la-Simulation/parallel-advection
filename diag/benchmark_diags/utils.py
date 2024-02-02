@@ -81,7 +81,7 @@ def clean_raw_df(
     except Exception:
         print("No error occured in Dataframe.")
 
-    df = df.drop(df[df["name"].str.endswith("_median")].index)
+    df = df.drop(df[df["name"].str.endswith("_mean")].index)
     df = df.drop(df[df["name"].str.startswith("BM_WgSize")].index)
 
     df["kernel_id"] = df["kernel_id"].map(kernel_id)
@@ -94,38 +94,38 @@ def clean_raw_df(
     cleaned_df = pd.DataFrame(
         columns=["kernel",
                  "global_size",
-                 "perf_mean",
+                 "perf_median",
                  "perf_std",
                  "real_time",
                  "gpu"]
     )
     # Display the selected groups of rows
     for group in grouped_rows:
-        df_mean = group.iloc[0]
+        df_median = group.iloc[0]
         df_stdev = group.iloc[1]
         df_cvar = group.iloc[2]
 
         # 1st should be mean, then stddev, then cv
-        assert df_mean["name"].endswith("_mean")
+        assert df_median["name"].endswith("_median")
         assert df_stdev["name"].endswith("_stddev")
         assert df_cvar["name"].endswith("_cv")
         # the id of the benchmark should be the same for all 3
         start_substring = group["name"].str.split("_").str[0].iloc[0]
         assert all(group["name"].str.startswith(start_substring))
 
-        global_size = df_mean["global_size"]
-        kernel_name = df_mean["kernel_id"]
+        global_size = df_median["global_size"]
+        kernel_name = df_median["kernel_id"]
 
-        perf_mean = df_mean[perf_name] / magnitude
+        perf_median = df_median[perf_name] / magnitude
         perf_std = df_stdev[perf_name] / magnitude
 
         new_row = {
             "kernel": kernel_name,
             "global_size": global_size,
-            "perf_mean": perf_mean,
+            "perf_median": perf_median,
             "perf_std": perf_std,
-            "real_time": df_mean['real_time'],
-            "gpu": df_mean["gpu"],
+            "real_time": df_median['real_time'],
+            "gpu": df_median["gpu"],
         }
 
         cleaned_df = pd.concat([cleaned_df, pd.DataFrame([new_row])], ignore_index=True)
@@ -149,7 +149,7 @@ def create_dict_from_df(df: pd.DataFrame):
         val_one_kernel = df[df["kernel"] == kernel_type]
         values_all_kernels[kernel_type] = (
             val_one_kernel["global_size"],
-            val_one_kernel["perf_mean"],
+            val_one_kernel["perf_median"],
             val_one_kernel["perf_std"],
         )
 
