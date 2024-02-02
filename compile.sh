@@ -10,12 +10,11 @@ BENCHMARK_DIR=""
 ONEAPI_COMPILER="icpx"
 INTELLLVM_COMPILER="clang++"
 ACPP_COMPILER="syclcc"
-echo ""
 
 usage() {
-    echo "Simple compilation script. Automatically builds the project for a combination (hw, sycl-impl)."
+    echo "Simple compilation script. Automatically builds the project for a combination (hw, sycl)."
     echo "For multiple devices compilation flows, please compile manually."
-    echo "Usage: $0 [--hw <mi250|a100|x86_64>] [--sycl-impl <intel-llvm|acpp|oneapi>] [--benchmark_DIR=<directory>]"
+    echo "Usage: $0 [--hw <mi250|a100|x86_64>] [--sycl <intel-llvm|acpp|oneapi>] [--benchmark_DIR=<directory>]"
     echo "Compilers must be present in PATH:"
     echo "           intel-llvm : ${INTELLLVM_COMPILER}"
     echo "           acpp       : ${ACPP_COMPILER}"
@@ -32,7 +31,7 @@ while [ "$#" -gt 0 ]; do
             HARDWARE="$2"
             shift 2
             ;;
-        --sycl-impl)
+        --sycl)
             SYCL_IMPL="$2"
             shift 2
             ;;
@@ -47,7 +46,7 @@ while [ "$#" -gt 0 ]; do
 done
 
 if [ -z "$HARDWARE" ] || [ -z "$SYCL_IMPL" ]; then
-    echo "Error: Both --hw and --sycl-impl options are required."
+    echo "Error: Both --hw and --sycl options are required."
     usage
 fi
 

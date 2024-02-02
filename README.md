@@ -32,6 +32,8 @@ Implementations (folder `kokkos/src/core/.../impl`):
 
 
 # Build the project (see instructions on branches):
+You can use the `compile.sh` script to compile for various hardware and sycl-implementations. Try `compile.sh --help` to see available options.
+
 ```sh
 mkdir build
 cd build

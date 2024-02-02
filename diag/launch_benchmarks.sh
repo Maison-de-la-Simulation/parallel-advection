@@ -18,8 +18,6 @@
 #============================================================
 # ADASTRA
 #============================================================
-# export SINGULARITY_BIND="/proc,/sys,/dev"
-
 ###SBATCH --account=cin4492
 ###SBATCH --gres=gpu:1
 ###SBATCH --gpus-per-node=1
@@ -30,6 +28,7 @@
 ###SBATCH --cpus-per-task=192
 ###SBATCH --constraint=GENOA
 
+# export SINGULARITY_BIND="/proc,/sys,/dev"
 #============================================================
 export CONTAINER_RUN=$CONTAINERSDIR/sycl-complete_latest.sif
 
@@ -38,7 +37,7 @@ export BUILD_DIR=/gpfs/users/my_user/parallel-advection/build_acpp
 
 export HW=a100
 export IMPL=acpp
-export ARGS_GPU_SINGULARITY= #--rocm #--nv
+export ARGS_GPU_SINGULARITY= #--rocm #--nv #--env HIP_VISIBLE_DEVICES=0
 
 #Benchmark parameters
 export BENCH_EXEC=${BUILD_DIR}/benchmark/main-bench
