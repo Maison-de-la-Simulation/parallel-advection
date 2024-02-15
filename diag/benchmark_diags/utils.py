@@ -27,11 +27,11 @@ KCOLORS = [
 ]
 
 #items per second peak with STSREAM benchmark
-peak_xeon = 9.8173
-peak_a100 = 86.1848
-peak_mi250 = 59.5168
-peak_epyc = 9.6437
-peak_genoa = 36.5901
+peak_xeon = 9.6875#9.8173
+peak_a100 = 87.625#86.1848
+peak_mi250 = 80.8125#59.5168
+peak_epyc = 9.625#9.6437
+peak_genoa = 29.125#36.5901
 # peak_xeon = 192
 # peak_a100 = 1330
 # peak_mi250 = 1056
@@ -352,16 +352,17 @@ def create_pp_values(dfs_list: list, ny_size: int):
             best_rts[hw_name] = -1
 
     print(best_rts)
+# {'mi250': 0.5471618701086244, 'a100': 0.4869700169951984, 'epyc': 7.0054624293698, 'genoa': 2.685817891202213, 'xeon': 26.35336968518021}
+# {'mi250': 0.5597686349298755, 'a100': 0.5856280472803576, 'epyc': 4.575693079375274, 'genoa': 1.9044154701114961, 'xeon': 31.387813750019305}
 
     # # TODO: fix this: we have to manually check which are best runtimes between 2 implementations
-    # best_rts = {
-    #     "mi250": 0.0543997544554455,
-    #     "a100": 0.0498033090909091,
-    #     "epyc": 0.5355192727272726,
-    #     "genoa": 0.3516840909090909,
-    #     "xeon": 13.275833333333331,
-    # }
-
+    best_rts = {
+        "mi250": 0.5471618701086244,
+        "a100": 0.4869700169951984,
+        "epyc": 4.575693079375274,
+        "genoa": 1.9044154701114961,
+        "xeon": 26.35336968518021,
+    }
     # now we have the dropped dfs and the pp_val data template
     for key in pp_val:
         for i_hw, hw in enumerate(__HW_LIST):
@@ -372,7 +373,7 @@ def create_pp_values(dfs_list: list, ny_size: int):
             if current_df is not None:
                 val = current_df[current_df["kernel"] == key]
                 if val is not None:
-                    pd_series_mem = val["perf_mean"].values
+                    pd_series_mem = val["perf_median"].values
                     pd_series_rt = val["real_time"].values
 
                     perf_mem = pd_series_mem[0] if len(pd_series_mem > 0) else -1
@@ -450,9 +451,127 @@ def compute_pp(pp_values: dict, hw_subset: list, do_print=False):
 
 ################################################################################
 ################################################################################
-def plot_pp(data, data_mean_cpu, data_mean_gpu, data_mean_allsubset):
-    """Generates a performance portability histogram for the paper.
+# def plot_pp(data, data_mean_cpu, data_mean_gpu, data_mean_allsubset):
+#     """Generates a performance portability histogram for the paper.
 
+#     Args:
+#         data (_type_): Values in the form created by
+#         `create_pp_values` function
+#         data_mean_cpu (_type_): Perf-port values (harmonic mean) for the CPU
+#         subset
+#         data_mean_gpu (_type_): Perf-port values (harmonic mean) for the GPU
+#         subset
+#         data_mean_allsubset (_type_): Perf-port values (harmonic mean) for the
+#         complete subset
+#     """
+#     implems = data.keys()
+
+#     num_implementations = len(implems)
+#     num_hardware = len(__HW_LIST)
+
+#     fig, axs = plt.subplots(1, num_implementations, figsize=(13, 2.8))  # , sharey=True)
+#     x = np.arange(num_hardware)
+#     bar_width = 0.4  # Adjust the width to control the spacing
+
+#     __COLOR_APP = "C0"
+#     __COLOR_ARCH = "C1"
+
+#     __LINESTYLE_GPU = "--"
+#     __LINESTYLE_CPU = ":"
+#     __LINESTYLE_ALL = "-"
+
+#     for i, implem in enumerate(implems):
+#         app_efficiency = [
+#             data[implem][hw]["app"] if data[implem][hw]["app"] != -1 else 0
+#             for hw in __HW_LIST
+#         ]
+#         arch_efficiency = [
+#             data[implem][hw]["arch"] if data[implem][hw]["arch"] != -1 else 0
+#             for hw in __HW_LIST
+#         ]
+
+#         # plot bars
+#         axs[i].bar(
+#             x - bar_width / 2, app_efficiency, bar_width, color="C0"
+#         )  # label='App Efficiency',
+#         axs[i].bar(
+#             x + bar_width / 2, arch_efficiency, bar_width, color="C1"
+#         )  # label='Arch Efficiency',
+
+#         # plot harmonix mean for each implem
+#         # line '--' for CPU, '---' for GPUs, and '-' for all subset ?
+#         axs[i].plot(
+#             x,
+#             [data_mean_cpu["app"][implem] for _ in range(5)],
+#             linestyle=__LINESTYLE_CPU,
+#             color=__COLOR_APP,
+#         )  # label='CPU APP PerfPort',
+#         axs[i].plot(
+#             x,
+#             [data_mean_cpu["arch"][implem] for _ in range(5)],
+#             linestyle=__LINESTYLE_CPU,
+#             color=__COLOR_ARCH,
+#         )  # label='CPU ARCH PerfPort',
+
+#         axs[i].plot(
+#             x,
+#             [data_mean_gpu["app"][implem] for _ in range(5)],
+#             linestyle=__LINESTYLE_GPU,
+#             color=__COLOR_APP,
+#         )  # label='Harmonic Mean',
+#         axs[i].plot(
+#             x,
+#             [data_mean_gpu["arch"][implem] for _ in range(5)],
+#             linestyle=__LINESTYLE_GPU,
+#             color=__COLOR_ARCH,
+#         )  # label='Harmonic Mean',
+
+#         axs[i].plot(
+#             x,
+#             [data_mean_allsubset["app"][implem] for _ in range(5)],
+#             linestyle=__LINESTYLE_ALL,
+#             color=__COLOR_APP,
+#         )
+#         axs[i].plot(
+#             x,
+#             [data_mean_allsubset["arch"][implem] for _ in range(5)],
+#             linestyle=__LINESTYLE_ALL,
+#             color=__COLOR_ARCH,
+#         )
+
+#         axs[i].xaxis.set_label_position("top")
+#         axs[i].set_xlabel(implem)
+#         axs[i].grid()
+#         axs[i].set_ylim(0, 1.1)  # set ylim max to 1.1 so we can see
+#         axs[i].set_xticks(x)
+#         axs[i].set_xticklabels([str(j + 1) for j in range(num_hardware)])
+#         axs[i].set_yticks([0, 0.25, 0.5, 0.75, 1.0])
+#         if i != 0:
+#             axs[i].set_yticklabels([])
+#         # if i != 0: axs[i].yaxis.set_ticks_position('none')
+
+#     # Legend for all the fig
+#     axs[0].bar(0, 0, color=__COLOR_APP, label="App Efficiency")
+#     axs[0].bar(0, 0, color=__COLOR_ARCH, label="Arch Efficiency")
+#     axs[0].plot(0, 0, __LINESTYLE_CPU, color="k", label="H = CPUs")
+#     axs[0].plot(0, 0, __LINESTYLE_GPU, color="k", label="H = GPUs")
+#     axs[0].plot(0, 0, __LINESTYLE_ALL, color="k", label="H = CPUs $\\cup$ GPUs")
+#     # axs[0].plot(0, 0, color='k', label="GPUs = 1,2 CPUs = 3,4,5")
+
+#     plt.figlegend(loc="lower center", ncol=5, bbox_to_anchor=(0.5, -0.1))
+
+#     axs[0].set_ylabel("Efficiency")
+
+#     # axs[0].legend(loc='upper right', ncol=5, borderaxespad=-2.2)
+#     plt.tight_layout()
+#     plt.savefig("pp.pdf", bbox_inches="tight")
+#     plt.show()
+
+
+################################################################################
+################################################################################
+def plot_perfport_full(array_of_data):
+    """Generates the performance portability histogram for the paper.
     Args:
         data (_type_): Values in the form created by
         `create_pp_values` function
@@ -463,103 +582,111 @@ def plot_pp(data, data_mean_cpu, data_mean_gpu, data_mean_allsubset):
         data_mean_allsubset (_type_): Perf-port values (harmonic mean) for the
         complete subset
     """
-    implems = data.keys()
 
-    num_implementations = len(implems)
-    num_hardware = len(__HW_LIST)
-
-    fig, axs = plt.subplots(1, num_implementations, figsize=(13, 2.8))  # , sharey=True)
-    x = np.arange(num_hardware)
+    fig, axs = plt.subplots(2, 5, figsize=(12, 5.2))  
+    x = np.arange(len(__HW_LIST))
     bar_width = 0.4  # Adjust the width to control the spacing
 
-    __COLOR_APP = "C0"
-    __COLOR_ARCH = "C1"
+    for idx_subplot, d in enumerate(array_of_data):
+        sycl_impl, data, data_mean_cpu, data_mean_gpu, data_mean_allsubset = d
 
-    __LINESTYLE_GPU = "--"
-    __LINESTYLE_CPU = ":"
-    __LINESTYLE_ALL = "-"
+        implems = data.keys()
 
-    for i, implem in enumerate(implems):
-        app_efficiency = [
-            data[implem][hw]["app"] if data[implem][hw]["app"] != -1 else 0
-            for hw in __HW_LIST
-        ]
-        arch_efficiency = [
-            data[implem][hw]["arch"] if data[implem][hw]["arch"] != -1 else 0
-            for hw in __HW_LIST
-        ]
+        # num_implementations = len(implems)
+        num_hardware = len(__HW_LIST)
 
-        # plot bars
-        axs[i].bar(
-            x - bar_width / 2, app_efficiency, bar_width, color="C0"
-        )  # label='App Efficiency',
-        axs[i].bar(
-            x + bar_width / 2, arch_efficiency, bar_width, color="C1"
-        )  # label='Arch Efficiency',
 
-        # plot harmonix mean for each implem
-        # line '--' for CPU, '---' for GPUs, and '-' for all subset ?
-        axs[i].plot(
-            x,
-            [data_mean_cpu["app"][implem] for _ in range(5)],
-            linestyle=__LINESTYLE_CPU,
-            color=__COLOR_APP,
-        )  # label='CPU APP PerfPort',
-        axs[i].plot(
-            x,
-            [data_mean_cpu["arch"][implem] for _ in range(5)],
-            linestyle=__LINESTYLE_CPU,
-            color=__COLOR_ARCH,
-        )  # label='CPU ARCH PerfPort',
+        __COLOR_APP = "C0"
+        __COLOR_ARCH = "C1"
 
-        axs[i].plot(
-            x,
-            [data_mean_gpu["app"][implem] for _ in range(5)],
-            linestyle=__LINESTYLE_GPU,
-            color=__COLOR_APP,
-        )  # label='Harmonic Mean',
-        axs[i].plot(
-            x,
-            [data_mean_gpu["arch"][implem] for _ in range(5)],
-            linestyle=__LINESTYLE_GPU,
-            color=__COLOR_ARCH,
-        )  # label='Harmonic Mean',
+        __LINESTYLE_GPU = "--"
+        __LINESTYLE_CPU = ":"
+        __LINESTYLE_ALL = "-"
 
-        axs[i].plot(
-            x,
-            [data_mean_allsubset["app"][implem] for _ in range(5)],
-            linestyle=__LINESTYLE_ALL,
-            color=__COLOR_APP,
-        )
-        axs[i].plot(
-            x,
-            [data_mean_allsubset["arch"][implem] for _ in range(5)],
-            linestyle=__LINESTYLE_ALL,
-            color=__COLOR_ARCH,
-        )
+        for i, implem in enumerate(implems):
+            if f"{implem}-{sycl_impl}".startswith('Scoped-dpcpp') : continue
+            
+            app_efficiency = [
+                data[implem][hw]["app"] if data[implem][hw]["app"] != -1 else 0
+                for hw in __HW_LIST
+            ]
+            arch_efficiency = [
+                data[implem][hw]["arch"] if data[implem][hw]["arch"] != -1 else 0
+                for hw in __HW_LIST
+            ]
 
-        axs[i].xaxis.set_label_position("top")
-        axs[i].set_xlabel(implem)
-        axs[i].grid()
-        axs[i].set_ylim(0, 1.1)  # set ylim max to 1.1 so we can see
-        axs[i].set_xticks(x)
-        axs[i].set_xticklabels([str(j + 1) for j in range(num_hardware)])
-        axs[i].set_yticks([0, 0.25, 0.5, 0.75, 1.0])
-        if i != 0:
-            axs[i].set_yticklabels([])
-        # if i != 0: axs[i].yaxis.set_ticks_position('none')
+            # plot bars
+            axs[idx_subplot][i].bar(x - bar_width / 2, app_efficiency, bar_width, color="C0"
+            )  # label='App Efficiency',
+            axs[idx_subplot][i].bar(
+                x + bar_width / 2, arch_efficiency, bar_width, color="C1"
+            )  # label='Arch Efficiency',
+
+            # plot harmonix mean for each implem
+            # line '--' for CPU, '---' for GPUs, and '-' for all subset ?
+            axs[idx_subplot][i].plot(
+                x,
+                [data_mean_cpu["app"][implem] for _ in range(5)],
+                linestyle=__LINESTYLE_CPU,
+                color=__COLOR_APP,
+            )  # label='CPU APP PerfPort',
+            axs[idx_subplot][i].plot(
+                x,
+                [data_mean_cpu["arch"][implem] for _ in range(5)],
+                linestyle=__LINESTYLE_CPU,
+                color=__COLOR_ARCH,
+            )  # label='CPU ARCH PerfPort',
+
+            axs[idx_subplot][i].plot(
+                x,
+                [data_mean_gpu["app"][implem] for _ in range(5)],
+                linestyle=__LINESTYLE_GPU,
+                color=__COLOR_APP,
+            )  # label='Harmonic Mean',
+            axs[idx_subplot][i].plot(
+                x,
+                [data_mean_gpu["arch"][implem] for _ in range(5)],
+                linestyle=__LINESTYLE_GPU,
+                color=__COLOR_ARCH,
+            )  # label='Harmonic Mean',
+
+            axs[idx_subplot][i].plot(
+                x,
+                [data_mean_allsubset["app"][implem] for _ in range(5)],
+                linestyle=__LINESTYLE_ALL,
+                color=__COLOR_APP,
+            )
+            axs[idx_subplot][i].plot(
+                x,
+                [data_mean_allsubset["arch"][implem] for _ in range(5)],
+                linestyle=__LINESTYLE_ALL,
+                color=__COLOR_ARCH,
+            )
+
+            axs[idx_subplot][i].xaxis.set_label_position("top")
+            axs[idx_subplot][i].set_xlabel(f"{implem}-{sycl_impl}")
+            # axs[idx_subplot][i].grid(axis = 'y')
+            axs[idx_subplot][i].grid()
+            axs[idx_subplot][i].set_ylim(0, 1.1)  # set ylim max to 1.1 so we can see
+            axs[idx_subplot][i].set_xticks(x)
+            axs[idx_subplot][i].set_xticklabels([str(j + 1) for j in range(num_hardware)])
+            axs[idx_subplot][i].set_yticks([0, 0.25, 0.5, 0.75, 1.0])
+            if i != 0:
+                axs[idx_subplot][i].set_yticklabels([])
+            # if i != 0: axs[i].yaxis.set_ticks_position('none')
 
     # Legend for all the fig
-    axs[0].bar(0, 0, color=__COLOR_APP, label="App Efficiency")
-    axs[0].bar(0, 0, color=__COLOR_ARCH, label="Arch Efficiency")
-    axs[0].plot(0, 0, __LINESTYLE_CPU, color="k", label="H = CPUs")
-    axs[0].plot(0, 0, __LINESTYLE_GPU, color="k", label="H = GPUs")
-    axs[0].plot(0, 0, __LINESTYLE_ALL, color="k", label="H = CPUs $\\cup$ GPUs")
+    axs[1][0].bar(0, 0, color=__COLOR_APP, label="App Efficiency")
+    axs[1][0].bar(0, 0, color=__COLOR_ARCH, label="Arch Efficiency")
+    axs[1][0].plot(0, 0, __LINESTYLE_CPU, color="k", label="{CPUs}")
+    axs[1][0].plot(0, 0, __LINESTYLE_GPU, color="k", label="{GPUs}")
+    axs[1][0].plot(0, 0, __LINESTYLE_ALL, color="k", label="{CPUs $\\cup$ GPUs}")
     # axs[0].plot(0, 0, color='k', label="GPUs = 1,2 CPUs = 3,4,5")
 
-    plt.figlegend(loc="lower center", ncol=5, bbox_to_anchor=(0.5, -0.1))
+    # plt.figlegend(loc=(0.818, 0.117), ncol=1)
+    plt.figlegend(loc=(0.8221, 0.1529), ncol=1)
 
-    axs[0].set_ylabel("Efficiency")
+    axs[-1][-1].axis('off') #remove scoped dpcpp
 
     # axs[0].legend(loc='upper right', ncol=5, borderaxespad=-2.2)
     plt.tight_layout()
