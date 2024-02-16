@@ -202,6 +202,8 @@ def plot_values(values: dict, title: str, do_show=False, log_base=2, show_peak=F
     # fig.savefig(f"plot{title}.pdf")
     if do_show:
         plt.show()
+    else:
+        plt.close()
 
 
 ################################################################################
@@ -289,7 +291,7 @@ def plot_all_general_perf(values: list):
 ################################################################################
 ################################################################################
 # careful run with df list in the right order (same as __HW_LIST)
-def create_pp_values(dfs_list: list, ny_size: int):
+def create_pp_values(dfs_list: list, ny_size: int, best_runtimes):
     """_summary_
 
     Args:
@@ -343,26 +345,6 @@ def create_pp_values(dfs_list: list, ny_size: int):
             else:
                 m_lists_impl_rt[impl_name].append(-1)
 
-    # best durations for each hardware regardless of the implem
-    best_rts = {}
-    for i_hw, hw_name in enumerate(__HW_LIST):
-        if m_list_df[i_hw] is not None:
-            best_rts[hw_name] = m_list_df[i_hw]["real_time"].min()
-        else:
-            best_rts[hw_name] = -1
-
-    print(best_rts)
-# {'mi250': 0.5471618701086244, 'a100': 0.4869700169951984, 'epyc': 7.0054624293698, 'genoa': 2.685817891202213, 'xeon': 26.35336968518021}
-# {'mi250': 0.5597686349298755, 'a100': 0.5856280472803576, 'epyc': 4.575693079375274, 'genoa': 1.9044154701114961, 'xeon': 31.387813750019305}
-
-    # # TODO: fix this: we have to manually check which are best runtimes between 2 implementations
-    best_rts = {
-        "mi250": 0.5471618701086244,
-        "a100": 0.4869700169951984,
-        "epyc": 4.575693079375274,
-        "genoa": 1.9044154701114961,
-        "xeon": 26.35336968518021,
-    }
     # now we have the dropped dfs and the pp_val data template
     for key in pp_val:
         for i_hw, hw in enumerate(__HW_LIST):
@@ -384,7 +366,7 @@ def create_pp_values(dfs_list: list, ny_size: int):
 
                 if perf_rt != -1:
                     pp_val[key][hw]["arch"] = perf_mem / hw_peak_list[i_hw]
-                    pp_val[key][hw]["app"] = best_rts[hw] / perf_rt
+                    pp_val[key][hw]["app"] = best_runtimes[hw] / perf_rt
 
             else:
                 # if is None, the application does not run on this hw, we set pp to 0
