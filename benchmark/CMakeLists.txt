@@ -28,3 +28,7 @@ compiler_wrapper
 adv1d::config
 adv1d::core
 adv1d::tools)
+
+#print sycl infos
+add_executable(print-sycl-infos print_sycl_infos.cpp)
+target_link_libraries(print-sycl-infos PUBLIC compiler_wrapper)
