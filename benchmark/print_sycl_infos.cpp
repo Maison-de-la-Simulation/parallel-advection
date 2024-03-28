@@ -45,5 +45,16 @@ main(int argc, char const *argv[]) {
     std::cout << "\t max_work_item_sizes<3>: " << r3d[0] << ", " << r3d[1]
               << ", " << r3d[2] << " (total =" << r3d.size() << ")\n";
 
+
+    Q.submit([&](sycl::handler &cgh) {
+        sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>(nx), cgh);
+
+        cgh.single_task([=]() {
+            auto max_size = slice_ftmp.max_size();
+            std::cout << "Local accessor max_size is: " << max_size << std::endl;
+        });
+    });
+
+
     return 0;
 }
