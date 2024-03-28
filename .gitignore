@@ -18,3 +18,4 @@ cmake-3.27.7-linux-x86_64.sh
 __pycache__
 LOGS/
 *.ipynb
+.cache

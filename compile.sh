@@ -11,6 +11,8 @@ ONEAPI_COMPILER="icpx"
 INTELLLVM_COMPILER="clang++"
 ACPP_COMPILER="syclcc"
 
+CMAKE_OPTIONS+=" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+
 usage() {
     echo "Simple compilation script. Automatically builds the project for a combination (hw, sycl)."
     echo "For multiple devices compilation flows, please compile manually."
@@ -115,9 +117,6 @@ if [ -n "$BENCHMARK_DIR" ]; then
     CMAKE_OPTIONS+=" -Dbenchmark_DIR=${BENCHMARK_DIR}"
 fi
 
-# =================================================
-# Configure
-# =================================================
 # =================================================
 # Configure
 # =================================================
