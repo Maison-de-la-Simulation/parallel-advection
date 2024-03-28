@@ -1,26 +1,27 @@
-name: Publish docker images for SYCL
+# name: Publish docker images for SYCL
 
-on:
-  push: { branches: [ 'main' ] }
+# on:
+#   push: { branches: [ 'main' ] }
 
-jobs:
-  build-push-container:
-    strategy:
-      matrix:
-        implem: ['sycl']
-        backend: ['complete']
-    runs-on: ubuntu-latest
-    steps:
-      - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@v1.2.0
-        with: { tool-cache: true, large-packages: false }
-      - name: Checkout built branch
-        uses: actions/checkout@v3
-      - name: Build and push
-        run: |
-          echo ${{ secrets.GH_ACCESS_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker build \
-            --cache-from ghcr.io/maison-de-la-simulation/${{matrix.implem}}-${{matrix.backend}} \
-            --tag ghcr.io/maison-de-la-simulation/${{matrix.implem}}-${{matrix.backend}} \
-            --squash .
-          docker push ghcr.io/maison-de-la-simulation/${{matrix.implem}}-${{matrix.backend}}
+# jobs:
+#   build-push-container:
+#     strategy:
+#       matrix:
+#         implem: ['sycl']
+#         backend: ['complete']
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Free Disk Space (Ubuntu)
+#         uses: jlumbroso/free-disk-space@v1.2.0
+#         with: { tool-cache: true, large-packages: false }
+#       - name: Checkout built branch
+#         uses: actions/checkout@v3
+#       - name: Build and push
+#         run: |
+#           echo ${{ secrets.GH_ACCESS_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+#           cd containers/${{matrix.implem}}-${{matrix.backend}}
+#           docker build \
+#             --cache-from ghcr.io/maison-de-la-simulation/${{matrix.implem}}-${{matrix.backend}} \
+#             --tag ghcr.io/maison-de-la-simulation/${{matrix.implem}}-${{matrix.backend}} \
+#             --squash .
+#           docker push ghcr.io/maison-de-la-simulation/${{matrix.implem}}-${{matrix.backend}}
