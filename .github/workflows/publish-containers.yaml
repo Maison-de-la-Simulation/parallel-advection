@@ -19,7 +19,6 @@ jobs:
       - name: Build and push
         run: |
           echo ${{ secrets.GH_ACCESS_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          cd containers/${{matrix.implem}}-${{matrix.backend}}
           docker build \
             --cache-from ghcr.io/maison-de-la-simulation/${{matrix.implem}}-${{matrix.backend}} \
             --tag ghcr.io/maison-de-la-simulation/${{matrix.implem}}-${{matrix.backend}} \
