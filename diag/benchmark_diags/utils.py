@@ -32,6 +32,15 @@ peak_a100 = 87.625#86.1848
 peak_mi250 = 80.8125#59.5168
 peak_epyc = 9.625#9.6437
 peak_genoa = 29.125#36.5901
+
+#PEAK IN GIGA FLOP/S
+# peak_xeon = 62        / 30
+# peak_a100 = 9700      / 30
+# peak_mi250 = 47900    / 2 / 30
+# peak_epyc = 130.383   / 30
+# peak_genoa = 559.698  / 30
+
+
 # peak_xeon = 192
 # peak_a100 = 1330
 # peak_mi250 = 1056
@@ -193,7 +202,7 @@ def plot_values(values: dict, title: str, do_show=False, log_base=2, show_peak=F
 
     ax.set_title(title)
     ax.set_ylabel("Items processed (G/s)")
-    ax.set_xlabel("Global size ($n_x \\times n_{y}$ with $n_x = 1024 $)")
+    ax.set_xlabel("Global size ($n_x \\times n_{y}$ with $n_x = 2^{10} = 1024 $)")
     ax.set_xscale("log", base=log_base)
 
     ax.legend()
@@ -658,8 +667,8 @@ def plot_perfport_full(array_of_data):
             # if i != 0: axs[i].yaxis.set_ticks_position('none')
 
     # Legend for all the fig
-    axs[1][0].bar(0, 0, color=__COLOR_APP, label="App Efficiency")
-    axs[1][0].bar(0, 0, color=__COLOR_ARCH, label="Arch Efficiency")
+    axs[1][0].bar(0, 0, color=__COLOR_APP, label="$e_{app}$")
+    axs[1][0].bar(0, 0, color=__COLOR_ARCH, label="$e_{arch}$")
     axs[1][0].plot(0, 0, __LINESTYLE_CPU, color="k", label="{CPUs}")
     axs[1][0].plot(0, 0, __LINESTYLE_GPU, color="k", label="{GPUs}")
     axs[1][0].plot(0, 0, __LINESTYLE_ALL, color="k", label="{CPUs $\\cup$ GPUs}")
