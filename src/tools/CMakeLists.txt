@@ -7,10 +7,6 @@ target_sources(tools
   unique_ref.h
   validation.h)
 
-# if(SYCL_IS_ACPP)
-#     add_sycl_to_target(TARGET tools)
-# endif()
-
 target_include_directories(core
   PUBLIC
   ${CMAKE_SOURCE_DIR}/src/tools)
