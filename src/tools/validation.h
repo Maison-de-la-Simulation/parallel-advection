@@ -1,13 +1,12 @@
 #pragma once
 
-#include "init.h"
 #include <AdvectionParams.h>
 #include <iostream>
 #include <sycl/sycl.hpp>
 
 // ==========================================
 // ==========================================
-double
+inline double
 validate_result(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
                 const ADVParams &params, bool do_print = true) noexcept {
 

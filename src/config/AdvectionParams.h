@@ -1,8 +1,6 @@
 #pragma once
 #include "ConfigMap.h"
-#include <unordered_map>
-#include <iostream>
-#include <sycl/sycl.hpp>
+
 struct ADVParamsNonCopyable;
 
 /**
@@ -24,11 +22,10 @@ struct ADVParams {
   // Number of iterations
   size_t maxIter;
 
-  // Number of points for positions (x)
+  // Number of points for positions (x) velocities (vx) and fictive dim (z)
   size_t nx;
-
-  // Number of points for speeds (Vx)
   size_t nvx;
+  size_t nz;
 
   // Sizes of the SYCL work groups
   size_t wg_size;

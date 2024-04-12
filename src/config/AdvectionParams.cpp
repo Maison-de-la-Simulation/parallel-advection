@@ -1,8 +1,10 @@
 #include "AdvectionParams.h"
+#include <iostream>
 
 ADVParams::ADVParams(ADVParamsNonCopyable &other){
   nx = other.nx;
   nvx = other.nvx;
+  nz = other.nz;
 
   maxIter = other.maxIter;
   gpu = other.gpu;
@@ -29,8 +31,9 @@ ADVParams::ADVParams(ADVParamsNonCopyable &other){
 void ADVParamsNonCopyable::setup(const ConfigMap& configMap)
 {
   // geometry
-  nx  = configMap.getInteger("geometry", "nx",  512);
-  nvx = configMap.getInteger("geometry", "nvx", 1024);
+  nx  = configMap.getInteger("geometry", "nx",  1024);
+  nvx = configMap.getInteger("geometry", "nvx", 64);
+  nz = configMap.getInteger("geometry", "nz", 32);
 
   // run parameters
   maxIter = configMap.getInteger("run", "maxIter", 1000);
@@ -63,11 +66,12 @@ void ADVParamsNonCopyable::print()
   printf( "Simulation run parameters:\n");
   printf( "##########################\n");
   std::cout << "kernelImpl : " << kernelImpl << std::endl;
-  std::cout << "wgSize     : " << wg_size << std::endl;
+  std::cout << "wgSize     : " << wg_size    << std::endl;
   printf( "gpu        : %d\n", gpu);
   printf( "maxIter    : %zu\n", maxIter);
-  printf( "nx         : %zu\n", nx);
   printf( "nvx        : %zu\n", nvx);
+  printf( "nx         : %zu\n", nx);
+  printf( "nz         : %zu\n", nz);
   printf( "dt         : %f\n", dt);
   printf( "dx         : %f\n", dx);
   printf( "dvx        : %f\n", dvx);

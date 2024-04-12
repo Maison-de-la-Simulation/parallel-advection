@@ -7,7 +7,7 @@
 
 // ==========================================
 // ==========================================
-void
+inline void
 print_buffer(sycl::buffer<double, 2> &fdist, const ADVParams &params) noexcept {
     sycl::host_accessor tab(fdist, sycl::read_only);
 
@@ -21,7 +21,7 @@ print_buffer(sycl::buffer<double, 2> &fdist, const ADVParams &params) noexcept {
 
 // ==========================================
 // ==========================================
-void
+inline void
 export_result_to_file(sycl::buffer<double, 2> &buff_fdistrib,
                       const ADVParams &params) noexcept {
 
@@ -46,7 +46,7 @@ export_result_to_file(sycl::buffer<double, 2> &buff_fdistrib,
 
 // ==========================================
 // ==========================================
-void
+inline void
 export_error_to_file(sycl::buffer<double, 2> &buff_fdistrib,
                       const ADVParams &params) noexcept {
 

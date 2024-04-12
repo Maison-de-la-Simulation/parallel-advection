@@ -13,14 +13,18 @@ include(print_target_properties)
 
 add_library(compiler_wrapper INTERFACE)
 
-message(STATUS "My compiler is    : ${CMAKE_CXX_COMPILER}")
-message(STATUS "My compiler ID is : ${CMAKE_CXX_COMPILER_ID}")
 if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "IntelLLVM") OR (NOT ${DPCPP_FSYCL_TARGETS} STREQUAL ""))
+    set(SYCL_IS_ACPP OFF)
+else()
+    set(SYCL_IS_ACPP ON)
+    find_package(AdaptiveCpp REQUIRED)
+endif()
+
+if(NOT SYCL_IS_ACPP)
     message(STATUS "Setting flags for IntelLLVM compiler")
     # find_package(IntelDPCPP REQUIRED)
     target_link_options(compiler_wrapper INTERFACE -fno-sycl-id-queries-fit-in-int -fsycl ${DPCPP_FSYCL_TARGETS})
     target_compile_options(compiler_wrapper INTERFACE -fno-sycl-id-queries-fit-in-int -fsycl ${DPCPP_FSYCL_TARGETS})
-
 else()
     message(STATUS "To add correct flags for DPCPP compiler, use the "
     "DPCPP_FSYCL_TARGETS' variable. Example: "
@@ -38,4 +42,3 @@ else()
     "want to compile advection benchmarks, build google benchmark apart and "
     "provide the benchmark_DIR cmake variable")
 endif()
-

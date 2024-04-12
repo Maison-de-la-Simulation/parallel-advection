@@ -10,7 +10,6 @@
  */
 #include "ConfigMap.h"
 #include <cstdlib>   // for strtof
-#include <fstream>
 #include <sstream>
 
 #if USE_MPI

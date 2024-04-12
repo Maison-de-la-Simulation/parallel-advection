@@ -18,7 +18,7 @@ static constexpr auto error_str =
 
 // // ==========================================
 // // ==========================================
-[[nodiscard]] sref::unique_ref<IAdvectorX>
+[[nodiscard]] inline sref::unique_ref<IAdvectorX>
 kernel_impl_factory(const ADVParamsNonCopyable &params) {
     std::string kernel_name(params.kernelImpl.begin(), params.kernelImpl.end());
 
@@ -47,7 +47,7 @@ kernel_impl_factory(const ADVParamsNonCopyable &params) {
 
 // ==========================================
 // ==========================================
-void
+inline void
 fill_buffer(sycl::queue &q, sycl::buffer<double, 2> &buff_fdist,
             const ADVParams &params) noexcept {
 
