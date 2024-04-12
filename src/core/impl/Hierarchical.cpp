@@ -2,16 +2,17 @@
 
 sycl::event
 AdvX::Hierarchical::operator()(sycl::queue &Q,
-                               sycl::buffer<double, 2> &buff_fdistrib,
+                               sycl::buffer<double, 3> &buff_fdistrib,
                                const ADVParams &params) {
     auto const nx = params.nx;
     auto const nvx = params.nvx;
+    auto const nz = params.nz;
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    const sycl::range<1> nb_wg{nvx};
-    const sycl::range<1> wg_size{params.wg_size};
+    const sycl::range nb_wg{nvx, 1, nz};
+    const sycl::range wg_size{1, params.wg_size, 1};
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
@@ -19,11 +20,12 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
 
         sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>(nx), cgh);
 
-        cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<1> g) {
+        cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<3> g) {
             g.parallel_for_work_item(
-                sycl::range<1>(nx), [&](sycl::h_item<1> it) {
-                    const int ix = it.get_local_id(0);
+                sycl::range{1, nx, 1}, [&](sycl::h_item<3> it) {
+                    const int ix = it.get_local_id(1);
                     const int ivx = g.get_group_id(0);
+                    const int iz = g.get_group_id(2);
 
                     double const xFootCoord = displ(ix, ivx, params);
 
@@ -45,23 +47,25 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
                     for (int k = 0; k <= LAG_ORDER; k++) {
                         int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-                        slice_ftmp[ix] += coef[k] * fdist[ivx][idx_ipos1];
+                        slice_ftmp[ix] += coef[k] * fdist[ivx][idx_ipos1][iz];
                     }
                 });   // end parallel_for_work_item --> Implicit barrier
 
-#ifdef SYCL_IMPLEMENTATION_ONEAPI   // for DPCPP
-            g.parallel_for_work_item(sycl::range<1>(nx),
-                                     [&](sycl::h_item<1> it) {
-                                         const int ix = it.get_local_id(0);
-                                         const int ivx = g.get_group_id(0);
-                                         fdist[ivx][ix] = slice_ftmp[ix];
-                                     });
-#else   // for acpp
-            g.async_work_group_copy(fdist.get_pointer() +
-                                        nx * g.get_group_id(0),
-                                    slice_ftmp.get_pointer(), nx)
-                .wait();
-#endif
+            g.async_work_group_copy(fdist.get_pointer()
+                                        + g.get_group_id(2)
+                                        + g.get_group_id(0) *nz*nx, /* dest */
+                                    slice_ftmp.get_pointer(), /* source */
+                                    nx, /* n elems */
+                                    nz  /* stride */
+            );
+            // g.parallel_for_work_item(sycl::range{1, nx, 1},
+            //                          [&](sycl::h_item<3> it) {
+            //                              const int ix = it.get_local_id(0);
+            //                              const int ivx = g.get_group_id(0);
+            //                              const int iz = g.get_group_id(2);
+
+            //                              fdist[ivx][ix][iz] = slice_ftmp[ix];
+            //                          });
         });   // end parallel_for_work_group
     });       // end Q.submit
 }

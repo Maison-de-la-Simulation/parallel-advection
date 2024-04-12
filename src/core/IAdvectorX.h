@@ -15,7 +15,7 @@ class IAdvectorX {
     virtual ~IAdvectorX() = default;
 
     virtual sycl::event operator()(sycl::queue &Q,
-                                   sycl::buffer<double, 2> &buff_fdistrib,
+                                   sycl::buffer<double, 3> &buff_fdistrib,
                                    const ADVParams &params) = 0;
 
     // ==========================================

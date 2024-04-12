@@ -1,8 +1,8 @@
 #include "advectors.h"
 
 sycl::event
-AdvX::BasicRange2D::operator()(sycl::queue &Q,
-                               sycl::buffer<double, 2> &buff_fdistrib,
+AdvX::BasicRange::operator()(sycl::queue &Q,
+                               sycl::buffer<double, 3> &buff_fdistrib,
                                const ADVParams &params) {
     auto const nx = params.nx;
     auto const minRealX = params.minRealX;
@@ -16,9 +16,10 @@ AdvX::BasicRange2D::operator()(sycl::queue &Q,
         sycl::accessor ftmp(m_global_buff_ftmp, cgh, sycl::write_only,
                             sycl::no_init);
 
-        cgh.parallel_for(buff_fdistrib.get_range(), [=](sycl::id<2> itm) {
+        cgh.parallel_for(buff_fdistrib.get_range(), [=](sycl::id<3> itm) {
             const int ix = itm[1];
             const int ivx = itm[0];
+            const int iz = itm[2];
 
             double const xFootCoord = displ(ix, ivx, params);
 
@@ -34,11 +35,11 @@ AdvX::BasicRange2D::operator()(sycl::queue &Q,
 
             const int ipos1 = LeftDiscreteNode - LAG_OFFSET;
 
-            ftmp[ivx][ix] = 0;   // initializing slice for each work item
+            ftmp[ivx][ix][iz] = 0;   // initializing slice for each work item
             for (int k = 0; k <= LAG_ORDER; k++) {
                 int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-                ftmp[ivx][ix] += coef[k] * fdist[ivx][idx_ipos1];
+                ftmp[ivx][ix][iz] += coef[k] * fdist[ivx][idx_ipos1][iz];
             }
 
             // barrier

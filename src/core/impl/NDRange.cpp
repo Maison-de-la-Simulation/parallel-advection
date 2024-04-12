@@ -2,16 +2,17 @@
 
 sycl::event
 AdvX::NDRange::operator()(sycl::queue &Q,
-                          sycl::buffer<double, 2> &buff_fdistrib,
+                          sycl::buffer<double, 3> &buff_fdistrib,
                           const ADVParams &params) {
     auto const nx = params.nx;
     auto const nvx = params.nvx;
+    auto const nz = params.nz;
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    const sycl::range<2> global_size{nvx, nx};
-    const sycl::range<2> local_size{1, nx};
+    const sycl::range global_size{nvx, nx, nz};
+    const sycl::range local_size{1, nx, 1};
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
@@ -20,10 +21,11 @@ AdvX::NDRange::operator()(sycl::queue &Q,
         sycl::local_accessor<double, 1> slice_ftmp(sycl::range{nx}, cgh);
 
         cgh.parallel_for(
-            sycl::nd_range<2>{global_size, local_size},
-            [=](sycl::nd_item<2> itm) {
+            sycl::nd_range<3>{global_size, local_size},
+            [=](auto itm) {
                 const int ix = itm.get_local_id(1);
                 const int ivx = itm.get_global_id(0);
+                const int iz = itm.get_global_id(2);
 
                 double const xFootCoord = displ(ix, ivx, params);
 
@@ -42,11 +44,11 @@ AdvX::NDRange::operator()(sycl::queue &Q,
                 for (int k = 0; k <= LAG_ORDER; k++) {
                     int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-                    slice_ftmp[ix] += coef[k] * fdist[ivx][idx_ipos1];
+                    slice_ftmp[ix] += coef[k] * fdist[ivx][idx_ipos1][iz];
                 }
 
                 sycl::group_barrier(itm.get_group());
-                fdist[ivx][ix] = slice_ftmp[ix];
+                fdist[ivx][ix][iz] = slice_ftmp[ix];
             }   // end lambda in parallel_for
         );      // end parallel_for nd_range
     });         // end Q.submit

@@ -10,7 +10,7 @@
 // ==========================================
 // returns duration for maxIter-1 iterations
 std::chrono::duration<double>
-advection(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
+advection(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
           sref::unique_ref<IAdvectorX> &advector, const ADVParams &params) {
 
     auto static const maxIter = params.maxIter;
@@ -41,7 +41,6 @@ main(int argc, char **argv) {
     std::string input_file = argc > 1 ? std::string(argv[1]) : "advection.ini";
     ConfigMap configMap(input_file);
 
-    
     ADVParamsNonCopyable strParams;// = ADVParamsNonCopyable();
     strParams.setup(configMap);
 
@@ -74,36 +73,32 @@ main(int argc, char **argv) {
 
     const auto nx = params.nx;
     const auto nvx = params.nvx;
+    const auto nz = params.nz;
     const auto maxIter = params.maxIter;
     
     /* Buffer for the distribution function containing the probabilities of
-    having a particle at a particular speed and position */
-    sycl::buffer<double, 2> buff_fdistrib(sycl::range<2>(nvx, nx));
+    having a particle at a particular speed and position, plus a fictive dim */
+    sycl::buffer<double, 3> buff_fdistrib(sycl::range<3>(nvx, nx, nz));
     fill_buffer(Q, buff_fdistrib, params);
 
     auto advector = kernel_impl_factory(strParams);
 
-
-    // auto start = std::chrono::high_resolution_clock::now();
     auto elapsed_seconds = advection(Q, buff_fdistrib, advector, params);
-    // auto end = std::chrono::high_resolution_clock::now();
 
     std::cout << "\nRESULTS_VALIDATION:" << std::endl;
     validate_result(Q, buff_fdistrib, params);
 
-    if(params.outputSolution){
-        export_result_to_file(buff_fdistrib, params);
-        export_error_to_file(buff_fdistrib, params);
-    }
+    // if(params.outputSolution){
+    //     export_result_to_file(buff_fdistrib, params);
+    //     export_error_to_file(buff_fdistrib, params);
+    // }
 
     std::cout << "PERF_DIAGS:" << std::endl;
-    // std::chrono::duration<double> elapsed_seconds = end - start;
     std::cout << "elapsed_time: " << elapsed_seconds.count() << " s\n";
 
-    auto gcells = ((nvx * nx * (maxIter-1)) / elapsed_seconds.count()) / 1e9;
+    auto gcells = ((nvx*nx*nz*(maxIter-1)) / elapsed_seconds.count()) / 1e9;
     std::cout << "upd_cells_per_sec: " << gcells << " Gcell/sec\n";
     std::cout << "estimated_throughput: " << gcells * sizeof(double) * 2
               << " GB/s" << std::endl;
-    std::cout << "parsing;" << nvx * nx << ";" << nx << ";" << nvx << std::endl;
     return 0;
 }

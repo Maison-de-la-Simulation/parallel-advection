@@ -7,7 +7,7 @@
 // ==========================================
 // ==========================================
 inline double
-validate_result(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
+validate_result(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
                 const ADVParams &params, bool do_print = true) noexcept {
 
 
@@ -60,10 +60,10 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 2> &buff_fdistrib,
     if(do_print){
         std::cout << "Total cumulated error: "
                 //   << errorL1 * dx * dvx << "\n"
-                << errorL1 / (params.nx * params.nvx) << "\n"
+                << errorL1 / (params.nx * params.nvx * params.nz) << "\n"
                 << std::endl;
     }
 
-    return errorL1 / (params.nx * params.nvx);
+    return errorL1 / (params.nx * params.nvx * params.nz);
     // return errorL1 * dx * dvx;
 }   // end validate_results

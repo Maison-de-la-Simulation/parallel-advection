@@ -1,16 +1,17 @@
 #include "advectors.h"
 
 sycl::event
-AdvX::Scoped::operator()(sycl::queue &Q,sycl::buffer<double, 2> &buff_fdistrib,
+AdvX::Scoped::operator()(sycl::queue &Q,sycl::buffer<double, 3> &buff_fdistrib,
                          const ADVParams &params) {
     auto const nx = params.nx;
     auto const nvx = params.nvx;
+    auto const nz = params.nz;
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    const sycl::range<1> nb_wg{nvx};
-    const sycl::range<1> wg_size{nx};
+    const sycl::range nb_wg{nvx, 1, nz};
+    const sycl::range wg_size{1, nx, 1};
 
     return Q.submit([&](sycl::handler &cgh) {
 #ifdef SYCL_IMPLEMENTATION_ONEAPI   // for DPCPP
@@ -20,10 +21,12 @@ throw std::logic_error("Scoped kernel is not compatible with DPCPP");
             buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
 
         sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>(nx), cgh);
+
         cgh.parallel(nb_wg, wg_size, [=](auto g) {
-                sycl::distribute_items_and_wait(g, [&](sycl::s_item<1> it) {
-                    const int ix = it.get_local_id(g, 0);
+                sycl::distribute_items_and_wait(g, [&](auto /*sycl::s_item<3>*/ it) {
+                    const int ix = it.get_local_id(g, 1);
                     const int ivx = g.get_group_id(0);
+                    const int iz = g.get_group_id(2);
 
                     double const xFootCoord = displ(ix, ivx, params);
 
@@ -45,15 +48,26 @@ throw std::logic_error("Scoped kernel is not compatible with DPCPP");
                     for (int k = 0; k <= LAG_ORDER; k++) {
                         int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-                        slice_ftmp[ix] += coef[k] * fdist[ivx][idx_ipos1];
+                        slice_ftmp[ix] += coef[k] * fdist[ivx][idx_ipos1][iz];
                     }
                 });   // end distribute items
 
-                g.async_work_group_copy(fdist.get_pointer() +
-                                            nx * g.get_group_id(0),
-                                        slice_ftmp.get_pointer(), nx)
-                    .wait();
-        });           // end parallel regions
+                g.async_work_group_copy(
+                    fdist.get_pointer() + g.get_group_id(2) +
+                        g.get_group_id(0) * nz * nx,   // dest
+                    slice_ftmp.get_pointer(),          // source
+                    nx,                                /* n elems */
+                    nz                                 /* stride */
+                );
+
+                // sycl::distribute_items_and_wait(g, [&](auto it) {
+                //     const int ix = it.get_local_id(g, 1);
+                //     const int ivx = g.get_group_id(0);
+                //     const int iz = g.get_group_id(2);
+
+                //     fdist[ivx][ix][iz] = slice_ftmp[ix];
+                // });
+        }); // end parallel regions
 #endif
-    });               // end Q.submit
+    });// end Q.submit
 }
