@@ -57,7 +57,6 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
         }
 
         all_l1_errors[iz] = errorL1 / (params.nx * params.nvx);
-        // std::cerr <<  params.nx << ", " << params.nvx << " --> " << errorL1 << std::endl;
     }
 
     auto highest_l1 =
@@ -65,13 +64,6 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
 
     auto lowest_l1 =
         *std::min_element(all_l1_errors.begin(), all_l1_errors.end());
-
-    // std::cerr << "VALIDATE RESULTS PRINT" << std::endl;
-    // int iii = 0;
-    // for (auto err : all_l1_errors) {
-    //     std::cerr << iii << " err = " << err << std::endl;
-    //     iii++;
-    // }
 
     if(do_print){
         std::cout << "Highest L1 error found: "

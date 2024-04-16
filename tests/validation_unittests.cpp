@@ -46,9 +46,6 @@ TEST(Validation, ValidateEachIterFor10Iterations){
     auto advector = sref::make_unique<AdvX::BasicRange>(params.nx, params.nvx, params.nz);
 
     double err;
-
-    // std::cerr << "(nvx, nx, nz) = (" << params.nvx << ", " << params.nx << ", " << params.nz << ")"  << std::endl;
-
     params.maxIter = 0;
     for(auto it=0; it < 10; ++it){
         params.maxIter++;
