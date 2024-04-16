@@ -18,7 +18,7 @@ target_include_directories(core
   PUBLIC #need public to include "advectors.h" in impl/*
   ${CMAKE_SOURCE_DIR}/src/core
   ${CMAKE_SOURCE_DIR}/src/config
-  # ${CMAKE_SOURCE_DIR}/src/tools
+  ${CMAKE_SOURCE_DIR}/src/tools
   )
   
 if(SYCL_IS_ACPP)

@@ -51,6 +51,18 @@ void ADVParamsNonCopyable::setup(const ConfigMap& configMap)
   minRealVx= configMap.getFloat("discretization", "minRealVx", 0.0);
   maxRealVx= configMap.getFloat("discretization", "maxRealVx", 1.0);
 
+  update_deltas();
+  // realWidthX = maxRealX - minRealX;
+  // dx = realWidthX / nx;
+  // dvx = (maxRealVx - minRealVx) / nvx;
+
+  // inv_dx     = 1/dx;
+} // ADVParams::setup
+
+// ======================================================
+// ======================================================
+void ADVParams::update_deltas()
+{
   realWidthX = maxRealX - minRealX;
   dx = realWidthX / nx;
   dvx = (maxRealVx - minRealVx) / nvx;

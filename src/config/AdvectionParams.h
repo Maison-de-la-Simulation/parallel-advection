@@ -46,7 +46,8 @@ struct ADVParams {
   double minRealVx;
   double maxRealVx;
 
-
+  //! update physical values
+  void update_deltas();
 }; // struct ADVParams
 
 //Need to have this in order to dodge the device trivially copyable SYCL
@@ -59,6 +60,7 @@ struct ADVParamsNonCopyable : ADVParams {
 
   //! print parameters on screen
   void print();
+
 };
 
 

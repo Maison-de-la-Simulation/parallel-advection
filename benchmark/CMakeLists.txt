@@ -1,5 +1,3 @@
-find_package(benchmark REQUIRED)
-
 add_executable(main-bench main_bench.cpp)
 
 target_link_libraries(main-bench PUBLIC

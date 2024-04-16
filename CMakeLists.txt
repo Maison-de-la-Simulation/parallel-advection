@@ -26,15 +26,22 @@ else()
     "-DDPCPP_FSYCL_TARGETS='-fsycl-targets=nvptx64-nvidia-cuda'")
 endif()
 
-################################################################################
 add_subdirectory(src)
 
-if(DEFINED benchmark_DIR)
-    message(STATUS "benchmark_DIR variable defined. Will try to build "
-    "advection benchmarks.")
+################################################################################
+if("${ADVECTION_BUILD_BENCHMARKS}")
+    find_package(benchmark REQUIRED)
     add_subdirectory(benchmark)
 else()
-    message(STATUS "benchmark_DIR not found.\nSkipping benchmark build. If you "
-    "want to compile advection benchmarks, build google benchmark apart and "
-    "provide the benchmark_DIR cmake variable")
+    message(STATUS "Skipping benchmark build, use ADVECTION_BUILD_BENCHMARKS=ON to build benchmarks.")
+endif()
+
+################################################################################
+if("${ADVECTION_BUILD_TESTS}")
+    message(STATUS "Building tests")
+    enable_testing()
+    add_subdirectory(thirdparty/googletest)
+    add_subdirectory(tests)
+else()
+    message(STATUS "Skipping tests, use ADVECTION_BUILD_TESTS=ON to build tests.")
 endif()
