@@ -1,36 +1,74 @@
+#include "validation.h"
 #include "gtest/gtest.h"
 #include <sycl/sycl.hpp>
 #include <AdvectionParams.h>
 #include <init.h>
 
-struct TestParams {
-    ADVParams params;
-
-    void setup_params(){
-        params.nx  = 512;
-        params.nvx = 32;
-        params.nz  = 32;
-
-        params.maxIter = 50;
-        params.update_deltas();
-    }
-
-    TestParams() : params{} {
-        setup_params();
-    }
-};
-
 
 TEST(Impl, BasicRange){
-    TestParams tstp;
+    ADVParams params;
+    sycl::queue Q;
 
-    const auto nx = tp.params.nx;
-    const auto nvx = tp.params.nvx;
-    const auto nz = params.nz;
-    const auto maxIter = params.maxIter;
-
-    sycl::buffer<double, 3> buff_fdistrib(sycl::range<3>(nvx, nx, nz));
-
-    sycl::queue Q{d};
+    sycl::range<3> r3d(params.nvx,params.nx, params.nz);
+    sycl::buffer<double, 3> buff_fdistrib(r3d);
     fill_buffer(Q, buff_fdistrib, params);
+
+    auto advector = sref::make_unique<AdvX::BasicRange>(params.nx, params.nvx, params.nz);
+
+    for (int i = 0; i < params.maxIter; ++i)
+        advector(Q, buff_fdistrib, params).wait_and_throw();
+
+    auto err = validate_result(Q, buff_fdistrib, params);
+    ASSERT_NEAR(err, 0, 1e-6);
+}
+
+TEST(Impl, Hierarchical){
+    ADVParams params;
+    sycl::queue Q;
+
+    sycl::range<3> r3d(params.nvx,params.nx, params.nz);
+    sycl::buffer<double, 3> buff_fdistrib(r3d);
+    fill_buffer(Q, buff_fdistrib, params);
+
+    auto advector = sref::make_unique<AdvX::Hierarchical>();
+
+    for (int i = 0; i < params.maxIter; ++i)
+        advector(Q, buff_fdistrib, params).wait_and_throw();
+
+    auto err = validate_result(Q, buff_fdistrib, params);
+    ASSERT_NEAR(err, 0, 1e-6);
+}
+
+TEST(Impl, NDRange){
+    ADVParams params;
+    sycl::queue Q;
+
+    sycl::range<3> r3d(params.nvx,params.nx, params.nz);
+    sycl::buffer<double, 3> buff_fdistrib(r3d);
+    fill_buffer(Q, buff_fdistrib, params);
+
+    auto advector = sref::make_unique<AdvX::NDRange>();
+
+    for (int i = 0; i < params.maxIter; ++i)
+        advector(Q, buff_fdistrib, params).wait_and_throw();
+
+    auto err = validate_result(Q, buff_fdistrib, params);
+    ASSERT_NEAR(err, 0, 1e-6);
+}
+
+TEST(Impl, Scoped){
+    ADVParams params;
+    sycl::queue Q;
+
+    sycl::range<3> r3d(params.nvx,params.nx, params.nz);
+    sycl::buffer<double, 3> buff_fdistrib(r3d);
+    fill_buffer(Q, buff_fdistrib, params);
+
+    auto advector = sref::make_unique<AdvX::Scoped>();
+
+    for (int i = 0; i < params.maxIter; ++i)
+        advector(Q, buff_fdistrib, params).wait_and_throw();
+
+    auto err = validate_result(Q, buff_fdistrib, params);
+    ASSERT_NEAR(err, 0, 1e-6);
 }

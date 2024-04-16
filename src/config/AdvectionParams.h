@@ -8,7 +8,7 @@ struct ADVParamsNonCopyable;
  */
 struct ADVParams {
   ADVParams(ADVParamsNonCopyable &other);
-  ADVParams() = default;
+  ADVParams(){update_deltas();};
   
   // Running on the GPU (false = CPU)
   bool gpu = false;

@@ -1,7 +1,7 @@
 add_executable(advection-tests
 init_unittests.cpp
 validation_unittests.cpp
-# impl_unittests.cpp
+impl_unittests.cpp
 )
 
 target_link_libraries(advection-tests PUBLIC

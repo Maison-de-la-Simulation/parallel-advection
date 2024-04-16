@@ -4,30 +4,31 @@
 #include <AdvectionParams.h>
 #include <init.h>
 
-// TEST(Init, FillBufferWithDefaultParams){
-//     sycl::device d = sycl::device{sycl::cpu_selector_v}; // tests on the CPU
+TEST(Init, FillBufferWithDefaultParams){
+    sycl::device d = sycl::device{sycl::cpu_selector_v}; // tests on the CPU
 
-//     ADVParams params;
-//     const auto nx  = params.nx;
-//     const auto nvx = params.nvx;
-//     const auto nz  = params.nz;
+    ADVParams params;
+    const auto nx  = params.nx;
+    const auto nvx = params.nvx;
+    const auto nz  = params.nz;
+    params.update_deltas();
 
-//     sycl::buffer<double, 3> buff_fdistrib(sycl::range<3>(nvx, nx, nz));
+    sycl::buffer<double, 3> buff_fdistrib(sycl::range<3>(nvx, nx, nz));
 
-//     sycl::queue Q{d};
-//     fill_buffer(Q, buff_fdistrib, params);
+    sycl::queue Q{d};
+    fill_buffer(Q, buff_fdistrib, params);
 
-//     sycl::host_accessor fdist(buff_fdistrib, sycl::read_only);
+    sycl::host_accessor fdist(buff_fdistrib, sycl::read_only);
 
-//     for (auto iz = 0; iz < nz; ++iz) {
-//         for (auto iv = 0; iv < nvx; ++iv) {
-//             for (auto ix = 0; ix < nx; ++ix) {
-//                 double x = params.minRealX + ix * params.dx;
-//                 EXPECT_EQ(fdist[iv][ix][iz], sycl::sin(4 * x * M_PI));
-//             }
-//         }
-//     }
-// }
+    for (auto iz = 0; iz < nz; ++iz) {
+        for (auto iv = 0; iv < nvx; ++iv) {
+            for (auto ix = 0; ix < nx; ++ix) {
+                double x = params.minRealX + ix * params.dx;
+                EXPECT_EQ(fdist[iv][ix][iz], sycl::sin(4 * x * M_PI));
+            }
+        }
+    }
+}
 
 TEST(Init, FillBufferWithRandomParams){
     sycl::device d = sycl::device{sycl::cpu_selector_v}; // tests on the CPU
