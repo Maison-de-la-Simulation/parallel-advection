@@ -2,27 +2,18 @@ add_subdirectory(config)
 add_subdirectory(core)
 add_subdirectory(tools)
 
-################################################
-#            SYCL Compiler options             #
-################################################
-get_filename_component(NAME "${CMAKE_CXX_COMPILER}"
-                       PROGRAM [PROGRAM_ARGS <ARG_VAR>]
-                       [CACHE])
-
-################################################
-#                  Executables                 #
-################################################
 add_executable(advection main.cpp)
+
+target_link_libraries(advection
+PUBLIC
+adv1d::config
+adv1d::core
+adv1d::tools)
 
 if(SYCL_IS_ACPP)
     add_sycl_to_target(TARGET advection)
+else()
+    target_link_libraries(advection PUBLIC dpcpp_opt)
 endif()
-
-target_link_libraries(advection
-    PUBLIC
-    compiler_wrapper
-    adv1d::config
-    adv1d::core
-    adv1d::tools)
 
 configure_file(advection.ini advection.ini COPYONLY)
