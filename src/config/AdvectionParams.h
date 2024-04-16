@@ -8,43 +8,43 @@ struct ADVParamsNonCopyable;
  */
 struct ADVParams {
   ADVParams(ADVParamsNonCopyable &other);
-  ADVParams(){};
+  ADVParams() = default;
   
   // Running on the GPU (false = CPU)
-  bool gpu;
+  bool gpu = false;
 
   //The implementation of the kernel, correspond to core/impl cpp files
   // std::string kernelImpl;
 
   // Outputs the solution to solution.log file to be read with the ipynb
-  bool outputSolution;
+  bool outputSolution = false;
 
   // Number of iterations
-  size_t maxIter;
+  size_t maxIter = 100;
 
   // Number of points for positions (x) velocities (vx) and fictive dim (z)
-  size_t nx;
-  size_t nvx;
-  size_t nz;
+  size_t nx  = 1024;
+  size_t nvx = 32;
+  size_t nz  = 32;
 
   // Sizes of the SYCL work groups
-  size_t wg_size;
+  size_t wg_size = 128;
 
   // Deltas : taille physique d'une cellule discrète (en x, vx, t)
-  double dt;
+  double dt  = 0.0001;
   double dx;
   double dvx;
 
   double inv_dx; // precompute inverse of dx
 
   // Min/max physical values of x (i.e., x[0] and x[-1])
-  double minRealX;
-  double maxRealX;
-  double realWidthX;
+  double minRealX   = 0;
+  double maxRealX   = 1;
+  double realWidthX = 1;
 
   // Min/max physical value of Vx
-  double minRealVx;
-  double maxRealVx;
+  double minRealVx = 0;
+  double maxRealVx = 1;
 
   //! update physical values
   void update_deltas();

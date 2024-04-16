@@ -30,12 +30,10 @@ TEST(Validation, ValidateNoIteration){
 }
 
 TEST(Validation, ValidateEachIterFor10Iterations){
-    std::srand(static_cast<unsigned>(std::time(0)));
-
     ADVParams params;
     params.nx  = 512;
-    params.nvx = 32;
-    params.nz  = 32;
+    params.nvx = 1 + std::rand() % 30;
+    params.nz  = 1 + std::rand() % 30;
     params.update_deltas();
 
     const sycl::range<3> r3d(params.nvx, params.nx, params.nz);
@@ -49,27 +47,24 @@ TEST(Validation, ValidateEachIterFor10Iterations){
 
     double err;
 
-    std::cerr << "(nvx, nx, nz) = (" << params.nvx << ", " << params.nx << ", " << params.nz << ")"  << std::endl;
+    // std::cerr << "(nvx, nx, nz) = (" << params.nvx << ", " << params.nx << ", " << params.nz << ")"  << std::endl;
 
-    params.maxIter = 1;
+    params.maxIter = 0;
     for(auto it=0; it < 10; ++it){
+        params.maxIter++;
+
         advector(Q, buff_fdistrib, params).wait_and_throw();
 
         err = validate_result(Q, buff_fdistrib, params, false);
         Q.wait();
-        EXPECT_NEAR(err, 0, 1e-4);
-
-        params.maxIter++;
-        std::cerr << err << std::endl;
+        EXPECT_NEAR(err, 0, 1e-6);
     }
 
     err = validate_result(Q, buff_fdistrib, params, false);
-    EXPECT_NEAR(err, 0, 1e-4);
+    EXPECT_NEAR(err, 0, 1e-6);
 }
 
 TEST(Validation, ValidateNIterations){
-    std::srand(static_cast<unsigned>(std::time(0)));
-
     ADVParams params;
     params.nx  = 1024;
     params.nvx = 16;
@@ -90,6 +85,7 @@ TEST(Validation, ValidateNIterations){
         advector(Q, buff_fdistrib, params).wait_and_throw();
 
     auto err = validate_result(Q, buff_fdistrib, params, false);
+    Q.wait();
 
     EXPECT_NEAR(err, 0, 1e-6);
 }

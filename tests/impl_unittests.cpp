@@ -1,25 +1,36 @@
-// #include "gtest/gtest.h"
-// #include <sycl/sycl.hpp>
-// #include <AdvectionParams.h>
-// #include <init.h>
+#include "gtest/gtest.h"
+#include <sycl/sycl.hpp>
+#include <AdvectionParams.h>
+#include <init.h>
 
-// TEST(Impl, BasicRange){
-//     ConfigMap configMap("advection_test.ini"); //might not exist and use default
-//     ADVParamsNonCopyable strParams;
-//     strParams.setup(configMap);
+struct TestParams {
+    ADVParams params;
 
-//     sycl::device d = sycl::device{sycl::cpu_selector_v}; // tests on the CPU
+    void setup_params(){
+        params.nx  = 512;
+        params.nvx = 32;
+        params.nz  = 32;
 
-//     ADVParams params(strParams);
-//     const auto nx = params.nx;
-//     const auto nvx = params.nvx;
-//     const auto nz = params.nz;
-//     const auto maxIter = params.maxIter;
+        params.maxIter = 50;
+        params.update_deltas();
+    }
 
-//     sycl::buffer<double, 3> buff_fdistrib(sycl::range<3>(nvx, nx, nz));
-
-//     sycl::queue Q{d};
-//     fill_buffer(Q, buff_fdistrib, params);
-// }
+    TestParams() : params{} {
+        setup_params();
+    }
+};
 
 
+TEST(Impl, BasicRange){
+    TestParams tstp;
+
+    const auto nx = tp.params.nx;
+    const auto nvx = tp.params.nvx;
+    const auto nz = params.nz;
+    const auto maxIter = params.maxIter;
+
+    sycl::buffer<double, 3> buff_fdistrib(sycl::range<3>(nvx, nx, nz));
+
+    sycl::queue Q{d};
+    fill_buffer(Q, buff_fdistrib, params);
+}
