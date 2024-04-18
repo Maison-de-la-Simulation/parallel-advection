@@ -1,19 +1,20 @@
 #include "validation.h"
 #include "gtest/gtest.h"
-#include <sycl/sycl.hpp>
 #include <AdvectionParams.h>
 #include <init.h>
+#include <sycl/sycl.hpp>
 
-
-TEST(Impl, BasicRange){
+// =============================================================================
+TEST(Impl, BasicRange) {
     ADVParams params;
     sycl::queue Q;
 
-    sycl::range<3> r3d(params.nvx,params.nx, params.nz);
+    sycl::range<3> r3d(params.nvx, params.nx, params.nz);
     sycl::buffer<double, 3> buff_fdistrib(r3d);
     fill_buffer(Q, buff_fdistrib, params);
 
-    auto advector = sref::make_unique<AdvX::BasicRange>(params.nx, params.nvx, params.nz);
+    auto advector =
+        sref::make_unique<AdvX::BasicRange>(params.nx, params.nvx, params.nz);
 
     for (int i = 0; i < params.maxIter; ++i)
         advector(Q, buff_fdistrib, params).wait_and_throw();
@@ -22,11 +23,12 @@ TEST(Impl, BasicRange){
     ASSERT_NEAR(err, 0, 1e-6);
 }
 
-TEST(Impl, Hierarchical){
+// =============================================================================
+TEST(Impl, Hierarchical) {
     ADVParams params;
     sycl::queue Q;
 
-    sycl::range<3> r3d(params.nvx,params.nx, params.nz);
+    sycl::range<3> r3d(params.nvx, params.nx, params.nz);
     sycl::buffer<double, 3> buff_fdistrib(r3d);
     fill_buffer(Q, buff_fdistrib, params);
 
@@ -39,11 +41,12 @@ TEST(Impl, Hierarchical){
     ASSERT_NEAR(err, 0, 1e-6);
 }
 
-TEST(Impl, NDRange){
+// =============================================================================
+TEST(Impl, NDRange) {
     ADVParams params;
     sycl::queue Q;
 
-    sycl::range<3> r3d(params.nvx,params.nx, params.nz);
+    sycl::range<3> r3d(params.nvx, params.nx, params.nz);
     sycl::buffer<double, 3> buff_fdistrib(r3d);
     fill_buffer(Q, buff_fdistrib, params);
 
@@ -56,11 +59,12 @@ TEST(Impl, NDRange){
     ASSERT_NEAR(err, 0, 1e-6);
 }
 
-TEST(Impl, Scoped){
+// =============================================================================
+TEST(Impl, Scoped) {
     ADVParams params;
     sycl::queue Q;
 
-    sycl::range<3> r3d(params.nvx,params.nx, params.nz);
+    sycl::range<3> r3d(params.nvx, params.nx, params.nz);
     sycl::buffer<double, 3> buff_fdistrib(r3d);
     fill_buffer(Q, buff_fdistrib, params);
 

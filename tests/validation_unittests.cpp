@@ -6,6 +6,7 @@
 #include <AdvectionParams.h>
 #include <init.h>
 
+// =============================================================================
 TEST(Validation, ValidateNoIteration){
     sycl::device d = sycl::device{sycl::cpu_selector_v}; // tests on the CPU
     std::srand(static_cast<unsigned>(std::time(0)));
@@ -29,6 +30,7 @@ TEST(Validation, ValidateNoIteration){
     EXPECT_EQ(res, 0);
 }
 
+// =============================================================================
 TEST(Validation, ValidateEachIterFor10Iterations){
     ADVParams params;
     params.nx  = 512;
@@ -61,6 +63,7 @@ TEST(Validation, ValidateEachIterFor10Iterations){
     EXPECT_NEAR(err, 0, 1e-6);
 }
 
+// =============================================================================
 TEST(Validation, ValidateNIterations){
     ADVParams params;
     params.nx  = 1024;

@@ -4,6 +4,7 @@
 #include <AdvectionParams.h>
 #include <init.h>
 
+// =============================================================================
 TEST(Init, FillBufferWithDefaultParams){
     sycl::device d = sycl::device{sycl::cpu_selector_v}; // tests on the CPU
 
@@ -30,6 +31,7 @@ TEST(Init, FillBufferWithDefaultParams){
     }
 }
 
+// =============================================================================
 TEST(Init, FillBufferWithRandomParams){
     sycl::device d = sycl::device{sycl::cpu_selector_v}; // tests on the CPU
     std::srand(static_cast<unsigned>(std::time(0)));
