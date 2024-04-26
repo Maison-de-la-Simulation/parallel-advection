@@ -1,15 +1,22 @@
 #include "advectors.h"
 
 sycl::event
-AdvX::Hierarchical::operator()(sycl::queue &Q,
-                               sycl::buffer<double, 3> &buff_fdistrib,
-                               const ADVParams &params) {
+AdvX::MemSafe::operator()(sycl::queue &Q,
+                          sycl::buffer<double, 3> &buff_fdistrib,
+                          const ADVParams &params) {
     auto const nx = params.nx;
     auto const nvx = params.nvx;
     auto const nz = params.nz;
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
+    
+    if(nx > 6144){ //on A100 it breaks over 6144 double because of the size
+
+    // if(nx*sizeof(double) > 49000){
+        //TODO check MAX_SIZE du local_accessor
+        // std::cerr << "Warning large size" << std::endl;
+    }
 
     const sycl::range nb_wg{nvx, 1, nz};
     const sycl::range wg_size{1, params.wg_size, 1};
@@ -50,12 +57,11 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
                     }
                 });   // end parallel_for_work_item --> Implicit barrier
 
-            g.async_work_group_copy(fdist.get_pointer()
-                                        + g.get_group_id(2)
-                                        + g.get_group_id(0) *nz*nx, /* dest */
+            g.async_work_group_copy(fdist.get_pointer() + g.get_group_id(2) +
+                                        g.get_group_id(0) * nz * nx, /* dest */
                                     slice_ftmp.get_pointer(), /* source */
-                                    nx, /* n elems */
-                                    nz  /* stride */
+                                    nx,                       /* n elems */
+                                    nz                        /* stride */
             );
             // g.parallel_for_work_item(sycl::range{1, nx, 1},
             //                          [&](sycl::h_item<3> it) {

@@ -12,6 +12,8 @@ target_sources(core
   # impl/FakeAdvector.cpp
   # impl/HierarchicalAlloca.cpp
   # impl/FixedMemoryFootprint.cpp
+  impl/MemSafe.cpp
+  impl/ReducedPrecision.cpp
 )
 
 target_include_directories(core

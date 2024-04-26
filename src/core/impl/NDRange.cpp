@@ -29,16 +29,16 @@ AdvX::NDRange::operator()(sycl::queue &Q,
 
                 double const xFootCoord = displ(ix, ivx, params);
 
-                const int LeftDiscreteNode =
+                const int leftNode =
                     sycl::floor((xFootCoord - minRealX) * inv_dx);
 
                 const double d_prev1 =
-                    LAG_OFFSET + inv_dx * (xFootCoord - coord(LeftDiscreteNode,
+                    LAG_OFFSET + inv_dx * (xFootCoord - coord(leftNode,
                                                               minRealX, dx));
 
                 auto coef = lag_basis(d_prev1);
 
-                const int ipos1 = LeftDiscreteNode - LAG_OFFSET;
+                const int ipos1 = leftNode - LAG_OFFSET;
 
                 slice_ftmp[ix] = 0;   // initializing slice for each work item
                 for (int k = 0; k <= LAG_ORDER; k++) {

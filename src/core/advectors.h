@@ -106,4 +106,25 @@ class Scoped : public IAdvectorX {
 //                            const ADVParams &params) override;
 // };
 
+// =============================================================================
+// EXPERIMENTS
+// =============================================================================
+class MemSafe : public IAdvectorX {
+    using IAdvectorX::IAdvectorX;
+
+  public:
+    sycl::event operator()(sycl::queue &Q,
+                           sycl::buffer<double, 3> &buff_fdistrib,
+                           const ADVParams &params) override;
+};
+
+class ReducedPrecision : public IAdvectorX {
+    using IAdvectorX::IAdvectorX;
+
+  public:
+    sycl::event operator()(sycl::queue &Q,
+                           sycl::buffer<double, 3> &buff_fdistrib,
+                           const ADVParams &params) override;
+};
+
 }   // namespace AdvX

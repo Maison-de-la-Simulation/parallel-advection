@@ -1,9 +1,9 @@
 #include "advectors.h"
 
 sycl::event
-AdvX::Hierarchical::operator()(sycl::queue &Q,
-                               sycl::buffer<double, 3> &buff_fdistrib,
-                               const ADVParams &params) {
+AdvX::ReducedPrecision::operator()(sycl::queue &Q,
+                                   sycl::buffer<double, 3> &buff_fdistrib,
+                                   const ADVParams &params) {
     auto const nx = params.nx;
     auto const nvx = params.nvx;
     auto const nz = params.nz;
@@ -18,7 +18,9 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
         auto fdist =
             buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
 
-        sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>(nx), cgh);
+        /* Float local accessor so we can put twice as much.
+         We do trade numerical accuracy though */
+        sycl::local_accessor<float, 1> slice_ftmp(sycl::range<1>(nx), cgh);
 
         cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<3> g) {
             g.parallel_for_work_item(
@@ -35,8 +37,7 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
 
                     const double d_prev1 =
                         LAG_OFFSET +
-                        inv_dx * (xFootCoord -
-                                  coord(leftNode, minRealX, dx));
+                        inv_dx * (xFootCoord - coord(leftNode, minRealX, dx));
 
                     auto coef = lag_basis(d_prev1);
 
@@ -50,21 +51,15 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
                     }
                 });   // end parallel_for_work_item --> Implicit barrier
 
-            g.async_work_group_copy(fdist.get_pointer()
-                                        + g.get_group_id(2)
-                                        + g.get_group_id(0) *nz*nx, /* dest */
-                                    slice_ftmp.get_pointer(), /* source */
-                                    nx, /* n elems */
-                                    nz  /* stride */
-            );
-            // g.parallel_for_work_item(sycl::range{1, nx, 1},
-            //                          [&](sycl::h_item<3> it) {
-            //                              const int ix = it.get_local_id(0);
-            //                              const int ivx = g.get_group_id(0);
-            //                              const int iz = g.get_group_id(2);
+            /* Cannot use async_work_group_copy because float != double */
+            g.parallel_for_work_item(sycl::range{1, nx, 1},
+                                     [&](sycl::h_item<3> it) {
+                                         const int ix = it.get_local_id(1);
+                                         const int ivx = g.get_group_id(0);
+                                         const int iz = g.get_group_id(2);
 
-            //                              fdist[ivx][ix][iz] = slice_ftmp[ix];
-            //                          });
+                                         fdist[ivx][ix][iz] = slice_ftmp[ix];
+                                     });
         });   // end parallel_for_work_group
     });       // end Q.submit
 }

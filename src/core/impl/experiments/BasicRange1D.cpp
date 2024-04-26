@@ -26,16 +26,16 @@
 //                 double const xFootCoord = displ(ix, ivx, params);
 
 //                 // Corresponds to the index of the cell to the left of footCoord
-//                 const int LeftDiscreteNode =
+//                 const int leftNode =
 //                     sycl::floor((xFootCoord - minRealX) * inv_dx);
 
 //                 const double d_prev1 =
-//                     LAG_OFFSET + inv_dx * (xFootCoord - coord(LeftDiscreteNode,
+//                     LAG_OFFSET + inv_dx * (xFootCoord - coord(leftNode,
 //                                                               minRealX, dx));
 
 //                 auto coef =  lag_basis(d_prev1);
 
-//                 const int ipos1 = LeftDiscreteNode - LAG_OFFSET;
+//                 const int ipos1 = leftNode - LAG_OFFSET;
 
 //                 ftmp[ivx][ix] = 0;
 //                 for (int k = 0; k <= LAG_ORDER; k++) {

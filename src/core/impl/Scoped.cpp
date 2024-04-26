@@ -32,17 +32,17 @@ throw std::logic_error("Scoped kernel is not compatible with DPCPP");
 
                     // Corresponds to the index of the cell to
                     // the left of footCoord
-                    const int LeftDiscreteNode =
+                    const int leftNode =
                         sycl::floor((xFootCoord - minRealX) * inv_dx);
 
                     const double d_prev1 =
                         LAG_OFFSET +
                         inv_dx * (xFootCoord -
-                                  coord(LeftDiscreteNode, minRealX, dx));
+                                  coord(leftNode, minRealX, dx));
 
                     auto coef = lag_basis(d_prev1);
 
-                    const int ipos1 = LeftDiscreteNode - LAG_OFFSET;
+                    const int ipos1 = leftNode - LAG_OFFSET;
 
                     slice_ftmp[ix] = 0.;
                     for (int k = 0; k <= LAG_ORDER; k++) {
