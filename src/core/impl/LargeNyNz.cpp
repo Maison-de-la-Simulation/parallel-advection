@@ -1,7 +1,8 @@
+#include "IAdvectorX.h"
 #include "advectors.h"
 
 sycl::event
-AdvX::MemSafe::operator()(sycl::queue &Q,
+AdvX::LargeNyNz::operator()(sycl::queue &Q,
                           sycl::buffer<double, 3> &buff_fdistrib,
                           const ADVParams &params) {
     auto const nx = params.nx;
@@ -10,16 +11,34 @@ AdvX::MemSafe::operator()(sycl::queue &Q,
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
-    
-    if(nx > 6144){ //on A100 it breaks over 6144 double because of the size
-
-    // if(nx*sizeof(double) > 49000){
-        //TODO check MAX_SIZE du local_accessor
-        // std::cerr << "Warning large size" << std::endl;
-    }
 
     const sycl::range nb_wg{nvx, 1, nz};
     const sycl::range wg_size{1, params.wg_size, 1};
+    
+
+    constexpr size_t MAX_NVX = 65536;
+    //On A100 it breaks when Nvx (the first dimension) is >= 65536.
+    if(nvx < MAX_NVX){
+        AdvX::Hierarchical adv{};
+        return adv(Q, buff_fdistrib, params);
+    }
+    else{
+        auto n_batch = std::ceil(nvx / MAX_NVX); //should be in constructor
+
+        for(int batch = 0;  batch < n_batch-1; ++batch){//can we parallel for this on multiple GPUs? multiple queues ? or other CUDA streams?
+            //how many items do we treat
+            sycl::range batch_range(MAX_NVX-1, nx, nz);
+
+            //start with the range from (batch*MAX_NVX) to (batch*MAX_NVX) + MAX_NVX
+            //do advection with offset
+        }
+        //for the last one we take the rest, we add n_batch because we processed MAX_SIZE-1 each batch
+        sycl::range last_range((nvx%MAX_NVX)+n_batch, nx, nz);
+        //offset from n_batch * (MAX_NVX-1) to nvx
+        
+        //return last advection
+
+    }
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
@@ -63,14 +82,6 @@ AdvX::MemSafe::operator()(sycl::queue &Q,
                                     nx,                       /* n elems */
                                     nz                        /* stride */
             );
-            // g.parallel_for_work_item(sycl::range{1, nx, 1},
-            //                          [&](sycl::h_item<3> it) {
-            //                              const int ix = it.get_local_id(0);
-            //                              const int ivx = g.get_group_id(0);
-            //                              const int iz = g.get_group_id(2);
-
-            //                              fdist[ivx][ix][iz] = slice_ftmp[ix];
-            //                          });
         });   // end parallel_for_work_group
     });       // end Q.submit
 }

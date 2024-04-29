@@ -109,7 +109,7 @@ class Scoped : public IAdvectorX {
 // =============================================================================
 // EXPERIMENTS
 // =============================================================================
-class MemSafe : public IAdvectorX {
+class LargeNyNz : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
 
   public:

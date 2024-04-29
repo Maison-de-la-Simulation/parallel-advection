@@ -12,7 +12,7 @@ target_sources(core
   # impl/FakeAdvector.cpp
   # impl/HierarchicalAlloca.cpp
   # impl/FixedMemoryFootprint.cpp
-  impl/MemSafe.cpp
+  impl/LargeNyNz.cpp
   impl/ReducedPrecision.cpp
 )
 

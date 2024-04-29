@@ -49,7 +49,16 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
                         slice_ftmp[ix] += coef[k] * fdist[ivx][idx_ipos1][iz];
                     }
                 });   // end parallel_for_work_item --> Implicit barrier
+#ifdef SYCL_IMPLEMENTATION_ONEAPI   // for DPCPP
+            g.parallel_for_work_item(sycl::range{1, nx, 1},
+                                     [&](sycl::h_item<3> it) {
+                                         const int ix = it.get_local_id(1);
+                                         const int ivx = g.get_group_id(0);
+                                         const int iz = g.get_group_id(2);
 
+                                         fdist[ivx][ix][iz] = slice_ftmp[ix];
+                                     });
+#else
             g.async_work_group_copy(fdist.get_pointer()
                                         + g.get_group_id(2)
                                         + g.get_group_id(0) *nz*nx, /* dest */
@@ -57,14 +66,7 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
                                     nx, /* n elems */
                                     nz  /* stride */
             );
-            // g.parallel_for_work_item(sycl::range{1, nx, 1},
-            //                          [&](sycl::h_item<3> it) {
-            //                              const int ix = it.get_local_id(0);
-            //                              const int ivx = g.get_group_id(0);
-            //                              const int iz = g.get_group_id(2);
-
-            //                              fdist[ivx][ix][iz] = slice_ftmp[ix];
-            //                          });
+#endif
         });   // end parallel_for_work_group
     });       // end Q.submit
 }
