@@ -7,6 +7,8 @@
 
 // }
 
+// ==========================================
+// ==========================================
 sycl::event
 AdvX::LargeNy::actual_advection(sycl::queue &Q,
                                 sycl::buffer<double, 3> &buff_fdistrib,
@@ -67,8 +69,10 @@ AdvX::LargeNy::actual_advection(sycl::queue &Q,
             );
         });   // end parallel_for_work_group
     });       // end Q.submit
-}
+} // end actual_advection
 
+// ==========================================
+// ==========================================
 sycl::event
 AdvX::LargeNy::operator()(sycl::queue &Q,
                             sycl::buffer<double, 3> &buff_fdistrib,
@@ -77,7 +81,7 @@ AdvX::LargeNy::operator()(sycl::queue &Q,
     auto const nvx = params.nvx;
     auto const nz = params.nz;
 
-    // IFDEF ACPP_TARGETS=cuda:sm_80 ...
+    // IFDEF ACPP_TARGETS=cuda:sm_80 ... ?
 
     // On A100 it breaks when Nvx (the first dimension) is >= 65536.
     constexpr size_t MAX_NVX = 65536;
@@ -103,9 +107,6 @@ AdvX::LargeNy::operator()(sycl::queue &Q,
         // processed MAX_SIZE-1 each batch
         auto const nvx_size = (nvx % MAX_NVX) + (n_batch - 1);
         auto const nvx_offset = (MAX_NVX-1)*(n_batch-1);
-
-        // std::cout << "LAST ITER: nvx_offset = " << nvx_offset << std::endl;
-        // std::cout << "LAST ITER: nvx_size = " << nvx_size << std::endl;
 
         return actual_advection(
             Q, buff_fdistrib, params,
