@@ -78,41 +78,34 @@ AdvX::LargeNy::operator()(sycl::queue &Q,
     auto const nz = params.nz;
 
     // IFDEF ACPP_TARGETS=cuda:sm_80 ...
-    constexpr size_t MAX_NVX = 65536;
+
     // On A100 it breaks when Nvx (the first dimension) is >= 65536.
+    constexpr size_t MAX_NVX = 65536;
     if (nvx < MAX_NVX) {
         /* If limit not exceeded we return a classical Hierarchical advector */
         AdvX::Hierarchical adv{};
         return adv(Q, buff_fdistrib, params);
     } else {
         auto n_batch = std::floor(nvx / MAX_NVX)+1;  // should be in constructor
-        std::cout << "n_batch = " << n_batch << std::endl;
 
-        for (int i_batch = 0; i_batch < n_batch - 1;
-             ++i_batch) {   // can we parallel_for this on multiple GPUs?
-                            // multiple queues ? or other CUDA streams?
+        for (int i_batch = 0; i_batch < n_batch - 1; ++i_batch) {   // can we parallel_for this on multiple GPUs? multiple queues ? or other CUDA streams?
 
             size_t nvx_offset = (i_batch * MAX_NVX) - i_batch;
-            std::cout << "nvx_offset = " << nvx_offset << std::endl;
 
-            // works
             // sycl::buffer sub_buff(buff_fdistrib,
             //                       sycl::id(nvx_offset, 0, 0) /*offset*/,
             //                       sycl::range(MAX_NVX - 1, nx, nz) /*range*/);
 
-            // start with the range from (i_batch*MAX_NVX) to (i_batch*MAX_NVX)
-            // + MAX_NVX do advection with offset, or on the sub buffer ?
             actual_advection(Q, buff_fdistrib, params, MAX_NVX-1, nvx_offset).wait();
         }
 
         // for the last one we take the rest, we add n_batch-1 because we
         // processed MAX_SIZE-1 each batch
-        // sycl::range last_range((nvx % MAX_NVX) + (n_batch - 1), 1, nz);
-
         auto const nvx_size = (nvx % MAX_NVX) + (n_batch - 1);
         auto const nvx_offset = (MAX_NVX-1)*(n_batch-1);
-        std::cout << "LAST ITER: nvx_offset = " << nvx_offset << std::endl;
-        std::cout << "LAST ITER: nvx_size = " << nvx_size << std::endl;
+
+        // std::cout << "LAST ITER: nvx_offset = " << nvx_offset << std::endl;
+        // std::cout << "LAST ITER: nvx_size = " << nvx_size << std::endl;
 
         return actual_advection(
             Q, buff_fdistrib, params,
