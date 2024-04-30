@@ -38,8 +38,8 @@ kernel_impl_factory(const ADVParamsNonCopyable &params) {
         return sref::make_unique<AdvX::NDRange>();
     case str2int("Scoped"):
         return sref::make_unique<AdvX::Scoped>();
-    case str2int("MemSafe"):
-        return sref::make_unique<AdvX::MemSafe>();
+    case str2int("LargeNy"):
+        return sref::make_unique<AdvX::LargeNy>();
     case str2int("ReducedPrecision"):
         return sref::make_unique<AdvX::ReducedPrecision>();
     default:
