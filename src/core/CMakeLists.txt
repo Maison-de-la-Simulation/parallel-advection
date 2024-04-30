@@ -14,6 +14,7 @@ target_sources(core
   # impl/FixedMemoryFootprint.cpp
   impl/LargeNy.cpp
   impl/ReducedPrecision.cpp
+  impl/LargeMalloc.cpp
 )
 
 target_include_directories(core

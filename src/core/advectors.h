@@ -136,9 +136,10 @@ class ReducedPrecision : public IAdvectorX {
 
 class LargeMalloc : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
-    sycl::event actual_advection(sycl::queue &Q,
-                                 sycl::buffer<double, 3> &buff_fdistrib,
-                                 const ADVParams &params);
+    sycl::event adv_opt3(sycl::queue &Q,
+                         sycl::buffer<double, 3> &buff_fdistrib,
+                         const ADVParams &params,
+                        const size_t &nx_rest_to_malloc);
 
   public:
     // LargeMalloc(const ADVParams &params);
