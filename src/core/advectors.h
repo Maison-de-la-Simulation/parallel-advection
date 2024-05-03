@@ -134,7 +134,7 @@ class ReducedPrecision : public IAdvectorX {
                            const ADVParams &params) override;
 };
 
-class LargeMalloc : public IAdvectorX {
+class StraddledMalloc : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
     sycl::event adv_opt3(sycl::queue &Q,
                          sycl::buffer<double, 3> &buff_fdistrib,
@@ -142,7 +142,7 @@ class LargeMalloc : public IAdvectorX {
                         const size_t &nx_rest_to_malloc);
 
   public:
-    // LargeMalloc(const ADVParams &params);
+    // StraddledMalloc(const ADVParams &params);
 
     sycl::event operator()(sycl::queue &Q,
                            sycl::buffer<double, 3> &buff_fdistrib,

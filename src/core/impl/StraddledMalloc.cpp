@@ -6,7 +6,7 @@
 
 constexpr size_t MAX_NX_ALLOC = 6144; //A100
 
-// AdvX::LargeMalloc::LargeMalloc(const ADVParams &params){
+// AdvX::StraddledMalloc::StraddledMalloc(const ADVParams &params){
 //     auto n_batch = std::ceil(params.nvx / MAX_NVX); //should be in
 //     constructor
 
@@ -15,7 +15,7 @@ constexpr size_t MAX_NX_ALLOC = 6144; //A100
 // ==========================================
 // ==========================================
 sycl::event
-AdvX::LargeMalloc::adv_opt3(sycl::queue &Q,
+AdvX::StraddledMalloc::adv_opt3(sycl::queue &Q,
                             sycl::buffer<double, 3> &buff_fdistrib,
                             const ADVParams &params,
                             const size_t &nx_rest_to_malloc) {
@@ -103,7 +103,7 @@ AdvX::LargeMalloc::adv_opt3(sycl::queue &Q,
 // ==========================================
 // ==========================================
 sycl::event
-AdvX::LargeMalloc::operator()(sycl::queue &Q,
+AdvX::StraddledMalloc::operator()(sycl::queue &Q,
                             sycl::buffer<double, 3> &buff_fdistrib,
                             const ADVParams &params) {
     auto const nx = params.nx;
@@ -123,7 +123,7 @@ AdvX::LargeMalloc::operator()(sycl::queue &Q,
 //  cudaDeviceSynchronize();
 //  cudaPeekAtLastError();
 
-        //Option 1: use global memory
+        //Option 1: use global memory --> Out of place
         //Option 2: use cudaFuncAttributeMaxDynamicSharedMemorySize
         //Option 3: use a mix of max local memory and global memory ??
 

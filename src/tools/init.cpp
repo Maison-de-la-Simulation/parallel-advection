@@ -13,7 +13,7 @@ str2int(const char *str, int h = 0) noexcept {
 static constexpr auto error_str =
     "Should be: {Sequential, BasicRange, "
     "Hierarchical, NDRange, "
-    "Scoped, StreamY, LargeMalloc, ReducedPrecision}";
+    "Scoped, StreamY, StraddledMalloc, ReducedPrecision}";
 
 // // ==========================================
 // // ==========================================
@@ -40,8 +40,8 @@ kernel_impl_factory(const ADVParamsNonCopyable &params) {
         return sref::make_unique<AdvX::Scoped>();
     case str2int("StreamY"):
         return sref::make_unique<AdvX::StreamY>();
-    case str2int("LargeMalloc"):
-        return sref::make_unique<AdvX::LargeMalloc>();
+    case str2int("StraddledMalloc"):
+        return sref::make_unique<AdvX::StraddledMalloc>();
     case str2int("ReducedPrecision"):
         return sref::make_unique<AdvX::ReducedPrecision>();
     default:

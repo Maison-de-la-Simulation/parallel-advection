@@ -14,7 +14,7 @@ target_sources(core
   # impl/FixedMemoryFootprint.cpp
   impl/StreamY.cpp
   impl/ReducedPrecision.cpp
-  impl/LargeMalloc.cpp
+  impl/StraddledMalloc.cpp
 )
 
 target_include_directories(core
