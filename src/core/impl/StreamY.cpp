@@ -1,7 +1,7 @@
 #include "IAdvectorX.h"
 #include "advectors.h"
 
-// AdvX::LargeNy::LargeNy(const ADVParams &params){
+// AdvX::StreamY::StreamY(const ADVParams &params){
 //     auto n_batch = std::ceil(params.nvx / MAX_NVX); //should be in
 //     constructor
 
@@ -10,7 +10,7 @@
 // ==========================================
 // ==========================================
 sycl::event
-AdvX::LargeNy::actual_advection(sycl::queue &Q,
+AdvX::StreamY::actual_advection(sycl::queue &Q,
                                 sycl::buffer<double, 3> &buff_fdistrib,
                                 const ADVParams &params,
                                 const size_t &n_nvx,
@@ -74,7 +74,7 @@ AdvX::LargeNy::actual_advection(sycl::queue &Q,
 // ==========================================
 // ==========================================
 sycl::event
-AdvX::LargeNy::operator()(sycl::queue &Q,
+AdvX::StreamY::operator()(sycl::queue &Q,
                             sycl::buffer<double, 3> &buff_fdistrib,
                             const ADVParams &params) {
     auto const nx = params.nx;

@@ -109,7 +109,7 @@ class Scoped : public IAdvectorX {
 // =============================================================================
 // EXPERIMENTS
 // =============================================================================
-class LargeNy : public IAdvectorX {
+class StreamY : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
     sycl::event actual_advection(sycl::queue &Q,
                                  sycl::buffer<double, 3> &buff_fdistrib,
@@ -118,7 +118,7 @@ class LargeNy : public IAdvectorX {
                                  const size_t &ny_offset);
 
   public:
-    // LargeNy(const ADVParams &params);
+    // StreamY(const ADVParams &params);
 
     sycl::event operator()(sycl::queue &Q,
                            sycl::buffer<double, 3> &buff_fdistrib,
