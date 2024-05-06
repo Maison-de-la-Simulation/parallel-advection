@@ -1,7 +1,7 @@
 #include "advectors.h"
 
 sycl::event
-AdvX::Hierarchical::operator()(sycl::queue &Q,
+AdvX::ReverseIndexes::operator()(sycl::queue &Q,
                                sycl::buffer<double, 3> &buff_fdistrib,
                                const ADVParams &params) {
     auto const nx = params.nx;
