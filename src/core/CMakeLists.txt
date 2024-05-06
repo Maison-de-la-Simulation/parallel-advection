@@ -15,6 +15,7 @@ target_sources(core
   impl/StreamY.cpp
   impl/ReducedPrecision.cpp
   impl/StraddledMalloc.cpp
+  impl/ReverseIndexes.cpp
 )
 
 target_include_directories(core

@@ -44,6 +44,8 @@ kernel_impl_factory(const ADVParamsNonCopyable &params) {
         return sref::make_unique<AdvX::StraddledMalloc>();
     case str2int("ReducedPrecision"):
         return sref::make_unique<AdvX::ReducedPrecision>();
+    case str2int("ReverseIndexes"):
+        return sref::make_unique<AdvX::ReverseIndexes>();
     default:
         auto str = kernel_name + " is not a valid kernel name.\n" + error_str;
         throw std::runtime_error(str);
