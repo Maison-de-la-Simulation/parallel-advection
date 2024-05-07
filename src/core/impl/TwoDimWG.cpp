@@ -17,7 +17,7 @@ AdvX::TwoDimWG::operator()(sycl::queue &Q,
 
     /* nvx must be divisible by slice_size_dim_y */
     if(nvx%wg_size_y != 0){
-        throw std::invalid_argument("nvx must be divisible by slice_size_dim_y");
+        throw std::invalid_argument("nvx must be divisible by wg_size_y");
     }
 
     const sycl::range nb_wg{nvx/wg_size_y, 1, nz};
@@ -33,15 +33,12 @@ AdvX::TwoDimWG::operator()(sycl::queue &Q,
 
         cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<3> g) {
             g.parallel_for_work_item(
-                // sycl::range{slice_size_dim_y, nx, 1}, [&](sycl::h_item<3> it) {
-                sycl::range{1, nx, 1}, [&](sycl::h_item<3> it) {
+                sycl::range{wg_size_y, nx, 1}, [&](sycl::h_item<3> it) {
                     const int ix = it.get_local_id(1);
-                    // const int ivx = g.get_group_id(0);
                     const int iz = g.get_group_id(2);
 
-                    // const int ivx = slice_size_dim_y * g.get_group_id(0) + it.get_local_id(0);
                     const int local_nvx = it.get_local_id(0);
-                    const int ivx = it.get_physical_local_id(0);
+                    const int ivx = wg_size_y * g.get_group_id(0) + local_nvx;
 
                     double const xFootCoord = displ(ix, ivx, params);
 
@@ -66,16 +63,13 @@ AdvX::TwoDimWG::operator()(sycl::queue &Q,
                     }
                 });   // end parallel_for_work_item --> Implicit barrier
 
-            g.parallel_for_work_item(sycl::range{1, nx, 1},
+            g.parallel_for_work_item(sycl::range{wg_size_y, nx, 1},
                                      [&](sycl::h_item<3> it) {
                                          const int ix = it.get_local_id(1);
-                                        //  const int ivx = g.get_group_id(0);
                                          const int iz = g.get_group_id(2);
 
-                                        const int local_nvx = it.get_local_id(0);
-                                        // const int ivx = slice_size_dim_y * g.get_group_id(0) + it.get_local_id(0);
-                                        const int ivx =  it.get_physical_local_id(0);
-
+                                         const int local_nvx = it.get_local_id(0);
+                                         const int ivx = wg_size_y * g.get_group_id(0) + local_nvx;
 
                                          fdist[ivx][ix][iz] = slice_ftmp[local_nvx][ix];
                                      });

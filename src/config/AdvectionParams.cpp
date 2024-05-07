@@ -80,8 +80,8 @@ void ADVParamsNonCopyable::print()
   printf( "Simulation run parameters:\n");
   printf( "##########################\n");
   std::cout << "kernelImpl : " << kernelImpl << std::endl;
-  std::cout << "wgSizeX     : " << wg_size_x    << std::endl;
-  std::cout << "wgSizeY     : " << wg_size_y    << std::endl;
+  std::cout << "wgSizeX    : " << wg_size_x    << std::endl;
+  std::cout << "wgSizeY    : " << wg_size_y    << std::endl;
   printf( "gpu        : %d\n", gpu);
   printf( "maxIter    : %zu\n", maxIter);
   printf( "nvx        : %zu\n", nvx);
