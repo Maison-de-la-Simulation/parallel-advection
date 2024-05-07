@@ -125,6 +125,7 @@ class StreamY : public IAdvectorX {
                            const ADVParams &params) override;
 };
 
+// =============================================================================
 class ReducedPrecision : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
 
@@ -134,6 +135,7 @@ class ReducedPrecision : public IAdvectorX {
                            const ADVParams &params) override;
 };
 
+// =============================================================================
 class StraddledMalloc : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
     sycl::event adv_opt3(sycl::queue &Q,
@@ -149,7 +151,17 @@ class StraddledMalloc : public IAdvectorX {
                            const ADVParams &params) override;
 };
 
+// =============================================================================
 class ReverseIndexes : public IAdvectorX {
+    using IAdvectorX::IAdvectorX;
+
+  public:
+    sycl::event operator()(sycl::queue &Q,
+                           sycl::buffer<double, 3> &buff_fdistrib,
+                           const ADVParams &params) override;
+};
+
+class TwoDimWG : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
 
   public:

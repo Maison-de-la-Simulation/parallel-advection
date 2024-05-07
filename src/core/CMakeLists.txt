@@ -16,6 +16,7 @@ target_sources(core
   impl/ReducedPrecision.cpp
   impl/StraddledMalloc.cpp
   impl/ReverseIndexes.cpp
+  impl/TwoDimWG.cpp
 )
 
 target_include_directories(core
