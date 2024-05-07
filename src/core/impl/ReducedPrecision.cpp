@@ -12,7 +12,7 @@ AdvX::ReducedPrecision::operator()(sycl::queue &Q,
     auto const inv_dx = params.inv_dx;
 
     const sycl::range nb_wg{nvx, 1, nz};
-    const sycl::range wg_size{1, params.wg_size, 1};
+    const sycl::range wg_size{1, params.wg_size_x, 1};
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =

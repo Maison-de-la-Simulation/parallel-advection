@@ -28,7 +28,8 @@ struct ADVParams {
   size_t nz  = 32;
 
   // Sizes of the SYCL work groups
-  size_t wg_size = 128;
+  size_t wg_size_x = 128;
+  size_t wg_size_y = 1;
 
   // Deltas : taille physique d'une cellule discrète (en x, vx, t)
   double dt  = 0.0001;

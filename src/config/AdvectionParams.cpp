@@ -10,7 +10,8 @@ ADVParams::ADVParams(ADVParamsNonCopyable &other){
   gpu = other.gpu;
   outputSolution = other.outputSolution;
 
-  wg_size = other.wg_size;
+  wg_size_x = other.wg_size_x;
+  wg_size_y = other.wg_size_y;
 
   dt = other.dt;
 
@@ -41,7 +42,8 @@ void ADVParamsNonCopyable::setup(const ConfigMap& configMap)
   outputSolution = configMap.getBool("run", "outputSolution", false);
 
   kernelImpl = configMap.getString("run", "kernelImpl", "BasicRange2D");
-  wg_size = configMap.getInteger("run", "workGroupSize", 512);
+  wg_size_x = configMap.getInteger("run", "workGroupSizeX", 128);
+  wg_size_y = configMap.getInteger("run", "workGroupSizeY", 1);
 
   // discretization parameters
   dt  = configMap.getFloat("discretization", "dt" , 0.0001);
@@ -78,7 +80,8 @@ void ADVParamsNonCopyable::print()
   printf( "Simulation run parameters:\n");
   printf( "##########################\n");
   std::cout << "kernelImpl : " << kernelImpl << std::endl;
-  std::cout << "wgSize     : " << wg_size    << std::endl;
+  std::cout << "wgSizeX     : " << wg_size_x    << std::endl;
+  std::cout << "wgSizeY     : " << wg_size_y    << std::endl;
   printf( "gpu        : %d\n", gpu);
   printf( "maxIter    : %zu\n", maxIter);
   printf( "nvx        : %zu\n", nvx);
