@@ -20,6 +20,7 @@ AdvX::TwoDimWG::operator()(sycl::queue &Q,
         throw std::invalid_argument("nvx must be divisible by wg_size_y");
     }
     if(wg_size_y * nx > 6144){
+        /* TODO: try with a unique allocation in shared memory and sequential iteration */
         throw std::invalid_argument("wg_size_y*nx must be < to 6144 (shared memory limit)");
     }
 
