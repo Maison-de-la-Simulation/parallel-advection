@@ -16,7 +16,7 @@ CMAKE_OPTIONS+=" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
 usage() {
     echo "Simple compilation script. Automatically builds the project for a combination (hw, sycl)."
     echo "For multiple devices compilation flows, please compile manually."
-    echo "Usage: $0 [--hw <mi250|a100|x86_64>] [--sycl <intel-llvm|acpp|oneapi>] [--benchmark_DIR=<directory>]"
+    echo "Usage: $0 [--hw <mi250|a100|x86_64>] [--sycl <intel-llvm|acpp|oneapi>] [--benchmark_DIR=<directory>] [--tests]"
     echo "Compilers must be present in PATH:"
     echo "           intel-llvm : ${INTELLLVM_COMPILER}"
     echo "           acpp       : ${ACPP_COMPILER}"
@@ -27,25 +27,35 @@ usage() {
 # =================================================
 # Argument parsing
 # =================================================
+# =================================================
+# Argument parsing
+# =================================================
+TESTS=false  # Initialize the boolean variable
+
 while [ "$#" -gt 0 ]; do
     case $1 in
         --hw)
             HARDWARE="$2"
-            shift 2
+            shift 2  # Remove --hw and its argument from the list
             ;;
         --sycl)
             SYCL_IMPL="$2"
-            shift 2
+            shift 2  # Remove --sycl and its argument from the list
             ;;
         --benchmark_DIR=*)
             BENCHMARK_DIR="${1#*=}"
-            shift 1
+            shift 1  # Remove --benchmark_DIR=path from the list
+            ;;
+        --tests)
+            TESTS=true
+            shift 1  # Remove --tests from the list
             ;;
         *)
-            usage
+            usage  # Handle unknown options
             ;;
     esac
 done
+
 
 if [ -z "$HARDWARE" ] || [ -z "$SYCL_IMPL" ]; then
     echo "Error: Both --hw and --sycl options are required."
@@ -117,6 +127,13 @@ if [ -n "$BENCHMARK_DIR" ]; then
     CMAKE_OPTIONS+=" -Dbenchmark_DIR=${BENCHMARK_DIR}"
 fi
 
+# Add tests compilation if specified
+if $TESTS; then
+    CMAKE_OPTIONS+=" -DADVECTION_BUILD_TESTS=ON"
+fi
+
+
+
 # =================================================
 # Configure
 # =================================================
@@ -141,6 +158,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 echo "### CMake configuration complete in `pwd`."
+echo "# CMake options: ${CMAKE_OPTIONS}"
 echo ""
 
 # =================================================
