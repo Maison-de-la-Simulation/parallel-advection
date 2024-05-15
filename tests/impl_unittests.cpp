@@ -1,8 +1,11 @@
+#include "advectors.h"
 #include "validation.h"
 #include "gtest/gtest.h"
 #include <AdvectionParams.h>
 #include <init.h>
 #include <sycl/sycl.hpp>
+
+static constexpr auto EPS = 1e-6;
 
 // =============================================================================
 TEST(Impl, BasicRange) {
@@ -20,7 +23,7 @@ TEST(Impl, BasicRange) {
         advector(Q, buff_fdistrib, params).wait_and_throw();
 
     auto err = validate_result(Q, buff_fdistrib, params);
-    ASSERT_NEAR(err, 0, 1e-6);
+    ASSERT_NEAR(err, 0, EPS);
 }
 
 // =============================================================================
@@ -38,7 +41,7 @@ TEST(Impl, Hierarchical) {
         advector(Q, buff_fdistrib, params).wait_and_throw();
 
     auto err = validate_result(Q, buff_fdistrib, params);
-    ASSERT_NEAR(err, 0, 1e-6);
+    ASSERT_NEAR(err, 0, EPS);
 }
 
 // =============================================================================
@@ -56,7 +59,7 @@ TEST(Impl, NDRange) {
         advector(Q, buff_fdistrib, params).wait_and_throw();
 
     auto err = validate_result(Q, buff_fdistrib, params);
-    ASSERT_NEAR(err, 0, 1e-6);
+    ASSERT_NEAR(err, 0, EPS);
 }
 
 // =============================================================================
@@ -74,5 +77,95 @@ TEST(Impl, Scoped) {
         advector(Q, buff_fdistrib, params).wait_and_throw();
 
     auto err = validate_result(Q, buff_fdistrib, params);
-    ASSERT_NEAR(err, 0, 1e-6);
+    ASSERT_NEAR(err, 0, EPS);
+}
+
+// =============================================================================
+TEST(Impl, ReverseIndexes) {
+    ADVParams params;
+    sycl::queue Q;
+
+    sycl::range<3> r3d(params.nvx, params.nx, params.nz);
+    sycl::buffer<double, 3> buff_fdistrib(r3d);
+    fill_buffer(Q, buff_fdistrib, params);
+
+    auto advector = sref::make_unique<AdvX::ReverseIndexes>();
+
+    for (int i = 0; i < params.maxIter; ++i)
+        advector(Q, buff_fdistrib, params).wait_and_throw();
+
+    auto err = validate_result(Q, buff_fdistrib, params);
+    ASSERT_NEAR(err, 0, EPS);
+}
+
+// =============================================================================
+TEST(Impl, SeqTwoDimWG) {
+    ADVParams params;
+    sycl::queue Q;
+
+    sycl::range<3> r3d(params.nvx, params.nx, params.nz);
+    sycl::buffer<double, 3> buff_fdistrib(r3d);
+    fill_buffer(Q, buff_fdistrib, params);
+
+    auto advector = sref::make_unique<AdvX::SeqTwoDimWG>();
+
+    for (int i = 0; i < params.maxIter; ++i)
+        advector(Q, buff_fdistrib, params).wait_and_throw();
+
+    auto err = validate_result(Q, buff_fdistrib, params);
+    ASSERT_NEAR(err, 0, EPS);
+}
+
+// =============================================================================
+TEST(Impl, StraddledMalloc) {
+    ADVParams params;
+    sycl::queue Q;
+
+    sycl::range<3> r3d(params.nvx, params.nx, params.nz);
+    sycl::buffer<double, 3> buff_fdistrib(r3d);
+    fill_buffer(Q, buff_fdistrib, params);
+
+    auto advector = sref::make_unique<AdvX::StraddledMalloc>();
+
+    for (int i = 0; i < params.maxIter; ++i)
+        advector(Q, buff_fdistrib, params).wait_and_throw();
+
+    auto err = validate_result(Q, buff_fdistrib, params);
+    ASSERT_NEAR(err, 0, EPS);
+}
+
+// =============================================================================
+TEST(Impl, StreamY) {
+    ADVParams params;
+    sycl::queue Q;
+
+    sycl::range<3> r3d(params.nvx, params.nx, params.nz);
+    sycl::buffer<double, 3> buff_fdistrib(r3d);
+    fill_buffer(Q, buff_fdistrib, params);
+
+    auto advector = sref::make_unique<AdvX::StreamY>();
+
+    for (int i = 0; i < params.maxIter; ++i)
+        advector(Q, buff_fdistrib, params).wait_and_throw();
+
+    auto err = validate_result(Q, buff_fdistrib, params);
+    ASSERT_NEAR(err, 0, EPS);
+}
+
+// =============================================================================
+TEST(Impl, TwoDimWG) {
+    ADVParams params;
+    sycl::queue Q;
+
+    sycl::range<3> r3d(params.nvx, params.nx, params.nz);
+    sycl::buffer<double, 3> buff_fdistrib(r3d);
+    fill_buffer(Q, buff_fdistrib, params);
+
+    auto advector = sref::make_unique<AdvX::TwoDimWG>();
+
+    for (int i = 0; i < params.maxIter; ++i)
+        advector(Q, buff_fdistrib, params).wait_and_throw();
+
+    auto err = validate_result(Q, buff_fdistrib, params);
+    ASSERT_NEAR(err, 0, EPS);
 }
