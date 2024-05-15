@@ -17,6 +17,7 @@ target_sources(core
   impl/StraddledMalloc.cpp
   impl/ReverseIndexes.cpp
   impl/TwoDimWG.cpp
+  impl/SeqTwoDimWG.cpp
 )
 
 target_include_directories(core

@@ -13,7 +13,7 @@ str2int(const char *str, int h = 0) noexcept {
 static constexpr auto error_str =
     "Should be: {Sequential, BasicRange, "
     "Hierarchical, NDRange, "
-    "Scoped, StreamY, StraddledMalloc, ReducedPrecision}";
+    "Scoped, StreamY, StraddledMalloc, ReducedPrecision...}";
 
 // // ==========================================
 // // ==========================================
@@ -48,6 +48,8 @@ kernel_impl_factory(const ADVParamsNonCopyable &params) {
         return sref::make_unique<AdvX::ReverseIndexes>();
     case str2int("TwoDimWG"):
         return sref::make_unique<AdvX::TwoDimWG>();
+    case str2int("SeqTwoDimWG"):
+        return sref::make_unique<AdvX::SeqTwoDimWG>();
     default:
         auto str = kernel_name + " is not a valid kernel name.\n" + error_str;
         throw std::runtime_error(str);
