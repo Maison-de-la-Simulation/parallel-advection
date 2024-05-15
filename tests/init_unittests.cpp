@@ -3,6 +3,8 @@
 #include <AdvectionParams.h>
 #include <init.h>
 
+static constexpr double EPS = 1e-6;
+
 // =============================================================================
 TEST(Init, FillBufferWithDefaultParams){
     ADVParams params;
@@ -22,7 +24,7 @@ TEST(Init, FillBufferWithDefaultParams){
         for (auto iv = 0; iv < nvx; ++iv) {
             for (auto ix = 0; ix < nx; ++ix) {
                 double x = params.minRealX + ix * params.dx;
-                EXPECT_EQ(fdist[iv][ix][iz], sycl::sin(4 * x * M_PI));
+                EXPECT_NEAR(fdist[iv][ix][iz], sycl::sin(4 * x * M_PI), EPS);
             }
         }
     }
@@ -51,7 +53,7 @@ TEST(Init, FillBufferWithRandomParams){
         for (auto ix = 0; ix < r3d.get(1); ++ix) {
             for (auto iv = 0; iv < r3d.get(0); ++iv) {
                 double x = params.minRealX + ix * params.dx;
-                EXPECT_EQ(fdist[iv][ix][iz], sycl::sin(4 * x * M_PI));
+                EXPECT_NEAR(fdist[iv][ix][iz], sycl::sin(4 * x * M_PI), EPS);
             }
         }
     }

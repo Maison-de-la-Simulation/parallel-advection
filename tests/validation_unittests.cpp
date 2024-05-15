@@ -5,6 +5,8 @@
 #include <AdvectionParams.h>
 #include <init.h>
 
+static constexpr double EPS = 1e-6;
+
 // =============================================================================
 TEST(Validation, ValidateNoIteration){
     std::srand(static_cast<unsigned>(std::time(0)));
