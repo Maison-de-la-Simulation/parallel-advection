@@ -61,12 +61,23 @@ AdvX::StreamY::actual_advection(sycl::queue &Q,
                     }
                 });   // end parallel_for_work_item --> Implicit barrier
 
+#ifdef SYCL_IMPLEMENTATION_ONEAPI   // for DPCPP
+            g.parallel_for_work_item(sycl::range{1, nx, 1},
+                                     [&](sycl::h_item<3> it) {
+                                         const int ix = it.get_local_id(1);
+                                         const int ivx = g.get_group_id(0);
+                                         const int iz = g.get_group_id(2);
+
+                                         fdist[ivx][ix][iz] = slice_ftmp[ix];
+                                     });
+#else
             g.async_work_group_copy(fdist.get_pointer() + g.get_group_id(2) +
                                         (g.get_group_id(0)+nvx_offset) * nz * nx, /* dest */
                                     slice_ftmp.get_pointer(), /* source */
                                     nx,                       /* n elems */
                                     nz                        /* stride */
             );
+#endif
         });   // end parallel_for_work_group
     });       // end Q.submit
 } // end actual_advection
