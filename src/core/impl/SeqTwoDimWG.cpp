@@ -49,34 +49,40 @@ AdvX::SeqTwoDimWG::operator()(sycl::queue &Q,
 
 
             g.parallel_for_work_item(
-                sycl::range{wg_size_y, nx, 1}, [&](sycl::h_item<3> it) {
+                sycl::range{1, nx, 1}, [&](sycl::h_item<3> it) {
                     const int ix = it.get_local_id(1);
                     const int iz = g.get_group_id(2);
 
-                    const int local_nvx = it.get_local_id(0);
-                    const int ivx = wg_size_y * g.get_group_id(0) + local_nvx;
+                    // int local_ivx = it.get_global_id(0);
+                    // get_local_id(0);
+                    // const int ivx = wg_size_y * g.get_group_id(0);
 
-                    double const xFootCoord = displ(ix, ivx, params);
+                    for (int iivx=0; iivx<wg_size_y; iivx++) {
+                        const int ivx = wg_size_y * g.get_group_id(0) + iivx;
 
-                    // index of the cell to the left of footCoord
-                    const int leftNode =
-                        sycl::floor((xFootCoord - minRealX) * inv_dx);
+                        double const xFootCoord = displ(ix, ivx, params);
 
-                    const double d_prev1 =
-                        LAG_OFFSET +
-                        inv_dx * (xFootCoord -
-                                  coord(leftNode, minRealX, dx));
+                        // index of the cell to the left of footCoord
+                        const int leftNode =
+                            sycl::floor((xFootCoord - minRealX) * inv_dx);
 
-                    auto coef = lag_basis(d_prev1);
+                        const double d_prev1 =
+                            LAG_OFFSET +
+                            inv_dx * (xFootCoord -
+                                    coord(leftNode, minRealX, dx));
 
-                    const int ipos1 = leftNode - LAG_OFFSET;
+                        auto coef = lag_basis(d_prev1);
 
-                    fdist[ivx][ix][iz] = 0.;
-                    for (int k = 0; k <= LAG_ORDER; k++) {
-                        int idx_ipos1 = (nx + ipos1 + k) % nx;
+                        const int ipos1 = leftNode - LAG_OFFSET;
 
-                        fdist[ivx][ix][iz] += coef[k] * slice_ftmp[local_nvx][idx_ipos1];
+                        fdist[ivx][ix][iz] = 0.;
+                        for (int k = 0; k <= LAG_ORDER; k++) {
+                            int idx_ipos1 = (nx + ipos1 + k) % nx;
+
+                            fdist[ivx][ix][iz] += coef[k] * slice_ftmp[iivx][idx_ipos1];
+                        }
                     }
+
                 });   // end parallel_for_work_item --> Implicit barrier
 
 
