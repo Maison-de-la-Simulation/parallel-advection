@@ -1,8 +1,5 @@
 #include "IAdvectorX.h"
 #include "advectors.h"
-#include <hipSYCL/sycl/access.hpp>
-#include <hipSYCL/sycl/libkernel/accessor.hpp>
-#include <hipSYCL/sycl/libkernel/range.hpp>
 
 constexpr size_t MAX_NX_ALLOC = 6144; //A100
 
