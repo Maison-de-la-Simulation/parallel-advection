@@ -7,7 +7,6 @@
 
 // =============================================================================
 TEST(Validation, ValidateNoIteration){
-    sycl::device d = sycl::device{sycl::cpu_selector_v}; // tests on the CPU
     std::srand(static_cast<unsigned>(std::time(0)));
 
     ADVParams params;
@@ -21,7 +20,7 @@ TEST(Validation, ValidateNoIteration){
     const sycl::range<3> r3d(params.nvx, params.nx, params.nz);
     sycl::buffer<double, 3> buff_fdistrib(r3d);
 
-    sycl::queue Q{d};
+    sycl::queue Q;
     fill_buffer(Q, buff_fdistrib, params);
 
     auto res = validate_result(Q, buff_fdistrib, params, false);

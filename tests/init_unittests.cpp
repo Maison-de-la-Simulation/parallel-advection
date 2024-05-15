@@ -5,8 +5,6 @@
 
 // =============================================================================
 TEST(Init, FillBufferWithDefaultParams){
-    sycl::device d = sycl::device{sycl::cpu_selector_v}; // tests on the CPU
-
     ADVParams params;
     const auto nx  = params.nx;
     const auto nvx = params.nvx;
@@ -15,7 +13,7 @@ TEST(Init, FillBufferWithDefaultParams){
 
     sycl::buffer<double, 3> buff_fdistrib(sycl::range<3>(nvx, nx, nz));
 
-    sycl::queue Q{d};
+    sycl::queue Q;
     fill_buffer(Q, buff_fdistrib, params);
 
     sycl::host_accessor fdist(buff_fdistrib, sycl::read_only);
@@ -32,7 +30,6 @@ TEST(Init, FillBufferWithDefaultParams){
 
 // =============================================================================
 TEST(Init, FillBufferWithRandomParams){
-    sycl::device d = sycl::device{sycl::cpu_selector_v}; // tests on the CPU
     std::srand(static_cast<unsigned>(std::time(0)));
 
     ADVParams params;
@@ -45,7 +42,7 @@ TEST(Init, FillBufferWithRandomParams){
     const sycl::range<3> r3d(params.nvx, params.nx, params.nz);
     sycl::buffer<double, 3> buff_fdistrib(r3d);
 
-    sycl::queue Q{d};
+    sycl::queue Q;
     fill_buffer(Q, buff_fdistrib, params);
 
     sycl::host_accessor fdist(buff_fdistrib, sycl::read_only);
