@@ -1,7 +1,6 @@
 #include "advectors.h"
 #include "validation.h"
 #include "gtest/gtest.h"
-#include <hipSYCL/sycl/libkernel/accessor.hpp>
 #include <sycl/sycl.hpp>
 #include <AdvectionParams.h>
 #include <init.h>
