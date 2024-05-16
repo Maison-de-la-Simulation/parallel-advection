@@ -53,8 +53,8 @@ AdvX::ReverseIndexes::operator()(sycl::queue &Q,
             g.parallel_for_work_item(sycl::range{1, nx, 1},
                                      [&](sycl::h_item<3> it) {
                                          const int ix = it.get_local_id(1);
-                                         const int ivx = g.get_group_id(0);
-                                         const int iz = g.get_group_id(2);
+                                         const int ivx = g.get_group_id(2);
+                                         const int iz = g.get_group_id(0);
 
                                          fdist[ivx][ix][iz] = slice_ftmp[ix];
                                      });
