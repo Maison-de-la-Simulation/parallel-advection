@@ -1,5 +1,5 @@
 .vscode
-*[Bb]uild*
+[Bb]uild*
 diag/log/*
 diag/pandas
 *.ods#

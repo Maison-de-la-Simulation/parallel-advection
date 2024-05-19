@@ -1,0 +1,43 @@
+name: GPU build and CPU build+tests
+
+on:
+  push: { branches: [ 'main' ] }
+
+jobs:
+  gpu-build:
+    strategy:
+      matrix:
+        sycl: ['acpp', 'intel-llvm']
+        hw: ['a100', 'mi250']
+    runs-on: ubuntu-latest
+    steps:
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@v1.2.0
+        with: { tool-cache: true, large-packages: false }
+      - name: Checkout built branch
+        uses: actions/checkout@v3
+      - name: Compile for GPUs
+        run: |
+          echo ${{ secrets.GH_ACCESS_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          cd docker 
+          docker build . -t test-container
+          export COMMAND="cd /parallel-advection && ./compile --hw ${{matrix.hw}} --sycl ${{matrix.sycl}}"
+          docker exec test-container $COMMAND
+          
+  cpu-build-and-test:
+    strategy:
+      matrix:
+        sycl: ['acpp', 'intel-llvm']
+    steps:
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@v1.2.0
+        with: { tool-cache: true, large-packages: false }
+      - name: Checkout built branch
+        uses: actions/checkout@v3
+      - name: Compile for CPU and run tests
+        run: |
+          echo ${{ secrets.GH_ACCESS_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          cd docker 
+          docker build . -t test-container
+          export COMMAND="cd /parallel-advection && ./compile --hw x86_64 --sycl ${{matrix.sycl}} --tests && cd build_${{ matrix.sycl}}_x86_64 && ctest --output-on-failure"
+          docker exec test-container $COMMAND

@@ -1,5 +1,8 @@
-FROM ghcr.io/maison-de-la-simulation/sycl-complete
+FROM ghcr.io/maison-de-la-simulation/sycl-complete:latest
 
-#TODO: compile the code
-#TODO: run the tests
-RUN sycl-ls
+WORKDIR /
+
+RUN git clone https://github.com/Maison-de-la-Simulation/parallel-advection.git -b 3d \
+&& cd parallel-advection
+
+WORKDIR /parallel-advection
