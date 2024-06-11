@@ -1,6 +1,6 @@
 # Parallel Advection
 
-This code implements a 1D advection operator inside a multidimensionnal space. It implements a [semi-Lagrangian scheme](https://en.wikipedia.org/wiki/Semi-Lagrangian_scheme) using C++ parallel progamming models (SYCL, Kokkos).
+This code implements a 1D advection operator inside a multidimensionnal space. It implements a [semi-Lagrangian scheme](https://en.wikipedia.org/wiki/Semi-Lagrangian_scheme) using the [SYCL 2020](https://registry.khronos.org/SYCL/specs/sycl-2020/html/sycl-2020.html) progamming models.
 
 ## General algorithm
 For one time step, this is the algorithm's structure:
@@ -8,32 +8,18 @@ For one time step, this is the algorithm's structure:
 ![Advection process](docs/fig/AdvectionProcess.png)
 
 ### SYCL Implementations
-**Tools:**
-- `local_accessor`: to allocate shared memory between work items of a same work group
-- groups barriers on work groups
-- simple mapping between physical and logical iteration space
-
-Impls (folder `sycl/src/core/.../impl`):
-- Basic Range
-  - 1D
-  - 2D
+Impls (folder `src/core/impl`):
+- Basic Range2D
+- Basic Range1D
 - ND-Range
 - Hierarchical
 - Scoped
 
-### Kokkos Implementations
-**Tools:**
-- `ScratchSpace` memory
-- Barriers
-
-Implementations (folder `kokkos/src/core/.../impl`):
-- MDRange
-- TeamPolicy
-
-
 # Build the project (see instructions on branches):
 You can use the `compile.sh` script to compile for various hardware and sycl-implementations. Try `compile.sh --help` to see available options.
 
+## Manually build the project
+Depends on the SYCL implementation you are using. For DPC++, add the correct flags via the `-DDPCPP_FSYCL_TARGETS` cmake variable.
 ```sh
 mkdir build
 cd build
