@@ -47,20 +47,21 @@ make
 ```ini
 [run]
 # Total number of iterations
-maxIter = 200
-# Wheter to run on the GPU or CPU #only for SYCL
+maxIter = 100
+# Wheter to run on the GPU or CPU
 gpu     = true
-# The kernel type to use for Xadvection
-kernelImpl  = Hierarchical  
+# The kernel type to use for advection
+kernelImpl  = Hierarchical
 # Size of work groups use in the kernels
-workGroupSize = 32
+workGroupSizeX = 128
+workGroupSizeB = 1
 # Outputs a solution.log file to be read with the python notebook
 outputSolution = false
 
 [geometry]
-nx  = 1024 # nb of spatial points
-nvx = 2 # nb of speed points
-n_fict_dim = 1  # nb of points in the fictive dimension
+nb = 512   # nb of speed points (batch dimension)
+nx = 1024 # nb of spatial points (dimension of interest)
+ns = 2 # fictive dimension, is also stride for x-dim
 
 [discretization]
 dt  = 0.001
