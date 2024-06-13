@@ -1,5 +1,4 @@
 # Benchmark scripts
-Submit a script to the scheduler executing advection program N times and stores the results in a csv file.
 
 ## How to: Singularity benchmarks `launch_benchmarks.sh`
 1. Update the `launch_benchmarks.sh` script with:
