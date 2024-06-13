@@ -56,11 +56,11 @@ TEST(Validation, ValidateEachIterFor10Iterations){
 
         err = validate_result(Q, buff_fdistrib, params, false);
         Q.wait();
-        EXPECT_NEAR(err, 0, 1e-6);
+        EXPECT_NEAR(err, 0, EPS);
     }
 
     err = validate_result(Q, buff_fdistrib, params, false);
-    EXPECT_NEAR(err, 0, 1e-6);
+    EXPECT_NEAR(err, 0, EPS);
 }
 
 // =============================================================================
@@ -87,5 +87,5 @@ TEST(Validation, ValidateNIterations){
     auto err = validate_result(Q, buff_fdistrib, params, false);
     Q.wait();
 
-    EXPECT_NEAR(err, 0, 1e-6);
+    EXPECT_NEAR(err, 0, EPS);
 }

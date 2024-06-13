@@ -5,7 +5,7 @@
 #include <init.h>
 #include <sycl/sycl.hpp>
 
-static constexpr auto EPS = 1e-6;
+static constexpr double EPS = 1e-6;
 
 // =============================================================================
 TEST(Impl, BasicRange) {
