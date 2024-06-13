@@ -6,6 +6,7 @@
 HARDWARE=""
 SYCL_IMPL=""
 BENCHMARK_DIR=""
+RUN_TESTS=false
 
 ONEAPI_COMPILER="icpx"
 INTELLLVM_COMPILER="clang++"
@@ -16,7 +17,7 @@ CMAKE_OPTIONS+=" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
 usage() {
     echo "Simple compilation script. Automatically builds the project for a combination (hw, sycl)."
     echo "For multiple devices compilation flows, please compile manually."
-    echo "Usage: $0 [--hw <mi250|a100|x86_64>] [--sycl <intel-llvm|acpp|oneapi>] [--benchmark_BUILD_DIR=<directory>] [--tests]"
+    echo "Usage: $0 [--hw <mi250|a100|x86_64>] [--sycl <intel-llvm|acpp|oneapi>] [--benchmark_BUILD_DIR=<directory>] [--build-tests] [--run-tests]"
     echo "Compilers must be present in PATH:"
     echo "           intel-llvm : ${INTELLLVM_COMPILER}"
     echo "           acpp       : ${ACPP_COMPILER}"
@@ -27,7 +28,7 @@ usage() {
 # =================================================
 # Argument parsing
 # =================================================
-TESTS=false  # Initialize the boolean variable
+BUILD_TESTS=false  # Initialize the boolean variable
 
 while [ "$#" -gt 0 ]; do
     case $1 in
@@ -43,9 +44,13 @@ while [ "$#" -gt 0 ]; do
             BENCHMARK_DIR="${1#*=}"
             shift 1  # Remove --benchmark_BUILD_DIR=path from the list
             ;;
-        --tests)
-            TESTS=true
-            shift 1  # Remove --tests from the list
+        --build-tests)
+            BUILD_TESTS=true
+            shift 1  # Remove --build-tests from the list
+            ;;
+        --run-tests)
+            RUN_TESTS=true
+            shift 1  # Remove --run-tests from the list
             ;;
         *)
             usage  # Handle unknown options
@@ -56,6 +61,11 @@ done
 
 if [ -z "$HARDWARE" ] || [ -z "$SYCL_IMPL" ]; then
     echo "Error: Both --hw and --sycl options are required."
+    usage
+fi
+
+if $RUN_TESTS && ! $BUILD_TESTS; then
+    echo "Error: --run-tests option requires --build-tests option to be set."
     usage
 fi
 
@@ -126,7 +136,7 @@ if [ -n "$BENCHMARK_DIR" ]; then
 fi
 
 # Add tests compilation if specified
-if $TESTS; then
+if $BUILD_TESTS; then
     CMAKE_OPTIONS+=" -DADVECTION_BUILD_TESTS=ON"
 fi
 
@@ -173,3 +183,14 @@ fi
 
 echo "### Build complete in `pwd`."
 echo ""
+
+# =================================================
+# Run tests if specified
+# =================================================
+if $RUN_TESTS; then
+    echo "### Running tests..."
+    cd $BUILD_DIR
+    ctest --output-on-failure
+    echo "### Tests complete."
+    echo ""
+fi
