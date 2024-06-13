@@ -50,4 +50,4 @@ plot_values(a100_acpp, "A100 GPU ACPP", do_show=true) #plot the values and show
 ```
 
 # Known issues
-- With AdaptiveCpp on the MI250X, we must `export ACPP_PERSISTENT_RUNTIME=1` variable because it causes bugs with the google benchmark framework.
+- With AdaptiveCpp on the MI250X, export the `ACPP_PERSISTENT_RUNTIME=1` variable because it causes crash with google benchmark framework.
