@@ -1,7 +1,7 @@
 name: GPU build and CPU build+tests
 
 on:
-  push: { branches: [ 'main' ] }
+  push: { branches: [ '3d' ] }
 
 jobs:
   gpu-build:
