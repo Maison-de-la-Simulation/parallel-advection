@@ -39,4 +39,4 @@ jobs:
           echo ${{ secrets.GH_ACCESS_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           cd docker 
           docker build . -t ci-container
-          docker run ci-container ./compile.sh --hw x86_64 --sycl ${{matrix.sycl}} --tests && cd build_${{ matrix.sycl}}_x86_64 && ctest --output-on-failure
+          docker run ci-container ./compile.sh --hw x86_64 --sycl ${{matrix.sycl}} --tests && cd /parallel-advection/build_${{ matrix.sycl}}_x86_64 && ctest --output-on-failure

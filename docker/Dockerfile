@@ -1,4 +1,4 @@
-FROM ghcr.io/maison-de-la-simulation/sycl-complete:latest
+FROM ghcr.io/maison-de-la-simulation/sycl-complete:llvm-16
 
 WORKDIR /
 
