@@ -2,10 +2,7 @@ add_library(tools)
 
 target_sources(tools
   PRIVATE
-  unique_ref.h
-  init.h
   init.cpp
-  validation.h
   validation.cpp)
 
 if(SYCL_IS_ACPP)
