@@ -28,6 +28,7 @@ jobs:
     strategy:
       matrix:
         sycl: ['acpp', 'intel-llvm']
+    runs-on: ubuntu-latest
     steps:
       - name: Free Disk Space (Ubuntu)
         uses: jlumbroso/free-disk-space@v1.2.0
