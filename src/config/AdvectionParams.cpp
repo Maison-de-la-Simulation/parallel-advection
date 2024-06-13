@@ -11,7 +11,33 @@ ADVParams::ADVParams(ADVParamsNonCopyable &other){
   outputSolution = other.outputSolution;
 
   wg_size_x = other.wg_size_x;
-  wg_size_y = other.wg_size_y;
+  wg_size_b = other.wg_size_b;
+
+  dt = other.dt;
+
+  minRealX   = other.minRealX;
+  maxRealX   = other.maxRealX;
+  minRealVx  = other.minRealVx;
+  maxRealVx  = other.maxRealVx;
+
+  realWidthX = other.realWidthX;
+  dx         = other.dx        ;
+  dvx        = other.dvx       ;
+
+  inv_dx     = other.inv_dx;
+};
+
+ADVParamsNonCopyable::ADVParamsNonCopyable(ADVParams &other){
+  nx = other.nx;
+  nb = other.nb;
+  ns = other.ns;
+
+  maxIter = other.maxIter;
+  gpu = other.gpu;
+  outputSolution = other.outputSolution;
+
+  wg_size_x = other.wg_size_x;
+  wg_size_b = other.wg_size_b;
 
   dt = other.dt;
 
@@ -43,7 +69,7 @@ void ADVParamsNonCopyable::setup(const ConfigMap& configMap)
 
   kernelImpl = configMap.getString("run", "kernelImpl", "BasicRange2D");
   wg_size_x = configMap.getInteger("run", "workGroupSizeX", 128);
-  wg_size_y = configMap.getInteger("run", "workGroupSizeY", 1);
+  wg_size_b = configMap.getInteger("run", "workGroupSizeB", 1);
 
   // discretization parameters
   dt  = configMap.getFloat("discretization", "dt" , 0.0001);
@@ -76,7 +102,7 @@ void ADVParamsNonCopyable::print()
   printf( "##########################\n");
   std::cout << "kernelImpl : " << kernelImpl << std::endl;
   std::cout << "wgSizeX    : " << wg_size_x    << std::endl;
-  std::cout << "wgSizeY    : " << wg_size_y    << std::endl;
+  std::cout << "wgSizeY    : " << wg_size_b    << std::endl;
   printf( "gpu        : %d\n", gpu);
   printf( "maxIter    : %zu\n", maxIter);
   printf( "nb (nvx)   : %zu\n", nb);

@@ -30,7 +30,7 @@ struct ADVParams {
 
   // Sizes of the SYCL work groups
   size_t wg_size_x = 128;
-  size_t wg_size_y = 1;
+  size_t wg_size_b = 1;
 
   // Deltas : taille physique d'une cellule discrète (en x, vx, t)
   double dt  = 0.0001;
@@ -54,6 +54,9 @@ struct ADVParams {
 
 //Need to have this in order to dodge the device trivially copyable SYCL
 struct ADVParamsNonCopyable : ADVParams {
+  ADVParamsNonCopyable(ADVParams &other);
+  ADVParamsNonCopyable() = default;
+
   //The implementation of the kernel, correspond to core/impl cpp files
   std::string kernelImpl;
 

@@ -13,18 +13,18 @@ AdvX::SeqTwoDimWG::operator()(sycl::queue &Q,
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    auto const wg_size_y = params.wg_size_y;
+    auto const wg_size_b = params.wg_size_b;
     auto const wg_size_x = params.wg_size_x;
 
-    if(nb%wg_size_y != 0){
-        throw std::invalid_argument("nb must be divisible by wg_size_y");
+    if(nb%wg_size_b != 0){
+        throw std::invalid_argument("nb must be divisible by wg_size_b");
     }
-    if(wg_size_y * nx > 6144){
-        throw std::invalid_argument("wg_size_y*nx must be < to 6144 (shared memory limit)");
+    if(wg_size_b * nx > 6144){
+        throw std::invalid_argument("wg_size_b*nx must be < to 6144 (shared memory limit)");
     }
 
-    const sycl::range nb_wg{nb/wg_size_y, 1, ns};
-    const sycl::range wg_size{wg_size_y, params.wg_size_x, 1};
+    const sycl::range nb_wg{nb/wg_size_b, 1, ns};
+    const sycl::range wg_size{wg_size_b, params.wg_size_x, 1};
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
@@ -32,17 +32,17 @@ AdvX::SeqTwoDimWG::operator()(sycl::queue &Q,
 
         /* We use a 2D local accessor here */
         sycl::local_accessor<double, 2> slice_ftmp(
-            sycl::range<2>(wg_size_y, nx), cgh);
+            sycl::range<2>(wg_size_b, nx), cgh);
 
         cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<3> g) {
 
-            g.parallel_for_work_item(sycl::range{wg_size_y, nx, 1},
+            g.parallel_for_work_item(sycl::range{wg_size_b, nx, 1},
                                      [&](sycl::h_item<3> it) {
                                          const int ix = it.get_local_id(1);
                                          const int iz = g.get_group_id(2);
 
                                          const int local_nb = it.get_local_id(0);
-                                         const int ivx = wg_size_y * g.get_group_id(0) + local_nb;
+                                         const int ivx = wg_size_b * g.get_group_id(0) + local_nb;
 
                                          slice_ftmp[local_nb][ix] = fdist[ivx][ix][iz];
                                      });
@@ -55,10 +55,10 @@ AdvX::SeqTwoDimWG::operator()(sycl::queue &Q,
 
                     // int local_ivx = it.get_global_id(0);
                     // get_local_id(0);
-                    // const int ivx = wg_size_y * g.get_group_id(0);
+                    // const int ivx = wg_size_b * g.get_group_id(0);
 
-                    for (int iivx=0; iivx<wg_size_y; iivx++) {
-                        const int ivx = wg_size_y * g.get_group_id(0) + iivx;
+                    for (int iivx=0; iivx<wg_size_b; iivx++) {
+                        const int ivx = wg_size_b * g.get_group_id(0) + iivx;
 
                         double const xFootCoord = displ(ix, ivx, params);
 
