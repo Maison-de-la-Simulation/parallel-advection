@@ -19,17 +19,19 @@ enum AdvImpl : int {
 };
 
 using bm_vec_t = std::vector<int64_t>;
-static bm_vec_t NB_RANGE = benchmark::CreateRange(2 << 5, 2 << 20, 2);
-static bm_vec_t NB_SMALL_RANGE = {16384, 32768, 65536};
-static bm_vec_t NS_RANGE = {1, 2, 4, 8, 16, 32, 64, 128, 256};
+static bm_vec_t NB_LARGE_RANGE = benchmark::CreateRange(2 << 5, 2 << 20, 2);
+static bm_vec_t NB_RANGE = {16384, 32768, 65535};
+static bm_vec_t NS_RANGE = {1, 2, 4, 8, 16, 32, 64};
 static int64_t  NX = 1024;
 
 static bm_vec_t WG_SIZES_X_RANGE = {1, 4, 8, 64, 128, 256, 512, 1024};
 
-static bm_vec_t IMPL_RANGE = {AdvImpl::BR3D, AdvImpl::HIER, AdvImpl::NDRA,
-                              AdvImpl::SCOP, AdvImpl::STREAMY, AdvImpl::STRAD,
-                              AdvImpl::REVIDX, AdvImpl::TWODIMWG, 
-                              AdvImpl::SEQ_TWODIMWG};
+static bm_vec_t IMPL_RANGE = {
+    // AdvImpl::BR3D,
+    AdvImpl::HIER, AdvImpl::NDRA,
+    AdvImpl::SCOP, AdvImpl::STREAMY, AdvImpl::STRAD,
+    AdvImpl::REVIDX, AdvImpl::TWODIMWG, 
+    AdvImpl::SEQ_TWODIMWG};
 
 // static bm_vec_t IMPL_RANGE_NO_SCOPED = {
 //                               AdvImpl::BR3D, AdvImpl::HIER, AdvImpl::NDRA,
