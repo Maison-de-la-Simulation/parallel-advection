@@ -7,11 +7,15 @@
 #include <benchmark/benchmark.h>
 
 enum AdvImpl : int {
-    BR2D,   // 0
-    BR1D,   // 1
-    HIER,   // 2
-    NDRA,   // 3
-    SCOP    // 4
+    BR3D,        // 0
+    HIER,        // 1
+    NDRA,        // 2
+    SCOP,        // 3
+    STREAMY,     // 4
+    STRAD,       // 5
+    REVIDX,      // 6
+    TWODIMWG,    // 7
+    SEQ_TWODIMWG // 8
 };
 
 using bm_vec_t = std::vector<int64_t>;
@@ -22,10 +26,15 @@ static int64_t  NX = 1024;
 
 static bm_vec_t WG_SIZES_X_RANGE = {1, 4, 8, 64, 128, 256, 512, 1024};
 
-static bm_vec_t IMPL_RANGE = {AdvImpl::BR2D, AdvImpl::BR1D, AdvImpl::HIER,
-                              AdvImpl::NDRA, AdvImpl::SCOP};
-static bm_vec_t IMPL_NO_SCOPED_RANGE = {AdvImpl::BR2D, AdvImpl::BR1D,
-                                        AdvImpl::HIER, AdvImpl::NDRA};
+static bm_vec_t IMPL_RANGE = {AdvImpl::BR3D, AdvImpl::HIER, AdvImpl::NDRA,
+                              AdvImpl::SCOP, AdvImpl::STREAMY, AdvImpl::STRAD,
+                              AdvImpl::REVIDX, AdvImpl::TWODIMWG, 
+                              AdvImpl::SEQ_TWODIMWG};
+
+// static bm_vec_t IMPL_RANGE_NO_SCOPED = {
+//                               AdvImpl::BR3D, AdvImpl::HIER, AdvImpl::NDRA,
+//                               AdvImpl::STREAMY, AdvImpl::STRAD, AdvImpl::REVIDX,
+//                               AdvImpl::TWODIMWG, AdvImpl::SEQ_TWODIMWG};
 
 // =============================================
 // =============================================
@@ -86,11 +95,8 @@ advectorFactory(const AdvImpl kernel_id,
     // params.ns = ns;
 
     switch (kernel_id) {
-    case AdvImpl::BR2D:
-        params.kernelImpl = "BasicRange2D";
-        break;
-    case AdvImpl::BR1D:
-        params.kernelImpl = "BasicRange1D";
+    case AdvImpl::BR3D:
+        params.kernelImpl = "BasicRange";
         break;
     case AdvImpl::HIER:
         params.kernelImpl = "Hierarchical";
@@ -101,7 +107,21 @@ advectorFactory(const AdvImpl kernel_id,
     case AdvImpl::SCOP:
         params.kernelImpl = "Scoped";
         break;
-
+    case AdvImpl::STREAMY:
+        params.kernelImpl = "StreamY";
+        break;
+    case AdvImpl::STRAD:
+        params.kernelImpl = "StraddledMalloc";
+        break;
+    case AdvImpl::REVIDX:
+        params.kernelImpl = "ReverseIndexes";
+        break;
+    case AdvImpl::TWODIMWG:
+        params.kernelImpl = "TwoDimWG";
+        break;
+    case AdvImpl::SEQ_TWODIMWG:
+        params.kernelImpl = "SeqTwoDimWG";
+        break;
     default:
         auto str = "Error: wrong kernel_id.\n";
         throw std::runtime_error(str);
