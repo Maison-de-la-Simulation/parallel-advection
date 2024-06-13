@@ -16,7 +16,7 @@ CMAKE_OPTIONS+=" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
 usage() {
     echo "Simple compilation script. Automatically builds the project for a combination (hw, sycl)."
     echo "For multiple devices compilation flows, please compile manually."
-    echo "Usage: $0 [--hw <mi250|a100|x86_64>] [--sycl <intel-llvm|acpp|oneapi>] [--benchmark_DIR=<directory>] [--tests]"
+    echo "Usage: $0 [--hw <mi250|a100|x86_64>] [--sycl <intel-llvm|acpp|oneapi>] [--benchmark_BUILD_DIR=<directory>] [--tests]"
     echo "Compilers must be present in PATH:"
     echo "           intel-llvm : ${INTELLLVM_COMPILER}"
     echo "           acpp       : ${ACPP_COMPILER}"
@@ -24,9 +24,6 @@ usage() {
     exit 1
 }
 
-# =================================================
-# Argument parsing
-# =================================================
 # =================================================
 # Argument parsing
 # =================================================
@@ -42,9 +39,9 @@ while [ "$#" -gt 0 ]; do
             SYCL_IMPL="$2"
             shift 2  # Remove --sycl and its argument from the list
             ;;
-        --benchmark_DIR=*)
+        --benchmark_BUILD_DIR=*)
             BENCHMARK_DIR="${1#*=}"
-            shift 1  # Remove --benchmark_DIR=path from the list
+            shift 1  # Remove --benchmark_BUILD_DIR=path from the list
             ;;
         --tests)
             TESTS=true
@@ -123,8 +120,9 @@ else
 fi
 
 # Add benchmark directory option if specified
-if [ -n "$BENCHMARK_DIR" ]; then
-    CMAKE_OPTIONS+=" -Dbenchmark_DIR=${BENCHMARK_DIR}"
+if [ -n "$BENCHMARK_DIR" ]; then 
+    CMAKE_OPTIONS+=" -DCMAKE_PREFIX_PATH=${BENCHMARK_DIR}" 
+    CMAKE_OPTIONS+=" -DADVECTION_BUILD_BENCHMARKS=ON" 
 fi
 
 # Add tests compilation if specified
