@@ -189,7 +189,6 @@ echo ""
 # =================================================
 if $RUN_TESTS; then
     echo "### Running tests..."
-    cd $BUILD_DIR
     ctest --output-on-failure
     echo "### Tests complete."
     echo ""
