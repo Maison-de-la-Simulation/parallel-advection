@@ -5,8 +5,8 @@ AdvX::Sequential::operator()([[maybe_unused]] sycl::queue &Q,
                              sycl::buffer<double, 3> &buff_fdistrib,
                              const ADVParams &params) {
     auto const nx = params.nx;
-    auto const nvx = params.nvx;
-    auto const nz = params.nz;
+    auto const nb = params.nb;
+    auto const ns = params.ns;
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
@@ -14,8 +14,8 @@ AdvX::Sequential::operator()([[maybe_unused]] sycl::queue &Q,
     std::vector<double> slice_ftmp(nx);
     sycl::host_accessor fdist(buff_fdistrib, sycl::read_write);
 
-    for (auto iz = 0; iz < nz; ++iz) {
-        for (auto iv = 0; iv < nvx; ++iv) {
+    for (auto iz = 0; iz < ns; ++iz) {
+        for (auto iv = 0; iv < nb; ++iv) {
 
             for (int iix = 0; iix < nx; ++iix) {
                 // slice_x[iix] = fdist[iix][iv];
@@ -41,14 +41,14 @@ AdvX::Sequential::operator()([[maybe_unused]] sycl::queue &Q,
                 for (auto k = 0; k <= LAG_ORDER; k++) {
                     int idx_ipos1 = (nx + ipos1 + k) % nx;
                     // ftmp += coef[k] * slice_x[idx_ipos1];
-                    slice_ftmp[ix] += coef[k] * fdist[idx_ipos1][iv][nz];
+                    slice_ftmp[ix] += coef[k] * fdist[idx_ipos1][iv][ns];
                 }
 
                 // fdist[ix][iv] = ftmp;
             }   // end for X
 
             for (int iix = 0; iix < nx; ++iix) {
-                fdist[iix][iv][nz] = slice_ftmp[iix];
+                fdist[iix][iv][ns] = slice_ftmp[iix];
             }
 
         }   // end for Vx

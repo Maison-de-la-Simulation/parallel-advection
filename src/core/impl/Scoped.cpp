@@ -4,13 +4,13 @@ sycl::event
 AdvX::Scoped::operator()(sycl::queue &Q,sycl::buffer<double, 3> &buff_fdistrib,
                          const ADVParams &params) {
     auto const nx = params.nx;
-    auto const nvx = params.nvx;
-    auto const nz = params.nz;
+    auto const nb = params.nb;
+    auto const ns = params.ns;
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    const sycl::range nb_wg{nvx, 1, nz};
+    const sycl::range nb_wg{nb, 1, ns};
     const sycl::range wg_size{1, nx, 1};
 
     return Q.submit([&](sycl::handler &cgh) {
@@ -54,10 +54,10 @@ throw std::logic_error("Scoped kernel is not compatible with DPCPP");
 
                 g.async_work_group_copy(
                     fdist.get_pointer() + g.get_group_id(2) +
-                        g.get_group_id(0) * nz * nx,   // dest
+                        g.get_group_id(0) * ns * nx,   // dest
                     slice_ftmp.get_pointer(),          // source
                     nx,                                /* n elems */
-                    nz                                 /* stride */
+                    ns                                 /* stride */
                 );
 
                 // sycl::distribute_items_and_wait(g, [&](auto it) {

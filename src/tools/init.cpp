@@ -25,9 +25,9 @@ kernel_impl_factory(const ADVParamsNonCopyable &params) {
     case str2int("Sequential"):
         return sref::make_unique<AdvX::Sequential>();
     case str2int("BasicRange"):
-        return sref::make_unique<AdvX::BasicRange>(params.nx, params.nvx, params.nz);
+        return sref::make_unique<AdvX::BasicRange>(params.nx, params.nb, params.ns);
     // case str2int("BasicRange1D"):
-        // return sref::make_unique<AdvX::BasicRange1D>(params.nx, params.nvx);
+        // return sref::make_unique<AdvX::BasicRange1D>(params.nx, params.nb);
     case str2int("Hierarchical"):
         return sref::make_unique<AdvX::Hierarchical>();
     // case str2int("HierarchicalAlloca"):

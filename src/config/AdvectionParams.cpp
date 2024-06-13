@@ -3,8 +3,8 @@
 
 ADVParams::ADVParams(ADVParamsNonCopyable &other){
   nx = other.nx;
-  nvx = other.nvx;
-  nz = other.nz;
+  nb = other.nb;
+  ns = other.ns;
 
   maxIter = other.maxIter;
   gpu = other.gpu;
@@ -33,8 +33,8 @@ void ADVParamsNonCopyable::setup(const ConfigMap& configMap)
 {
   // geometry
   nx  = configMap.getInteger("geometry", "nx",  1024);
-  nvx = configMap.getInteger("geometry", "nvx", 64);
-  nz = configMap.getInteger("geometry", "nz", 32);
+  nb = configMap.getInteger("geometry", "nb", 64);
+  ns = configMap.getInteger("geometry", "ns", 32);
 
   // run parameters
   maxIter = configMap.getInteger("run", "maxIter", 1000);
@@ -54,11 +54,6 @@ void ADVParamsNonCopyable::setup(const ConfigMap& configMap)
   maxRealVx= configMap.getFloat("discretization", "maxRealVx", 1.0);
 
   update_deltas();
-  // realWidthX = maxRealX - minRealX;
-  // dx = realWidthX / nx;
-  // dvx = (maxRealVx - minRealVx) / nvx;
-
-  // inv_dx     = 1/dx;
 } // ADVParams::setup
 
 // ======================================================
@@ -67,7 +62,7 @@ void ADVParams::update_deltas()
 {
   realWidthX = maxRealX - minRealX;
   dx = realWidthX / nx;
-  dvx = (maxRealVx - minRealVx) / nvx;
+  dvx = (maxRealVx - minRealVx) / nb;
 
   inv_dx     = 1/dx;
 } // ADVParams::setup
@@ -84,9 +79,9 @@ void ADVParamsNonCopyable::print()
   std::cout << "wgSizeY    : " << wg_size_y    << std::endl;
   printf( "gpu        : %d\n", gpu);
   printf( "maxIter    : %zu\n", maxIter);
-  printf( "nvx        : %zu\n", nvx);
+  printf( "nb (nvx)   : %zu\n", nb);
   printf( "nx         : %zu\n", nx);
-  printf( "nz         : %zu\n", nz);
+  printf( "ns         : %zu\n", ns);
   printf( "dt         : %f\n", dt);
   printf( "dx         : %f\n", dx);
   printf( "dvx        : %f\n", dvx);

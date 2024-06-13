@@ -7,8 +7,8 @@ AdvX::SeqTwoDimWG::operator()(sycl::queue &Q,
                               const ADVParams &params) {
 
     auto const nx = params.nx;
-    auto const nvx = params.nvx;
-    auto const nz = params.nz;
+    auto const nb = params.nb;
+    auto const ns = params.ns;
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
@@ -16,14 +16,14 @@ AdvX::SeqTwoDimWG::operator()(sycl::queue &Q,
     auto const wg_size_y = params.wg_size_y;
     auto const wg_size_x = params.wg_size_x;
 
-    if(nvx%wg_size_y != 0){
-        throw std::invalid_argument("nvx must be divisible by wg_size_y");
+    if(nb%wg_size_y != 0){
+        throw std::invalid_argument("nb must be divisible by wg_size_y");
     }
     if(wg_size_y * nx > 6144){
         throw std::invalid_argument("wg_size_y*nx must be < to 6144 (shared memory limit)");
     }
 
-    const sycl::range nb_wg{nvx/wg_size_y, 1, nz};
+    const sycl::range nb_wg{nb/wg_size_y, 1, ns};
     const sycl::range wg_size{wg_size_y, params.wg_size_x, 1};
 
     return Q.submit([&](sycl::handler &cgh) {
@@ -41,10 +41,10 @@ AdvX::SeqTwoDimWG::operator()(sycl::queue &Q,
                                          const int ix = it.get_local_id(1);
                                          const int iz = g.get_group_id(2);
 
-                                         const int local_nvx = it.get_local_id(0);
-                                         const int ivx = wg_size_y * g.get_group_id(0) + local_nvx;
+                                         const int local_nb = it.get_local_id(0);
+                                         const int ivx = wg_size_y * g.get_group_id(0) + local_nb;
 
-                                         slice_ftmp[local_nvx][ix] = fdist[ivx][ix][iz];
+                                         slice_ftmp[local_nb][ix] = fdist[ivx][ix][iz];
                                      });
 
 
@@ -88,10 +88,10 @@ AdvX::SeqTwoDimWG::operator()(sycl::queue &Q,
 
             // g.async_work_group_copy(fdist.get_pointer()
             //                             + g.get_group_id(2)
-            //                             + g.get_group_id(0) *nz*nx, /* dest */
+            //                             + g.get_group_id(0) *ns*nx, /* dest */
             //                         slice_ftmp.get_pointer(), /* source */
             //                         nx*slice_size_dim_y, /* n elems */
-            //                         nz  /* stride */
+            //                         ns  /* stride */
             // );
         });   // end parallel_for_work_group
     });       // end Q.submit

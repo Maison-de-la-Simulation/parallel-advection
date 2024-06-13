@@ -22,10 +22,11 @@ struct ADVParams {
   // Number of iterations
   size_t maxIter = 100;
 
-  // Number of points for positions (x) velocities (vx) and fictive dim (z)
-  size_t nx  = 1024;
-  size_t nvx = 32;
-  size_t nz  = 32;
+  // Number of points for
+  size_t nx = 1024; //dimension of interest
+  size_t nb = 32;    //batch dimension (corresponds to velocities Vx)
+  size_t ns = 32;   //stride for x, is also a batch dimension
+  //We get ns*nb independent problems of size nx, and x has a stride of ns
 
   // Sizes of the SYCL work groups
   size_t wg_size_x = 128;

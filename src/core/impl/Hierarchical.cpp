@@ -5,13 +5,13 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
                                sycl::buffer<double, 3> &buff_fdistrib,
                                const ADVParams &params) {
     auto const nx = params.nx;
-    auto const nvx = params.nvx;
-    auto const nz = params.nz;
+    auto const nb = params.nb;
+    auto const ns = params.ns;
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    const sycl::range nb_wg{nvx, 1, nz};
+    const sycl::range nb_wg{nb, 1, ns};
     const sycl::range wg_size{1, params.wg_size_x, 1};
 
     return Q.submit([&](sycl::handler &cgh) {
@@ -61,10 +61,10 @@ AdvX::Hierarchical::operator()(sycl::queue &Q,
 #else
             g.async_work_group_copy(fdist.get_pointer()
                                         + g.get_group_id(2)
-                                        + g.get_group_id(0) *nz*nx, /* dest */
+                                        + g.get_group_id(0) *ns*nx, /* dest */
                                     slice_ftmp.get_pointer(), /* source */
                                     nx, /* n elems */
-                                    nz  /* stride */
+                                    ns  /* stride */
             );
 #endif
         });   // end parallel_for_work_group

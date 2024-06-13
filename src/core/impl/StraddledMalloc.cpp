@@ -4,7 +4,7 @@
 constexpr size_t MAX_NX_ALLOC = 6144; //A100
 
 // AdvX::StraddledMalloc::StraddledMalloc(const ADVParams &params){
-//     auto n_batch = std::ceil(params.nvx / MAX_NVX); //should be in
+//     auto n_batch = std::ceil(params.nb / MAX_nb); //should be in
 //     constructor
 
 // }
@@ -17,17 +17,17 @@ AdvX::StraddledMalloc::adv_opt3(sycl::queue &Q,
                             const ADVParams &params,
                             const size_t &nx_rest_to_malloc) {
     auto const nx = params.nx;
-    auto const nvx = params.nvx;
-    auto const nz = params.nz;
+    auto const nb = params.nb;
+    auto const ns = params.ns;
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    const sycl::range nb_wg{nvx, 1, nz};
+    const sycl::range nb_wg{nb, 1, ns};
     const sycl::range wg_size{1, params.wg_size_x, 1};
 
     //TODO we don't want this, we want to allocate a 1D slice for each problem in parallel, containing only the rest of NX slice in 1D
-    sycl::buffer<double, 3> buff_rest_nx(sycl::range<3>{nvx, nx_rest_to_malloc, nz}, sycl::no_init);
+    sycl::buffer<double, 3> buff_rest_nx(sycl::range<3>{nb, nx_rest_to_malloc, ns}, sycl::no_init);
 
     return Q.submit([&](sycl::handler &cgh) {
 
@@ -104,8 +104,8 @@ AdvX::StraddledMalloc::operator()(sycl::queue &Q,
                             sycl::buffer<double, 3> &buff_fdistrib,
                             const ADVParams &params) {
     auto const nx = params.nx;
-    auto const nvx = params.nvx;
-    auto const nz = params.nz;
+    auto const nb = params.nb;
+    auto const ns = params.ns;
 
     //On A100 it breaks if we allocate more than 48 KiB per block, which is 6144 double
     //On MI250x it breaks if we allocate more than 64KiB per wg, which is 8192 double

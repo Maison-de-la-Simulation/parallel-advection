@@ -20,8 +20,8 @@ class BasicRange : public IAdvectorX {
     sycl::buffer<double, 3> m_global_buff_ftmp;
 
   public:
-    BasicRange(const size_t nx, const size_t nvx, const size_t nz)
-        : m_global_buff_ftmp{sycl::range<3>(nvx, nx, nz)} {}
+    BasicRange(const size_t nx, const size_t nvx, const size_t ns)
+        : m_global_buff_ftmp{sycl::range<3>(nvx, nx, ns)} {}
 
     sycl::event operator()(sycl::queue &Q,
                            sycl::buffer<double, 3> &buff_fdistrib,
@@ -34,8 +34,8 @@ class BasicRange : public IAdvectorX {
 //                            sycl::buffer<double, 3> &buff_fdistrib,
 //                            const ADVParams &params) override;
 
-//     explicit BasicRange2D(const size_t nx, const size_t nvx, const size_t nz)
-//         : BasicRange(nx, nvx, nz){};
+//     explicit BasicRange2D(const size_t nx, const size_t nvx, const size_t ns)
+//         : BasicRange(nx, nvx, ns){};
 // };
 
 // class BasicRange1D : public BasicRange {
@@ -44,8 +44,8 @@ class BasicRange : public IAdvectorX {
 //                            sycl::buffer<double, 3> &buff_fdistrib,
 //                            const ADVParams &params) override;
 
-//     explicit BasicRange1D(const size_t nx, const size_t nvx, const size_t nz)
-//         : BasicRange(nx, nvx, nz){};
+//     explicit BasicRange1D(const size_t nx, const size_t nvx, const size_t ns)
+//         : BasicRange(nx, nvx, ns){};
 // };
 
 class Hierarchical : public IAdvectorX {

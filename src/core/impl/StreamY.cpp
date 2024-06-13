@@ -2,7 +2,7 @@
 #include "advectors.h"
 
 // AdvX::StreamY::StreamY(const ADVParams &params){
-//     auto n_batch = std::ceil(params.nvx / MAX_NVX); //should be in
+//     auto n_batch = std::ceil(params.nb / MAX_nb); //should be in
 //     constructor
 
 // }
@@ -13,17 +13,17 @@ sycl::event
 AdvX::StreamY::actual_advection(sycl::queue &Q,
                                 sycl::buffer<double, 3> &buff_fdistrib,
                                 const ADVParams &params,
-                                const size_t &n_nvx,
-                                const size_t &nvx_offset) {
+                                const size_t &n_nb,
+                                const size_t &nb_offset) {
 
     auto const nx = params.nx;
-    auto const nvx = params.nvx;
-    auto const nz = params.nz;
+    auto const nb = params.nb;
+    auto const ns = params.ns;
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    const sycl::range nb_wg{n_nvx, 1, nz};
+    const sycl::range nb_wg{n_nb, 1, ns};
     const sycl::range wg_size{1, params.wg_size_x, 1};
 
     return Q.submit([&](sycl::handler &cgh) {
@@ -36,7 +36,7 @@ AdvX::StreamY::actual_advection(sycl::queue &Q,
             g.parallel_for_work_item(
                 sycl::range{1, nx, 1}, [&](sycl::h_item<3> it) {
                     const int ix = it.get_local_id(1);
-                    const int ivx = g.get_group_id(0) + nvx_offset;
+                    const int ivx = g.get_group_id(0) + nb_offset;
                     const int iz = g.get_group_id(2);
 
                     double const xFootCoord = displ(ix, ivx, params);
@@ -72,10 +72,10 @@ AdvX::StreamY::actual_advection(sycl::queue &Q,
                                      });
 #else
             g.async_work_group_copy(fdist.get_pointer() + g.get_group_id(2) +
-                                        (g.get_group_id(0)+nvx_offset) * nz * nx, /* dest */
+                                        (g.get_group_id(0)+nb_offset) * ns * nx, /* dest */
                                     slice_ftmp.get_pointer(), /* source */
                                     nx,                       /* n elems */
-                                    nz                        /* stride */
+                                    ns                        /* stride */
             );
 #endif
         });   // end parallel_for_work_group
@@ -89,39 +89,39 @@ AdvX::StreamY::operator()(sycl::queue &Q,
                             sycl::buffer<double, 3> &buff_fdistrib,
                             const ADVParams &params) {
     auto const nx = params.nx;
-    auto const nvx = params.nvx;
-    auto const nz = params.nz;
+    auto const nb = params.nb;
+    auto const ns = params.ns;
 
     // IFDEF ACPP_TARGETS=cuda:sm_80 ... ?
 
-    // On A100 it breaks when Nvx (the first dimension) is >= 65536.
-    constexpr size_t MAX_NVX = 65536;
-    if (nvx < MAX_NVX) {
+    // On A100 it breaks when nb (the first dimension) is >= 65536.
+    constexpr size_t MAX_nb = 65536;
+    if (nb < MAX_nb) {
         /* If limit not exceeded we return a classical Hierarchical advector */
         AdvX::Hierarchical adv{};
         return adv(Q, buff_fdistrib, params);
     } else {
-        auto n_batch = std::floor(nvx / MAX_NVX)+1;  // should be in constructor
+        auto n_batch = std::floor(nb / MAX_nb)+1;  // should be in constructor
 
         for (int i_batch = 0; i_batch < n_batch - 1; ++i_batch) {   // can we parallel_for this on multiple GPUs? multiple queues ? or other CUDA streams?
 
-            size_t nvx_offset = (i_batch * MAX_NVX) - i_batch;
+            size_t nb_offset = (i_batch * MAX_nb) - i_batch;
 
             // sycl::buffer sub_buff(buff_fdistrib,
-            //                       sycl::id(nvx_offset, 0, 0) /*offset*/,
-            //                       sycl::range(MAX_NVX - 1, nx, nz) /*range*/);
+            //                       sycl::id(nb_offset, 0, 0) /*offset*/,
+            //                       sycl::range(MAX_nb - 1, nx, ns) /*range*/);
 
-            actual_advection(Q, buff_fdistrib, params, MAX_NVX-1, nvx_offset).wait();
+            actual_advection(Q, buff_fdistrib, params, MAX_nb-1, nb_offset).wait();
         }
 
         // for the last one we take the rest, we add n_batch-1 because we
         // processed MAX_SIZE-1 each batch
-        auto const nvx_size = (nvx % MAX_NVX) + (n_batch - 1);
-        auto const nvx_offset = (MAX_NVX-1)*(n_batch-1);
+        auto const nb_size = (nb % MAX_nb) + (n_batch - 1);
+        auto const nb_offset = (MAX_nb-1)*(n_batch-1);
 
         return actual_advection(
             Q, buff_fdistrib, params,
-            nvx_size,
-            nvx_offset);
+            nb_size,
+            nb_offset);
     }
 }

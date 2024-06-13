@@ -14,8 +14,8 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
     auto const minRealVx = params.minRealVx;
     auto const maxIter = params.maxIter;
 
-    std::vector<double> all_l1_errors(params.nz);
-    for (size_t iz=0; iz < params.nz; iz++) {
+    std::vector<double> all_l1_errors(params.ns);
+    for (size_t iz=0; iz < params.ns; iz++) {
 
         double errorL1 = 0.0;
         {
@@ -53,10 +53,10 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
                                       auto err = sycl::fabs(f - value);
                                       errorl1_reduc += err;
                                   });
-             }).wait_and_throw();
+             });
         }
 
-        all_l1_errors[iz] = errorL1 / (params.nx * params.nvx);
+        all_l1_errors[iz] = errorL1 / (params.nx * params.nb);
     }
 
     auto highest_l1 =

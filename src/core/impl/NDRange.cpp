@@ -5,13 +5,13 @@ AdvX::NDRange::operator()(sycl::queue &Q,
                           sycl::buffer<double, 3> &buff_fdistrib,
                           const ADVParams &params) {
     auto const nx = params.nx;
-    auto const nvx = params.nvx;
-    auto const nz = params.nz;
+    auto const nb = params.nb;
+    auto const ns = params.ns;
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    const sycl::range global_size{nvx, nx, nz};
+    const sycl::range global_size{nb, nx, ns};
     const sycl::range local_size{1, nx, 1};
 
     return Q.submit([&](sycl::handler &cgh) {
