@@ -19,3 +19,4 @@ __pycache__
 LOGS/
 *.ipynb
 .cache
+pp-evolution*.pdf
