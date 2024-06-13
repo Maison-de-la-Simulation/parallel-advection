@@ -22,7 +22,7 @@ jobs:
           cd docker 
           docker build . -t test-container
           export COMMAND="cd /parallel-advection && ./compile --hw ${{matrix.hw}} --sycl ${{matrix.sycl}}"
-          docker exec test-container $COMMAND
+          docker run test-container $COMMAND
           
   cpu-build-and-test:
     strategy:
@@ -41,4 +41,4 @@ jobs:
           cd docker 
           docker build . -t test-container
           export COMMAND="cd /parallel-advection && ./compile --hw x86_64 --sycl ${{matrix.sycl}} --tests && cd build_${{ matrix.sycl}}_x86_64 && ctest --output-on-failure"
-          docker exec test-container $COMMAND
+          docker run test-container $COMMAND
