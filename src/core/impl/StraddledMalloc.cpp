@@ -110,7 +110,7 @@ AdvX::StraddledMalloc::operator()(sycl::queue &Q,
     //On A100 it breaks if we allocate more than 48 KiB per block, which is 6144 double
     //On MI250x it breaks if we allocate more than 64KiB per wg, which is 8192 double
     if (nx <= MAX_NX_ALLOC) {
-        return adv_opt3(Q, buff_fdistrib, params, 0);
+        // return adv_opt3(Q, buff_fdistrib, params, 0);
         AdvX::Hierarchical adv{};
         return adv(Q, buff_fdistrib, params);
     } else {
