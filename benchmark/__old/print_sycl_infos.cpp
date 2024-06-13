@@ -47,7 +47,7 @@ main(int argc, char const *argv[]) {
 
 
     Q.submit([&](sycl::handler &cgh) {
-        sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>(nx), cgh);
+        sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>(1024), cgh);
 
         cgh.single_task([=]() {
             auto max_size = slice_ftmp.max_size();

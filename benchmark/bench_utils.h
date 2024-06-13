@@ -15,10 +15,13 @@ enum AdvImpl : int {
 };
 
 using bm_vec_t = std::vector<int64_t>;
-static bm_vec_t NY_RANGE = benchmark::CreateRange(2 << 5, 2 << 20, 2);
-static bm_vec_t NY_SMALL_RANGE = {16384, 32768, 65536};
-static bm_vec_t WG_SIZES_RANGE = {1, 4, 8, 64, 128, 256, 512, 1024};
+static bm_vec_t NB_RANGE = benchmark::CreateRange(2 << 5, 2 << 20, 2);
+static bm_vec_t NB_SMALL_RANGE = {16384, 32768, 65536};
+static bm_vec_t NS_RANGE = {1, 2, 4, 8, 16, 32, 64, 128, 256};
 static int64_t  NX = 1024;
+
+static bm_vec_t WG_SIZES_X_RANGE = {1, 4, 8, 64, 128, 256, 512, 1024};
+
 static bm_vec_t IMPL_RANGE = {AdvImpl::BR2D, AdvImpl::BR1D, AdvImpl::HIER,
                               AdvImpl::NDRA, AdvImpl::SCOP};
 static bm_vec_t IMPL_NO_SCOPED_RANGE = {AdvImpl::BR2D, AdvImpl::BR1D,
@@ -28,29 +31,29 @@ static bm_vec_t IMPL_NO_SCOPED_RANGE = {AdvImpl::BR2D, AdvImpl::BR1D,
 // =============================================
 [[nodiscard]] inline ADVParams
 createParams(const bool gpu,
+             const size_t &nb,
              const size_t &nx,
-             const size_t &nvx) {
+             const size_t &ns) {
     ADVParams p;
 
     p.outputSolution = false;
-    p.wg_size = 128;
+    p.wg_size_x = 128;
+    p.wg_size_b = 1;
 
-    /* Static physicals p*/
+    /* Static physicals params*/
     p.dt = 0.001;
     p.minRealX = 0;
     p.maxRealX = 1;
     p.minRealVx = -1;
     p.maxRealVx = 1;
-    p.realWidthX = p.maxRealX - p.minRealX;
 
-    /* Dynamic benchmark p*/
+    /* Dynamic benchmark params*/
     p.gpu = gpu;
     p.nx = nx;
-    p.nvx = nvx;
-    p.dx = p.realWidthX / p.nx;
-    p.dvx = (p.maxRealVx - p.minRealVx) / p.nvx;
-    p.inv_dx = 1 / p.dx;
+    p.nb = nb;
+    p.ns = ns;
 
+    p.update_deltas();
     return p;
 }
 
@@ -74,11 +77,13 @@ createSyclQueue(const bool run_on_gpu, benchmark::State &state) {
 // =============================================
 // =============================================
 [[nodiscard]] sref::unique_ref<IAdvectorX>
-advectorFactory(const AdvImpl kernel_id, const size_t &nx, const size_t &nvx,
+advectorFactory(const AdvImpl kernel_id,
+                ADVParams p,
                 benchmark::State &state) {
-    ADVParamsNonCopyable params;
-    params.nx = nx;
-    params.nvx = nvx;
+    ADVParamsNonCopyable params(p);
+    // params.nx = nx;
+    // params.nb = nb;
+    // params.ns = ns;
 
     switch (kernel_id) {
     case AdvImpl::BR2D:

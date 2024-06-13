@@ -6,25 +6,27 @@
 /* Benchmark the impact of wg_size on Hierarchical kernel */
 static void
 BM_WgSize(benchmark::State &state){
-    auto p = createParams(state.range(0), state.range(1), state.range(2));
+    auto p = createParams(
+        state.range(0), state.range(1), state.range(2), state.range(3));
 
     /* Advector setup */
     const auto kernel_id = AdvImpl::HIER;
-    const auto hierAdv = advectorFactory(kernel_id, p.nx, p.nvx, state);
-    p.wg_size = state.range(3);
+    const auto hierAdv = advectorFactory(kernel_id, p, state);
+    p.wg_size_x = state.range(4);
 
     /* Benchmark infos */
     state.counters.insert({
         {"gpu", p.gpu},
+        {"nb", p.nb},
         {"nx", p.nx},
-        {"ny", p.nvx},
+        {"ns", p.ns},
         {"kernel_id", kernel_id},
-        {"wg_size", p.wg_size},
+        {"wg_size_x", p.wg_size_x},
     });
 
     /* SYCL setup */
     auto Q = createSyclQueue(p.gpu, state);
-    sycl::buffer<double, 2> fdist(sycl::range<2>(p.nvx, p.nx));
+    sycl::buffer<double, 3> fdist(sycl::range<3>(p.nb, p.nx, p.ns));
 
     /* Physics setup */
     fill_buffer(Q, fdist, p);
@@ -45,8 +47,8 @@ BM_WgSize(benchmark::State &state){
 
     p.maxIter = state.iterations();
 
-    state.SetItemsProcessed(p.maxIter * p.nvx * p.nx);
-    state.SetBytesProcessed(p.maxIter * p.nvx * p.nx * sizeof(double));
+    state.SetItemsProcessed(p.maxIter * p.nb * p.nx * p.ns);
+    state.SetBytesProcessed(p.maxIter * p.nb * p.nx * p.ns * sizeof(double));
 
     auto err = validate_result(Q, fdist, p, false);
     if (err > 10e-6) {
@@ -58,9 +60,10 @@ BM_WgSize(benchmark::State &state){
 BENCHMARK(BM_WgSize)
     ->ArgsProduct({
         {0, 1}, /*gpu*/
+        NB_SMALL_RANGE, /*nb*/
         {NX}, /*nx*/
-        NY_SMALL_RANGE, /*ny*/
-        WG_SIZES_RANGE /*wg_size*/
+        NS_RANGE, /*ns*/
+        WG_SIZES_X_RANGE /*wg_size*/
     })
     ->UseRealTime()
     ->Unit(benchmark::kMillisecond);
@@ -72,25 +75,27 @@ one advection operation */
 static void
 BM_Advector(benchmark::State &state) {
     /* Params setup */
-    auto p = createParams(state.range(0), state.range(1), state.range(2));
-    p.wg_size = p.gpu ? 128 : 64;
+    auto p = createParams(
+        state.range(0), state.range(1), state.range(2), state.range(3));
+    p.wg_size_x = p.gpu ? 128 : 64;
 
     /* Advector setup */
-    auto kernel_id = static_cast<AdvImpl>(static_cast<int>(state.range(3)));
-    auto advector = advectorFactory(kernel_id, p.nx, p.nvx, state);
+    auto kernel_id = static_cast<AdvImpl>(static_cast<int>(state.range(4)));
+    auto advector = advectorFactory(kernel_id, p, state);
 
     /* Benchmark infos */
     state.counters.insert({
         {"gpu", p.gpu},
+        {"nb", p.nb},
         {"nx", p.nx},
-        {"ny", p.nvx},
+        {"ns", p.ns},
         {"kernel_id", kernel_id},
-        {"wg_size", p.wg_size},
+        {"wg_size_x", p.wg_size_x},
     });
 
     /* SYCL setup */
     auto Q = createSyclQueue(p.gpu, state);
-    sycl::buffer<double, 2> fdist(sycl::range<2>(p.nvx, p.nx));
+    sycl::buffer<double, 3> fdist(sycl::range<3>(p.nb, p.nx, p.ns));
 
     /* Physics setup */
     fill_buffer(Q, fdist, p);
@@ -111,8 +116,8 @@ BM_Advector(benchmark::State &state) {
 
     p.maxIter = state.iterations();
 
-    state.SetItemsProcessed(p.maxIter * p.nvx * p.nx);
-    state.SetBytesProcessed(p.maxIter * p.nvx * p.nx * sizeof(double));
+    state.SetItemsProcessed(p.maxIter * p.nb * p.nx * p.ns);
+    state.SetBytesProcessed(p.maxIter * p.nb * p.nx * p.ns * sizeof(double));
 
     state.counters.insert({{"maxIter", p.maxIter}});
 
@@ -130,8 +135,9 @@ BM_Advector(benchmark::State &state) {
 BENCHMARK(BM_Advector)
     ->ArgsProduct({
         {0, 1}, /*gpu USE --benchmark-filter=BM_Advector/0 or BM_Advector/1 */
+        NB_RANGE, /*ny*/
         {NX}, /*nx*/
-        NY_RANGE, /*ny*/
+        NS_RANGE, /*ns*/
         IMPL_RANGE, /*impl*/
     })
     ->UseRealTime()
