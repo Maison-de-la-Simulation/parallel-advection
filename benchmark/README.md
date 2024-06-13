@@ -48,3 +48,6 @@ df_acpp_a100 = get_cleaned_df("LOGS/A100/a100_acpp_50rep.json") #turn json into 
 a100_acpp = create_dict_from_df(df_acpp_a100) #turn DataFrame into a easily plotable list
 plot_values(a100_acpp, "A100 GPU ACPP", do_show=true) #plot the values and show
 ```
+
+# Known issues
+- With AdaptiveCpp on the MI250X, we must `export ACPP_PERSISTENT_RUNTIME=1` variable because it causes bugs with the google benchmark framework.
