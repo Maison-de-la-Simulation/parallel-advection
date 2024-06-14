@@ -135,7 +135,7 @@ BM_Advector(benchmark::State &state) {
 BENCHMARK(BM_Advector)
     ->ArgsProduct({
         {1},
-        {4096, 8192, 16384, 32768, 65535}, /*ny*/
+        {4096, 8192, 16384, 32768, 65535, 131070, 262140, 524288}, /*ny*/
         {NX}, /*nx*/
         {1}, /*ns*/
         {AdvImpl::HIER, AdvImpl::EXP1}, /*impl*/
