@@ -18,6 +18,7 @@ target_sources(core
   impl/ReverseIndexes.cpp
   impl/TwoDimWG.cpp
   impl/SeqTwoDimWG.cpp
+  impl/Exp1.cpp
 )
 
 target_include_directories(core

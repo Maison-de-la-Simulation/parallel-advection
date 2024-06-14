@@ -50,6 +50,8 @@ kernel_impl_factory(const ADVParamsNonCopyable &params) {
         return sref::make_unique<AdvX::TwoDimWG>();
     case str2int("SeqTwoDimWG"):
         return sref::make_unique<AdvX::SeqTwoDimWG>();
+    case str2int("Exp1"):
+        return sref::make_unique<AdvX::Exp1>();
     default:
         auto str = kernel_name + " is not a valid kernel name.\n" + error_str;
         throw std::runtime_error(str);
