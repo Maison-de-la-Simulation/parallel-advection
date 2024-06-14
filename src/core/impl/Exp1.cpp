@@ -3,12 +3,8 @@
 HIPSYCL_UNIVERSAL_TARGET
 void optimized_codepaths(double* ptr, int ib, int nx, int ns, int idx_ipos1, int is, double& value)
 {
-    // Only executed on CUDA device. CUDA specific device functions can be called here
   __hipsycl_if_target_cuda(
         value = __ldg(ptr + (ib*nx*ns+idx_ipos1*ns+is));
-    // [&](){
-        // value = __ldg(ptr + (ib*nx*ns+idx_ipos1*ns+is));
-    // }
   );
 }
 

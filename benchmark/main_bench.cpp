@@ -132,13 +132,13 @@ BM_Advector(benchmark::State &state) {
 }   // end BM_Advector
 
 // ================================================
-BENCHMARK(BM_Advector)
+BENCHMARK(BM_Exp)
     ->ArgsProduct({
-        {0, 1}, /*gpu USE --benchmark-filter=BM_Advector/0 or BM_Advector/1 */
-        NB_RANGE, /*ny*/
+        {1},
+        {4096, 8192, 16384, 32768, 65535}, /*ny*/
         {NX}, /*nx*/
-        NS_RANGE, /*ns*/
-        IMPL_RANGE, /*impl*/
+        {1}, /*ns*/
+        {AdvImpl::Hierarchical, AdvImpl::EXP1}, /*impl*/
     })
     ->UseRealTime()
     ->Unit(benchmark::kMillisecond);

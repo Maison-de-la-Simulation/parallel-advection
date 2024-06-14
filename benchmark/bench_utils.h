@@ -16,6 +16,7 @@ enum AdvImpl : int {
     REVIDX,      // 6
     TWODIMWG,    // 7
     SEQ_TWODIMWG // 8
+    EXP1,
 };
 
 using bm_vec_t = std::vector<int64_t>;
@@ -31,7 +32,7 @@ static bm_vec_t IMPL_RANGE = {
     AdvImpl::HIER, AdvImpl::NDRA,
     AdvImpl::SCOP, AdvImpl::STREAMY, AdvImpl::STRAD,
     AdvImpl::REVIDX, AdvImpl::TWODIMWG, 
-    AdvImpl::SEQ_TWODIMWG};
+    AdvImpl::SEQ_TWODIMWG, AdvImpl::EXP1};
 
 // static bm_vec_t IMPL_RANGE_NO_SCOPED = {
 //                               AdvImpl::BR3D, AdvImpl::HIER, AdvImpl::NDRA,
@@ -123,6 +124,9 @@ advectorFactory(const AdvImpl kernel_id,
         break;
     case AdvImpl::SEQ_TWODIMWG:
         params.kernelImpl = "SeqTwoDimWG";
+        break;
+    case AdvImpl::SEQ_TWODIMWG:
+        params.kernelImpl = "Exp1";
         break;
     default:
         auto str = "Error: wrong kernel_id.\n";
