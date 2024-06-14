@@ -15,7 +15,7 @@ enum AdvImpl : int {
     STRAD,       // 5
     REVIDX,      // 6
     TWODIMWG,    // 7
-    SEQ_TWODIMWG // 8
+    SEQ_TWODIMWG, // 8
     EXP1,
 };
 
@@ -125,7 +125,7 @@ advectorFactory(const AdvImpl kernel_id,
     case AdvImpl::SEQ_TWODIMWG:
         params.kernelImpl = "SeqTwoDimWG";
         break;
-    case AdvImpl::SEQ_TWODIMWG:
+    case AdvImpl::EXP1:
         params.kernelImpl = "Exp1";
         break;
     default:

@@ -132,13 +132,13 @@ BM_Advector(benchmark::State &state) {
 }   // end BM_Advector
 
 // ================================================
-BENCHMARK(BM_Exp)
+BENCHMARK(BM_Advector)
     ->ArgsProduct({
         {1},
         {4096, 8192, 16384, 32768, 65535}, /*ny*/
         {NX}, /*nx*/
         {1}, /*ns*/
-        {AdvImpl::Hierarchical, AdvImpl::EXP1}, /*impl*/
+        {AdvImpl::HIER, AdvImpl::EXP1}, /*impl*/
     })
     ->UseRealTime()
     ->Unit(benchmark::kMillisecond);
