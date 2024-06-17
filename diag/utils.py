@@ -56,13 +56,25 @@ __GPUS_ONLY = ["mi250", "a100", None, None, None]
 
 kernel_id = {
     -1: "FakeAdvector",
-    0: "BasicRange2D",
-    1: "BasicRange1D",
-    2: "Hierarchical",
-    3: "NDRange",
-    4: "Scoped",
+    0: "BasicRange3D",
+    1: "Hierarchical",
+    2: "NDRange",
+    3: "Scoped",
+    4: "StreamY",
+    5: "Straddled",
+    6: "Revidx",
+    7: "TwoDimWG",
+    8: "Seq_TwoDimWG",
+    9: "HierLDG",
 }
 
+################################################################################
+import json
+def get_cleaned_df(path):
+  with open(path, "r") as f:
+    data = json.load(f)
+    df = pd.DataFrame(data["benchmarks"])
+    return clean_raw_df(df)
 
 ################################################################################
 ################################################################################
@@ -96,7 +108,7 @@ def clean_raw_df(
     df["kernel_id"] = df["kernel_id"].map(kernel_id)
 
     # setting up things to work with old utils.py
-    df["global_size"] = df["ny"] * df["nx"]
+    df["global_size"] = df["nb"] * df["nx"] * df["ns"]
 
     grouped_rows = [df.iloc[i : i + 3] for i in range(0, len(df), 3)]
 
@@ -114,7 +126,8 @@ def clean_raw_df(
         df_stdev = group.iloc[1]
         df_cvar = group.iloc[2]
 
-        # 1st should be mean, then stddev, then cv
+        # 1st should be mean, then stddev, then cv.
+        #If assert fails here, bench probably ran without --benchmark_repetitions
         assert df_median["name"].endswith("_median")
         assert df_stdev["name"].endswith("_stddev")
         assert df_cvar["name"].endswith("_cv")
@@ -300,13 +313,13 @@ def plot_all_general_perf(values: list):
 ################################################################################
 ################################################################################
 # careful run with df list in the right order (same as __HW_LIST)
-def create_pp_values(dfs_list: list, ny_size: int, best_runtimes):
+def create_pp_values(dfs_list: list, nb_size: int, best_runtimes):
     """_summary_
 
     Args:
         dfs_list (list): List of DataFrames used to compute perf-port,
         same order as hw list
-        ny_size (int): Which size of ny to keep for the perf-port. All other
+        nb_size (int): Which size of nb to keep for the perf-port. All other
         sizes will be removed from DataFrames.
 
     Returns:
@@ -332,9 +345,9 @@ def create_pp_values(dfs_list: list, ny_size: int, best_runtimes):
     # we have general structure of pp_val dict of dict
     m_list_df = []  # list of dataframes we will use, same order as hw list
     for df in dfs_list:
-        # we only keep the rows with targeted ny size. ny = global_size/nx and nx = 1024
+        # we only keep the rows with targeted nb size. nb = global_size/nx and nx = 1024
         m_list_df.append(
-            df.drop(df[(df["global_size"]/1024 != ny_size)].index) if df is not None else None
+            df.drop(df[(df["global_size"]/1024 != nb_size)].index) if df is not None else None
         )
 
     # for i_hw, m_df in enumerate(m_list_df):
