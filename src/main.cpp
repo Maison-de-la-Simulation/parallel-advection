@@ -51,7 +51,7 @@ main(int argc, char **argv) {
     if (run_on_gpu)
         try {
             d = sycl::device{sycl::gpu_selector_v};
-        } catch (const std::runtime_error e) {
+        } catch (const sycl::exception e) {
             std::cout
                 << "GPU was requested but none is available, running kernels "
                    "on the CPU\n"

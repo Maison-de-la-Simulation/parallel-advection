@@ -1,9 +1,19 @@
 #include "advectors.h"
 
+#ifndef SYCL_IMPLEMENTATION_ONEAPI   // for DPCPP
+HIPSYCL_UNIVERSAL_TARGET
+void optimized_codepaths(double* ptr, int ib, int nx, int ns, int idx_ipos1, int is, double& value)
+{
+  __hipsycl_if_target_cuda(
+        value = __ldg(ptr + (ib*nx*ns+idx_ipos1*ns+is));
+  );
+}
+#endif
+
 sycl::event
-AdvX::Exp1::operator()(sycl::queue &Q,
-                       sycl::buffer<double, 3> &buff_fdistrib,
-                       const ADVParams &params) {
+AdvX::CudaLDG::operator()(sycl::queue &Q,
+                          sycl::buffer<double, 3> &buff_fdistrib,
+                          const ADVParams &params) {
     auto const nx = params.nx;
     auto const nb = params.nb;
     auto const ns = params.ns;
@@ -16,6 +26,9 @@ AdvX::Exp1::operator()(sycl::queue &Q,
     // const sycl::range wg_sise{1, nx, 1};
 
     return Q.submit([&](sycl::handler &cgh) {
+#ifdef SYCL_IMPLEMENTATION_ONEAPI   // for DPCPP
+throw std::logic_error("CudaLDG kernel is not compatible with DPCPP");
+#else   // for acpp
         auto fdist =
             buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
 
@@ -61,19 +74,18 @@ AdvX::Exp1::operator()(sycl::queue &Q,
                     for (int k = 0; k <= LAG_ORDER; k++) {
                         int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-                        slice_ftmp[ix] += coef[k] * fdist[ib][idx_ipos1][is];
+                        double v = 0;
+                        optimized_codepaths(ptr, ib, nx, ns, idx_ipos1, is, v);
+                        // auto value = __ldg(ptr + (ib*nx*ns+idx_ipos1*ns+is));
+                        // double value = __ldg(&fdist[ivx][idx_ipos1][iz]);
+
+                        // auto value = *(ptr + (ib*nx*ns+idx_ipos1*ns+is));
+
+                        // slice_ftmp[ix] += coef[k] * fdist[ib][idx_ipos1][iz];
+                        slice_ftmp[ix] += coef[k] * v;
                     }
                 });   // end parallel_for_work_item --> Implicit barrier
-#ifdef SYCL_IMPLEMENTATION_ONEAPI   // for DPCPP
-            g.parallel_for_work_item(sycl::range{1, nx, 1},
-                                     [&](sycl::h_item<3> it) {
-                                         const int ix = it.get_local_id(1);
-                                         const int ib = g.get_group_id(0);
-                                         const int is = g.get_group_id(2);
 
-                                         fdist[ib][ix][is] = slice_ftmp[ix];
-                                     });
-#else
             g.async_work_group_copy(fdist.get_pointer()
                                         + g.get_group_id(2)
                                         + g.get_group_id(0) *ns*nx, /* dest */
@@ -81,7 +93,8 @@ AdvX::Exp1::operator()(sycl::queue &Q,
                                     nx, /* n elems */
                                     ns  /* stride */
             );
-#endif
         });   // end parallel_for_work_group
+
+#endif
     });       // end Q.submit
 }

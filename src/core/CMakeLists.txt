@@ -19,7 +19,8 @@ target_sources(core
   impl/TwoDimWG.cpp
   impl/SeqTwoDimWG.cpp
   impl/Exp1.cpp
-)
+  impl/CudaLDG.cpp
+  )
 
 target_include_directories(core
   PUBLIC #need public to include "advectors.h" in impl/*
