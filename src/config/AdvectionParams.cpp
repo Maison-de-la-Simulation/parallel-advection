@@ -97,24 +97,24 @@ void ADVParams::update_deltas()
 // ======================================================
 void ADVParamsNonCopyable::print()
 {
-  printf( "##########################\n");
-  printf( "Simulation run parameters:\n");
-  printf( "##########################\n");
+  std::cout << "##########################" << std::endl;
+  std::cout << "Runtime parameters:" << std::endl;
+  std::cout << "##########################" << std::endl;
   std::cout << "kernelImpl : " << kernelImpl << std::endl;
   std::cout << "wgSizeX    : " << wg_size_x    << std::endl;
   std::cout << "wgSizeY    : " << wg_size_b    << std::endl;
-  printf( "gpu        : %d\n", gpu);
-  printf( "maxIter    : %zu\n", maxIter);
-  printf( "nb (nvx)   : %zu\n", nb);
-  printf( "nx         : %zu\n", nx);
-  printf( "ns         : %zu\n", ns);
-  printf( "dt         : %f\n", dt);
-  printf( "dx         : %f\n", dx);
-  printf( "dvx        : %f\n", dvx);
-  printf( "minRealX   : %f\n", minRealX );
-  printf( "maxRealX   : %f\n", maxRealX);
-  printf( "minRealVx  : %f\n", minRealVx);
-  printf( "maxRealVx  : %f\n", maxRealVx);
-  printf( "\n");
+  std::cout << "gpu        : " << gpu    << std::endl;
+  std::cout << "maxIter    : " << maxIter    << std::endl;
+  std::cout << "nb (nvx)   : " << nb    << std::endl;
+  std::cout << "nx         : " << nx    << std::endl;
+  std::cout << "ns         : " << ns    << std::endl;
+  std::cout << "dt         : " << dt    << std::endl;
+  std::cout << "dx         : " << dx    << std::endl;
+  std::cout << "dvx        : " << dvx    << std::endl;
+  std::cout << "minRealX   : " << minRealX    << std::endl;
+  std::cout << "maxRealX   : " << maxRealX    << std::endl;
+  std::cout << "minRealVx  : " << minRealVx    << std::endl;
+  std::cout << "maxRealVx  : " << maxRealVx    << std::endl;
+  std::cout << std::endl;
 
 } // ADVParams::print
