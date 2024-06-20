@@ -3,7 +3,6 @@
 #include <sycl/sycl.hpp>
 #include <iostream>
 
-
 #include "tools/init.h"
 #include "tools/validation.h"
 
@@ -22,7 +21,6 @@ advection(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
     auto start = std::chrono::high_resolution_clock::now();
     // Time loop
     for (auto t = 0; t < maxIter-1; ++t) {
-
         // If it's last iteration, we wait
         if (t == maxIter - 2)
             advector(Q, buff_fdistrib, params).wait_and_throw();

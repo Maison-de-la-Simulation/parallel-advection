@@ -184,6 +184,12 @@ class SeqTwoDimWG : public IAdvectorX {
 // =============================================================================
 class Exp1 : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
+    sycl::event actual_advection(sycl::queue &Q,
+                                 sycl::buffer<double, 3> &buff_fdistrib,
+                                 const ADVParams &params,
+                                 const size_t &nb_batch_size,
+                                 const size_t &nb_offset);
+
 
   public:
     sycl::event operator()(sycl::queue &Q,
