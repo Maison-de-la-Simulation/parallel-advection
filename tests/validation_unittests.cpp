@@ -13,13 +13,13 @@ TEST(Validation, ValidateNoIteration){
 
     ADVParams params;
     params.nx  = 1 + std::rand() % 1024;
-    params.nb = 1 + std::rand() % 128;
-    params.ns  = 1 + std::rand() % 64;
+    params.nb0 = 1 + std::rand() % 128;
+    params.nb1  = 1 + std::rand() % 64;
 
     params.maxIter = 0;
     params.update_deltas();
 
-    const sycl::range<3> r3d(params.nb, params.nx, params.ns);
+    const sycl::range<3> r3d(params.nb0, params.nx, params.nb1);
     sycl::buffer<double, 3> buff_fdistrib(r3d);
 
     sycl::queue Q;
@@ -34,18 +34,18 @@ TEST(Validation, ValidateNoIteration){
 TEST(Validation, ValidateEachIterFor10Iterations){
     ADVParams params;
     params.nx  = 512;
-    params.nb = 1 + std::rand() % 30;
-    params.ns  = 1 + std::rand() % 30;
+    params.nb0 = 1 + std::rand() % 30;
+    params.nb1  = 1 + std::rand() % 30;
     params.update_deltas();
 
-    const sycl::range<3> r3d(params.nb, params.nx, params.ns);
+    const sycl::range<3> r3d(params.nb0, params.nx, params.nb1);
     sycl::buffer<double, 3> buff_fdistrib(r3d);
 
     sycl::queue Q;
     fill_buffer(Q, buff_fdistrib, params);
 
     /* Creating a BasicRange advector */
-    auto advector = sref::make_unique<AdvX::BasicRange>(params.nx, params.nb, params.ns);
+    auto advector = sref::make_unique<AdvX::BasicRange>(params.nx, params.nb0, params.nb1);
 
     double err;
     params.maxIter = 0;
@@ -67,19 +67,19 @@ TEST(Validation, ValidateEachIterFor10Iterations){
 TEST(Validation, ValidateNIterations){
     ADVParams params;
     params.nx  = 1024;
-    params.nb = 16;
-    params.ns  = 16;
+    params.nb0 = 16;
+    params.nb1  = 16;
 
     params.maxIter = 1 + std::rand() % 100;
     params.update_deltas();
 
-    const sycl::range<3> r3d(params.nb, params.nx, params.ns);
+    const sycl::range<3> r3d(params.nb0, params.nx, params.nb1);
     sycl::buffer<double, 3> buff_fdistrib(r3d);
 
     sycl::queue Q;
     fill_buffer(Q, buff_fdistrib, params);
 
-    auto advector = sref::make_unique<AdvX::BasicRange>(params.nx, params.nb, params.ns);
+    auto advector = sref::make_unique<AdvX::BasicRange>(params.nx, params.nb0, params.nb1);
 
     for(auto it=0; it<params.maxIter; ++it)
         advector(Q, buff_fdistrib, params).wait_and_throw();

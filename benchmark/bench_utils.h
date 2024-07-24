@@ -43,9 +43,9 @@ static bm_vec_t IMPL_RANGE = {
 // =============================================
 [[nodiscard]] inline ADVParams
 createParams(const bool gpu,
-             const size_t &nb,
+             const size_t &nb0,
              const size_t &nx,
-             const size_t &ns) {
+             const size_t &nb1) {
     ADVParams p;
 
     p.outputSolution = false;
@@ -62,8 +62,8 @@ createParams(const bool gpu,
     /* Dynamic benchmark params*/
     p.gpu = gpu;
     p.nx = nx;
-    p.nb = nb;
-    p.ns = ns;
+    p.nb0 = nb0;
+    p.nb1 = nb1;
 
     p.update_deltas();
     return p;
@@ -93,9 +93,6 @@ advectorFactory(const AdvImpl kernel_id,
                 ADVParams p,
                 benchmark::State &state) {
     ADVParamsNonCopyable params(p);
-    // params.nx = nx;
-    // params.nb = nb;
-    // params.ns = ns;
 
     switch (kernel_id) {
     case AdvImpl::BR3D:

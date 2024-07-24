@@ -3,8 +3,8 @@
 
 ADVParams::ADVParams(ADVParamsNonCopyable &other){
   nx = other.nx;
-  nb = other.nb;
-  ns = other.ns;
+  nb0 = other.nb0;
+  nb1 = other.nb1;
 
   maxIter = other.maxIter;
   gpu = other.gpu;
@@ -29,8 +29,8 @@ ADVParams::ADVParams(ADVParamsNonCopyable &other){
 
 ADVParamsNonCopyable::ADVParamsNonCopyable(ADVParams &other){
   nx = other.nx;
-  nb = other.nb;
-  ns = other.ns;
+  nb0 = other.nb0;
+  nb1 = other.nb1;
 
   maxIter = other.maxIter;
   gpu = other.gpu;
@@ -59,8 +59,8 @@ void ADVParamsNonCopyable::setup(const ConfigMap& configMap)
 {
   // geometry
   nx  = configMap.getInteger("geometry", "nx",  1024);
-  nb = configMap.getInteger("geometry", "nb", 64);
-  ns = configMap.getInteger("geometry", "ns", 32);
+  nb0 = configMap.getInteger("geometry", "nb0", 64);
+  nb1 = configMap.getInteger("geometry", "nb1", 32);
 
   // run parameters
   maxIter = configMap.getInteger("run", "maxIter", 1000);
@@ -88,7 +88,7 @@ void ADVParams::update_deltas()
 {
   realWidthX = maxRealX - minRealX;
   dx = realWidthX / nx;
-  dvx = (maxRealVx - minRealVx) / nb;
+  dvx = (maxRealVx - minRealVx) / nb0;
 
   inv_dx     = 1/dx;
 } // ADVParams::setup
@@ -105,9 +105,9 @@ void ADVParamsNonCopyable::print()
   std::cout << "wgSizeY    : " << wg_size_b    << std::endl;
   std::cout << "gpu        : " << gpu    << std::endl;
   std::cout << "maxIter    : " << maxIter    << std::endl;
-  std::cout << "nb (nvx)   : " << nb    << std::endl;
+  std::cout << "nb0 (nvx)   : " << nb0    << std::endl;
   std::cout << "nx         : " << nx    << std::endl;
-  std::cout << "ns         : " << ns    << std::endl;
+  std::cout << "nb1         : " << nb1    << std::endl;
   std::cout << "dt         : " << dt    << std::endl;
   std::cout << "dx         : " << dx    << std::endl;
   std::cout << "dvx        : " << dvx    << std::endl;
