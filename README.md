@@ -53,7 +53,7 @@ Flags varies on the SYCL implementation you are using.
     [geometry]
     nb = 512   # nb of speed points (batch dimension)
     nx = 1024 # nb of spatial points (dimension of interest)
-    ns = 2 # fictive dimension, is also stride for x-dim
+    nb1 = 2 # fictive dimension, is also stride for x-dim
 
     [discretization]
     dt  = 0.001

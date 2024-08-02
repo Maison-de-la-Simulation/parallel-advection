@@ -13,8 +13,8 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
                              const size_t &nb_offset) {
 
     auto const nx = params.nx;
-    auto const nb = params.nb;
-    auto const ns = params.ns;
+    auto const nb0 = params.nb0;
+    auto const nb1 = params.nb1;
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
@@ -22,9 +22,9 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
     auto const wg_size_b = params.wg_size_b;
     auto const wg_size_x = params.wg_size_x;
 
-    /* nb must be divisible by slice_size_dim_y */
-    if (nb_batch_size % wg_size_b != 0) {
-        throw std::invalid_argument("nb must be divisible by wg_size_b");
+    /* nb0 must be divisible by slice_size_dim_y */
+    if (nb0 % wg_size_b != 0) {
+        throw std::invalid_argument("nb0 must be divisible by wg_size_b");
     }
     if (wg_size_b * nx > 6144) {
         /* TODO: try with a unique allocation in shared memory and sequential
@@ -33,7 +33,7 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
             "wg_size_b*nx must be < to 6144 (shared memory limit)");
     }
 
-    const sycl::range nb_wg{nb_batch_size/wg_size_b, 1, ns};
+    const sycl::range nb_wg{nb0 / wg_size_b, 1, nb1};
     const sycl::range wg_size{params.wg_size_b, params.wg_size_x, 1};
 
     return Q.submit([&](sycl::handler &cgh) {
@@ -97,18 +97,18 @@ AdvX::Exp1::operator()(sycl::queue &Q,
                        sycl::buffer<double, 3> &buff_fdistrib,
                        const ADVParams &params) {
     auto const nx = params.nx;
-    auto const nb = params.nb;
-    auto const ns = params.ns;
+    auto const nb0 = params.nb0;
+    auto const nb1 = params.nb1;
 
-    // On A100 it breaks when nb (the first dimension) is >= 65536.
-    constexpr size_t MAX_nb = 65535;
-    if (nb < MAX_nb) {
+    // On A100 it breaks when nb0 (the first dimension) is >= 65536.
+    constexpr size_t MAX_nb = 65536;
+    if (nb0 < MAX_nb) {
         /* If limit not exceeded we return a classical Hierarchical advector */
         AdvX::Hierarchical adv{};
         return adv(Q, buff_fdistrib, params);
     } else {
         auto n_batch =
-            std::floor(nb / MAX_nb) + 1;   // should be in constructor
+            std::floor(nb0 / MAX_nb) + 1;   // should be in constructor
 
         // For BBlock in B
         for (int i_batch = 0; i_batch < n_batch - 1; ++i_batch) {
@@ -123,7 +123,7 @@ AdvX::Exp1::operator()(sycl::queue &Q,
 
         // for the last one we take the rest, we add n_batch-1 because we
         // processed MAX_SIZE-1 each batch
-        auto const nb_size = (nb % MAX_nb) + (n_batch - 1);
+        auto const nb_size = (nb0 % MAX_nb) + (n_batch - 1);
         auto const nb_offset = (MAX_nb - 1) * (n_batch - 1);
 
         return actual_advection(Q, buff_fdistrib, params, nb_size, nb_offset);

@@ -24,9 +24,9 @@ struct ADVParams {
 
   // Number of points for
   size_t nx = 1024; //dimension of interest
-  size_t nb = 32;    //batch dimension (corresponds to velocities Vx)
-  size_t ns = 32;   //stride for x, is also a batch dimension
-  //We get ns*nb independent problems of size nx, and x has a stride of ns
+  size_t nb0 = 32;    //batch dimension (corresponds to velocities Vx)
+  size_t nb1 = 32;   //stride for x, is also a batch dimension
+  //We get nb1*nb0 independent problems of size nx, and x has a stride of nb1
 
   // Sizes of the SYCL work groups
   size_t wg_size_x = 128;

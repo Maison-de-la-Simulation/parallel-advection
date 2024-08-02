@@ -6,8 +6,8 @@ AdvX::TwoDimWG::operator()(sycl::queue &Q,
                                const ADVParams &params) {
 
     auto const nx = params.nx;
-    auto const nb = params.nb;
-    auto const ns = params.ns;
+    auto const nb0 = params.nb0;
+    auto const nb1 = params.nb1;
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
@@ -15,16 +15,16 @@ AdvX::TwoDimWG::operator()(sycl::queue &Q,
     auto const wg_size_b = params.wg_size_b;
     auto const wg_size_x = params.wg_size_x;
 
-    /* nb must be divisible by slice_size_dim_y */
-    if(nb%wg_size_b != 0){
-        throw std::invalid_argument("nb must be divisible by wg_size_b");
+    /* nb0 must be divisible by slice_size_dim_y */
+    if(nb0%wg_size_b != 0){
+        throw std::invalid_argument("nb0 must be divisible by wg_size_b");
     }
     if(wg_size_b * nx > 6144){
         /* TODO: try with a unique allocation in shared memory and sequential iteration */
         throw std::invalid_argument("wg_size_b*nx must be < to 6144 (shared memory limit)");
     }
 
-    const sycl::range nb_wg{nb/wg_size_b, 1, ns};
+    const sycl::range nb_wg{nb0/wg_size_b, 1, nb1};
     const sycl::range wg_size{wg_size_b, params.wg_size_x, 1};
 
     return Q.submit([&](sycl::handler &cgh) {
@@ -80,10 +80,10 @@ AdvX::TwoDimWG::operator()(sycl::queue &Q,
 
             // g.async_work_group_copy(fdist.get_pointer()
             //                             + g.get_group_id(2)
-            //                             + g.get_group_id(0) *ns*nx, /* dest */
+            //                             + g.get_group_id(0) *nb1*nx, /* dest */
             //                         slice_ftmp.get_pointer(), /* source */
             //                         nx*slice_size_dim_y, /* n elems */
-            //                         ns  /* stride */
+            //                         nb1  /* stride */
             // );
         });   // end parallel_for_work_group
     });       // end Q.submit

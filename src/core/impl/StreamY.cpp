@@ -2,7 +2,7 @@
 #include "advectors.h"
 
 // AdvX::StreamY::StreamY(const ADVParams &params){
-//     auto n_batch = std::ceil(params.nb / MAX_nb); //should be in
+//     auto n_batch = std::ceil(params.nb0 / MAX_nb); //should be in
 //     constructor
 
 // }
@@ -17,13 +17,13 @@ AdvX::StreamY::actual_advection(sycl::queue &Q,
                                 const size_t &nb_offset) {
 
     auto const nx = params.nx;
-    auto const nb = params.nb;
-    auto const ns = params.ns;
+    auto const nb0 = params.nb0;
+    auto const nb1 = params.nb1;
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    const sycl::range nb_wg{n_nb, 1, ns};
+    const sycl::range nb_wg{n_nb, 1, nb1};
     const sycl::range wg_size{1, params.wg_size_x, 1};
 
     return Q.submit([&](sycl::handler &cgh) {
@@ -72,10 +72,10 @@ AdvX::StreamY::actual_advection(sycl::queue &Q,
                                      });
 #else
             g.async_work_group_copy(fdist.get_pointer() + g.get_group_id(2) +
-                                        (g.get_group_id(0)+nb_offset) * ns * nx, /* dest */
+                                        (g.get_group_id(0)+nb_offset) * nb1 * nx, /* dest */
                                     slice_ftmp.get_pointer(), /* source */
                                     nx,                       /* n elems */
-                                    ns                        /* stride */
+                                    nb1                        /* stride */
             );
 #endif
         });   // end parallel_for_work_group
@@ -89,19 +89,19 @@ AdvX::StreamY::operator()(sycl::queue &Q,
                             sycl::buffer<double, 3> &buff_fdistrib,
                             const ADVParams &params) {
     auto const nx = params.nx;
-    auto const nb = params.nb;
-    auto const ns = params.ns;
+    auto const nb0 = params.nb0;
+    auto const nb1 = params.nb1;
 
     // IFDEF ACPP_TARGETS=cuda:sm_80 ... ?
 
-    // On A100 it breaks when nb (the first dimension) is >= 65536.
+    // On A100 it breaks when nb0 (the first dimension) is >= 65536.
     constexpr size_t MAX_nb = 65536;
-    if (nb < MAX_nb) {
+    if (nb0 < MAX_nb) {
         /* If limit not exceeded we return a classical Hierarchical advector */
         AdvX::Hierarchical adv{};
         return adv(Q, buff_fdistrib, params);
     } else {
-        auto n_batch = std::floor(nb / MAX_nb)+1;  // should be in constructor
+        auto n_batch = std::floor(nb0 / MAX_nb)+1;  // should be in constructor
 
         for (int i_batch = 0; i_batch < n_batch - 1; ++i_batch) {   // can we parallel_for this on multiple GPUs? multiple queues ? or other CUDA streams?
 
@@ -109,14 +109,14 @@ AdvX::StreamY::operator()(sycl::queue &Q,
 
             // sycl::buffer sub_buff(buff_fdistrib,
             //                       sycl::id(nb_offset, 0, 0) /*offset*/,
-            //                       sycl::range(MAX_nb - 1, nx, ns) /*range*/);
+            //                       sycl::range(MAX_nb - 1, nx, nb1) /*range*/);
 
             actual_advection(Q, buff_fdistrib, params, MAX_nb-1, nb_offset).wait();
         }
 
         // for the last one we take the rest, we add n_batch-1 because we
         // processed MAX_SIZE-1 each batch
-        auto const nb_size = (nb % MAX_nb) + (n_batch - 1);
+        auto const nb_size = (nb0 % MAX_nb) + (n_batch - 1);
         auto const nb_offset = (MAX_nb-1)*(n_batch-1);
 
         return actual_advection(

@@ -12,21 +12,21 @@ BM_Advector(benchmark::State &state) {
 
     /* Advector setup */
     auto kernel_id = static_cast<AdvImpl>(static_cast<int>(state.range(3)));
-    auto advector = advectorFactory(kernel_id, p.nx, p.nb, state);
+    auto advector = advectorFactory(kernel_id, p.nx, p.nb0, state);
 
     p.maxIter = state.range(4);
     /* Benchmark infos */
     state.counters.insert({
         {"gpu", p.gpu},
         {"nx", p.nx},
-        {"ny", p.nb},
+        {"ny", p.nb0},
         {"kernel_id", kernel_id},
         {"nIter", p.maxIter},
     });
 
     /* SYCL setup */
     auto Q = createSyclQueue(p.gpu, state);
-    sycl::buffer<double, 3> fdist(sycl::range<3>(p.nb, p.nx));
+    sycl::buffer<double, 3> fdist(sycl::range<3>(p.nb0, p.nx));
 
     /* Physics setup */
     fill_buffer(Q, fdist, p);
@@ -54,8 +54,8 @@ BM_Advector(benchmark::State &state) {
         {"nRepet", state.iterations()},
     });
 
-    state.SetItemsProcessed(state.iterations() * p.maxIter * p.nb * p.nx);
-    state.SetBytesProcessed(state.iterations() * p.maxIter * p.nb * p.nx *
+    state.SetItemsProcessed(state.iterations() * p.maxIter * p.nb0 * p.nx);
+    state.SetBytesProcessed(state.iterations() * p.maxIter * p.nb0 * p.nx *
                             sizeof(double));
 
     p.maxIter *= state.iterations();
