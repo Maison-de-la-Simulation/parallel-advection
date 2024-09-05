@@ -41,8 +41,8 @@ AdvX::TwoDimWG::operator()(sycl::queue &Q,
                     const int ix = it.get_local_id(1);
                     const int iz = g.get_group_id(2);
 
-                    const int local_nb = it.get_local_id(0);
-                    const int ivx = wg_size_y * g.get_group_id(0) + local_nb;
+                    const int local_ny = it.get_local_id(0);
+                    const int ivx = wg_size_y * g.get_group_id(0) + local_ny;
 
                     double const xFootCoord = displ(ix, ivx, params);
 
@@ -59,11 +59,11 @@ AdvX::TwoDimWG::operator()(sycl::queue &Q,
 
                     const int ipos1 = leftNode - LAG_OFFSET;
 
-                    slice_ftmp[local_nb][ix] = 0.;
+                    slice_ftmp[local_ny][ix] = 0.;
                     for (int k = 0; k <= LAG_ORDER; k++) {
                         int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-                        slice_ftmp[local_nb][ix] += coef[k] * fdist[ivx][idx_ipos1][iz];
+                        slice_ftmp[local_ny][ix] += coef[k] * fdist[ivx][idx_ipos1][iz];
                     }
                 });   // end parallel_for_work_item --> Implicit barrier
 
@@ -72,10 +72,10 @@ AdvX::TwoDimWG::operator()(sycl::queue &Q,
                                          const int ix = it.get_local_id(1);
                                          const int iz = g.get_group_id(2);
 
-                                         const int local_nb = it.get_local_id(0);
-                                         const int ivx = wg_size_y * g.get_group_id(0) + local_nb;
+                                         const int local_ny = it.get_local_id(0);
+                                         const int ivx = wg_size_y * g.get_group_id(0) + local_ny;
 
-                                         fdist[ivx][ix][iz] = slice_ftmp[local_nb][ix];
+                                         fdist[ivx][ix][iz] = slice_ftmp[local_ny][ix];
                                      });
 
             // g.async_work_group_copy(fdist.get_pointer()

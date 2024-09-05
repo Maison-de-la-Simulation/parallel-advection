@@ -12,8 +12,7 @@
 sycl::event
 AdvX::StreamY::actual_advection(sycl::queue &Q,
                                 sycl::buffer<double, 3> &buff_fdistrib,
-                                const ADVParams &params,
-                                const size_t &n_ny,
+                                const ADVParams &params, const size_t &n_ny,
                                 const size_t &ny_offset) {
 
     auto const nx = params.nx;
@@ -25,8 +24,6 @@ AdvX::StreamY::actual_advection(sycl::queue &Q,
 
     const sycl::range nb_wg{n_ny, 1, ny1};
     const sycl::range wg_size{1, params.wg_size_x, 1};
-
-    std::cout << "Advecting" << std::endl;
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
@@ -64,14 +61,14 @@ AdvX::StreamY::actual_advection(sycl::queue &Q,
                 });   // end parallel_for_work_item --> Implicit barrier
 
 #ifdef SYCL_IMPLEMENTATION_ONEAPI   // for DPCPP
-            g.parallel_for_work_item(sycl::range{1, nx, 1},
-                                     [&](sycl::h_item<3> it) {
-                                         const int ix = it.get_local_id(1);
-                                         const int ivx = g.get_group_id(0)+ny_offset;
-                                         const int iz = g.get_group_id(2);
+            g.parallel_for_work_item(
+                sycl::range{1, nx, 1}, [&](sycl::h_item<3> it) {
+                    const int ix = it.get_local_id(1);
+                    const int ivx = g.get_group_id(0) + ny_offset;
+                    const int iz = g.get_group_id(2);
 
-                                         fdist[ivx][ix][iz] = slice_ftmp[ix];
-                                     });
+                    fdist[ivx][ix][iz] = slice_ftmp[ix];
+                });
 #else
             g.async_work_group_copy(fdist.get_pointer() + g.get_group_id(2) +
                                         (g.get_group_id(0)+ny_offset) * ny1 * nx, /* dest */
@@ -82,14 +79,14 @@ AdvX::StreamY::actual_advection(sycl::queue &Q,
 #endif
         });   // end parallel_for_work_group
     });       // end Q.submit
-} // end actual_advection
+}   // end actual_advection
 
 // ==========================================
 // ==========================================
 sycl::event
 AdvX::StreamY::operator()(sycl::queue &Q,
-                            sycl::buffer<double, 3> &buff_fdistrib,
-                            const ADVParams &params) {
+                          sycl::buffer<double, 3> &buff_fdistrib,
+                          const ADVParams &params) {
     auto const nx = params.nx;
     auto const ny = params.ny;
     auto const ny1 = params.ny1;
@@ -106,30 +103,25 @@ AdvX::StreamY::operator()(sycl::queue &Q,
         double div = static_cast<double>(ny) / static_cast<double>(MAX_NY);
         auto floor_div = std::floor(div);
         auto is_int = div == floor_div;
-        auto n_batch = is_int ? div : floor_div + 1; 
+        auto n_batch = is_int ? div : floor_div + 1;
 
-        std::cout << "Will process ny=" << ny << " elements with " << n_batch << " batchs" << std::endl;
-
-        //run once without offset
-        // actual_advection(Q, buff_fdistrib, params, MAX_NY-1, 0).wait();
-        for (int i_batch = 0; i_batch < n_batch - 1; ++i_batch) {   // can we parallel_for this on multiple GPUs? multiple queues ? or other CUDA streams?
+        for (int i_batch = 0; i_batch < n_batch - 1;
+             ++i_batch) {   // can we parallel_for this on multiple GPUs?
+                            // multiple queues ? or other CUDA streams?
 
             size_t ny_offset = (i_batch * MAX_NY);
 
-            actual_advection(Q, buff_fdistrib, params, MAX_NY, ny_offset).wait();
+            actual_advection(Q, buff_fdistrib, params, MAX_NY, ny_offset)
+                .wait();
         }
 
         // for the last one we take the rest, we add n_batch-1 because we
         // processed MAX_SIZE-1 each batch
-        auto const ny_size = is_int ? MAX_NY : (ny % MAX_NY);// + (n_batch - 1);
-        auto const ny_offset = MAX_NY*(n_batch-1);
+        auto const ny_size =
+            is_int ? MAX_NY : (ny % MAX_NY);   // + (n_batch - 1);
+        auto const ny_offset = MAX_NY * (n_batch - 1);
 
-        std::cout << "last iter: ny_size="<<ny_size<<", ny_offset="<<ny_offset << std::endl;
-
-        //return the last advection with the rest
-        return actual_advection(
-            Q, buff_fdistrib, params,
-            ny_size,
-            ny_offset);
+        // return the last advection with the rest
+        return actual_advection(Q, buff_fdistrib, params, ny_size, ny_offset);
     }
 }

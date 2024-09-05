@@ -46,7 +46,7 @@ Flags varies on the SYCL implementation you are using.
     kernelImpl  = Hierarchical
     # Size of work groups use in the kernels
     workGroupSizeX = 128
-    workGroupSizeB = 1
+    workGroupSizeY = 1
     # Outputs a solution.log file to be read with the python notebook
     outputSolution = false
 

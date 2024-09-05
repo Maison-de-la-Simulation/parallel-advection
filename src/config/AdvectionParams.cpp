@@ -69,7 +69,7 @@ void ADVParamsNonCopyable::setup(const ConfigMap& configMap)
 
   kernelImpl = configMap.getString("run", "kernelImpl", "BasicRange");
   wg_size_x = configMap.getInteger("run", "workGroupSizeX", 128);
-  wg_size_y = configMap.getInteger("run", "workGroupSizeB", 1);
+  wg_size_y = configMap.getInteger("run", "workGroupSizeY", 1);
 
   // discretization parameters
   dt  = configMap.getFloat("discretization", "dt" , 0.0001);

@@ -41,10 +41,10 @@ AdvX::SeqTwoDimWG::operator()(sycl::queue &Q,
                                          const int ix = it.get_local_id(1);
                                          const int iz = g.get_group_id(2);
 
-                                         const int local_nb = it.get_local_id(0);
-                                         const int ivx = wg_size_y * g.get_group_id(0) + local_nb;
+                                         const int local_ny = it.get_local_id(0);
+                                         const int ivx = wg_size_y * g.get_group_id(0) + local_ny;
 
-                                         slice_ftmp[local_nb][ix] = fdist[ivx][ix][iz];
+                                         slice_ftmp[local_ny][ix] = fdist[ivx][ix][iz];
                                      });
 
 
