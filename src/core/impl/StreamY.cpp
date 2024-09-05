@@ -2,7 +2,7 @@
 #include "advectors.h"
 
 // AdvX::StreamY::StreamY(const ADVParams &params){
-//     auto n_batch = std::ceil(params.nb0 / MAX_nb); //should be in
+//     auto n_batch = std::ceil(params.ny / MAX_NY); //should be in
 //     constructor
 
 // }
@@ -13,18 +13,20 @@ sycl::event
 AdvX::StreamY::actual_advection(sycl::queue &Q,
                                 sycl::buffer<double, 3> &buff_fdistrib,
                                 const ADVParams &params,
-                                const size_t &n_nb,
-                                const size_t &nb_offset) {
+                                const size_t &n_ny,
+                                const size_t &ny_offset) {
 
     auto const nx = params.nx;
-    auto const nb0 = params.nb0;
-    auto const nb1 = params.nb1;
+    auto const ny = params.ny;
+    auto const ny1 = params.ny1;
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    const sycl::range nb_wg{n_nb, 1, nb1};
+    const sycl::range nb_wg{n_ny, 1, ny1};
     const sycl::range wg_size{1, params.wg_size_x, 1};
+
+    std::cout << "Advecting" << std::endl;
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
@@ -36,7 +38,7 @@ AdvX::StreamY::actual_advection(sycl::queue &Q,
             g.parallel_for_work_item(
                 sycl::range{1, nx, 1}, [&](sycl::h_item<3> it) {
                     const int ix = it.get_local_id(1);
-                    const int ivx = g.get_group_id(0) + nb_offset;
+                    const int ivx = g.get_group_id(0) + ny_offset;
                     const int iz = g.get_group_id(2);
 
                     double const xFootCoord = displ(ix, ivx, params);
@@ -65,17 +67,17 @@ AdvX::StreamY::actual_advection(sycl::queue &Q,
             g.parallel_for_work_item(sycl::range{1, nx, 1},
                                      [&](sycl::h_item<3> it) {
                                          const int ix = it.get_local_id(1);
-                                         const int ivx = g.get_group_id(0);
+                                         const int ivx = g.get_group_id(0)+ny_offset;
                                          const int iz = g.get_group_id(2);
 
                                          fdist[ivx][ix][iz] = slice_ftmp[ix];
                                      });
 #else
             g.async_work_group_copy(fdist.get_pointer() + g.get_group_id(2) +
-                                        (g.get_group_id(0)+nb_offset) * nb1 * nx, /* dest */
+                                        (g.get_group_id(0)+ny_offset) * ny1 * nx, /* dest */
                                     slice_ftmp.get_pointer(), /* source */
                                     nx,                       /* n elems */
-                                    nb1                        /* stride */
+                                    ny1                        /* stride */
             );
 #endif
         });   // end parallel_for_work_group
@@ -89,39 +91,45 @@ AdvX::StreamY::operator()(sycl::queue &Q,
                             sycl::buffer<double, 3> &buff_fdistrib,
                             const ADVParams &params) {
     auto const nx = params.nx;
-    auto const nb0 = params.nb0;
-    auto const nb1 = params.nb1;
+    auto const ny = params.ny;
+    auto const ny1 = params.ny1;
 
     // IFDEF ACPP_TARGETS=cuda:sm_80 ... ?
 
-    // On A100 it breaks when nb0 (the first dimension) is >= 65536.
-    constexpr size_t MAX_nb = 65536;
-    if (nb0 < MAX_nb) {
+    // On A100 it breaks when ny (the first dimension) is >= 65536.
+    constexpr size_t MAX_NY = 128;
+    if (ny < MAX_NY) {
         /* If limit not exceeded we return a classical Hierarchical advector */
         AdvX::Hierarchical adv{};
         return adv(Q, buff_fdistrib, params);
     } else {
-        auto n_batch = std::floor(nb0 / MAX_nb)+1;  // should be in constructor
+        double div = static_cast<double>(ny) / static_cast<double>(MAX_NY);
+        auto floor_div = std::floor(div);
+        auto is_int = div == floor_div;
+        auto n_batch = is_int ? div : floor_div + 1; 
 
+        std::cout << "Will process ny=" << ny << " elements with " << n_batch << " batchs" << std::endl;
+
+        //run once without offset
+        // actual_advection(Q, buff_fdistrib, params, MAX_NY-1, 0).wait();
         for (int i_batch = 0; i_batch < n_batch - 1; ++i_batch) {   // can we parallel_for this on multiple GPUs? multiple queues ? or other CUDA streams?
 
-            size_t nb_offset = (i_batch * MAX_nb) - i_batch;
+            size_t ny_offset = (i_batch * MAX_NY);
 
-            // sycl::buffer sub_buff(buff_fdistrib,
-            //                       sycl::id(nb_offset, 0, 0) /*offset*/,
-            //                       sycl::range(MAX_nb - 1, nx, nb1) /*range*/);
-
-            actual_advection(Q, buff_fdistrib, params, MAX_nb-1, nb_offset).wait();
+            actual_advection(Q, buff_fdistrib, params, MAX_NY, ny_offset).wait();
         }
 
         // for the last one we take the rest, we add n_batch-1 because we
         // processed MAX_SIZE-1 each batch
-        auto const nb_size = (nb0 % MAX_nb) + (n_batch - 1);
-        auto const nb_offset = (MAX_nb-1)*(n_batch-1);
+        auto const ny_size = is_int ? MAX_NY : (ny % MAX_NY);// + (n_batch - 1);
+        auto const ny_offset = MAX_NY*(n_batch-1);
 
+        std::cout << "last iter: ny_size="<<ny_size<<", ny_offset="<<ny_offset << std::endl;
+
+        //return the last advection with the rest
         return actual_advection(
             Q, buff_fdistrib, params,
-            nb_size,
-            nb_offset);
+            ny_size,
+            ny_offset);
     }
 }
