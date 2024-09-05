@@ -5,20 +5,20 @@ AdvX::NDRange::operator()(sycl::queue &Q,
                           sycl::buffer<double, 3> &buff_fdistrib,
                           const ADVParams &params) {
     auto const nx = params.nx;
-    auto const nb0 = params.nb0;
-    auto const nb1 = params.nb1;
+    auto const ny = params.ny;
+    auto const ny1 = params.ny1;
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    const sycl::range global_size{nb0, nx, nb1};
+    const sycl::range global_size{ny, nx, ny1};
     const sycl::range local_size{1, nx, 1};
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
             buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
 
-        sycl::local_accessor<double, 1> slice_ftmp(sycl::range{nx}, cgh);
+        sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>(nx), cgh);
 
         cgh.parallel_for(
             sycl::nd_range<3>{global_size, local_size},

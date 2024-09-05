@@ -17,16 +17,16 @@ BM_WgSize(benchmark::State &state){
     /* Benchmark infos */
     state.counters.insert({
         {"gpu", p.gpu},
-        {"nb0", p.nb0},
+        {"ny", p.ny},
         {"nx", p.nx},
-        {"nb1", p.nb1},
+        {"ny1", p.ny1},
         {"kernel_id", kernel_id},
         {"wg_size_x", p.wg_size_x},
     });
 
     /* SYCL setup */
     auto Q = createSyclQueue(p.gpu, state);
-    sycl::buffer<double, 3> fdist(sycl::range<3>(p.nb0, p.nx, p.nb1));
+    sycl::buffer<double, 3> fdist(sycl::range<3>(p.ny, p.nx, p.ny1));
 
     /* Physics setup */
     fill_buffer(Q, fdist, p);
@@ -47,8 +47,8 @@ BM_WgSize(benchmark::State &state){
 
     p.maxIter = state.iterations();
 
-    state.SetItemsProcessed(p.maxIter * p.nb0 * p.nx * p.nb1);
-    state.SetBytesProcessed(p.maxIter * p.nb0 * p.nx * p.nb1 * sizeof(double));
+    state.SetItemsProcessed(p.maxIter * p.ny * p.nx * p.ny1);
+    state.SetBytesProcessed(p.maxIter * p.ny * p.nx * p.ny1 * sizeof(double));
 
     auto err = validate_result(Q, fdist, p, false);
     if (err > 10e-6) {
@@ -60,9 +60,9 @@ BM_WgSize(benchmark::State &state){
 BENCHMARK(BM_WgSize)
     ->ArgsProduct({
         {0, 1}, /*gpu*/
-        NB_RANGE, /*nb0*/
+        NB_RANGE, /*ny*/
         {NX}, /*nx*/
-        NS_RANGE, /*nb1*/
+        NS_RANGE, /*ny1*/
         WG_SIZES_X_RANGE /*wg_size*/
     })
     ->UseRealTime()
@@ -86,16 +86,16 @@ BM_Advector(benchmark::State &state) {
     /* Benchmark infos */
     state.counters.insert({
         {"gpu", p.gpu},
-        {"nb0", p.nb0},
+        {"ny", p.ny},
         {"nx", p.nx},
-        {"nb1", p.nb1},
+        {"ny1", p.ny1},
         {"kernel_id", kernel_id},
         {"wg_size_x", p.wg_size_x},
     });
 
     /* SYCL setup */
     auto Q = createSyclQueue(p.gpu, state);
-    sycl::buffer<double, 3> fdist(sycl::range<3>(p.nb0, p.nx, p.nb1));
+    sycl::buffer<double, 3> fdist(sycl::range<3>(p.ny, p.nx, p.ny1));
 
     /* Physics setup */
     fill_buffer(Q, fdist, p);
@@ -116,8 +116,8 @@ BM_Advector(benchmark::State &state) {
 
     p.maxIter = state.iterations();
 
-    state.SetItemsProcessed(p.maxIter * p.nb0 * p.nx * p.nb1);
-    state.SetBytesProcessed(p.maxIter * p.nb0 * p.nx * p.nb1 * sizeof(double));
+    state.SetItemsProcessed(p.maxIter * p.ny * p.nx * p.ny1);
+    state.SetBytesProcessed(p.maxIter * p.ny * p.nx * p.ny1 * sizeof(double));
 
     state.counters.insert({{"maxIter", p.maxIter}});
 
@@ -137,7 +137,7 @@ BENCHMARK(BM_Advector)
         {1},
         {4096, 8192, 16384, 32768, 65535, 131070, 262140, 524288}, /*ny*/
         {NX}, /*nx*/
-        {1}, /*nb1*/
+        {1}, /*ny1*/
         {AdvImpl::HIER, AdvImpl::EXP1}, /*impl*/
     })
     ->UseRealTime()

@@ -216,9 +216,9 @@ def create_pp_values(dfs_list: list, ny_size: int):
     # we have general structure of pp_val dict of dict
     m_list_df = []  # list of dataframes we will use, same order as hw list
     for df in dfs_list:
-        # we only keep the rows with targeted nb0 size
+        # we only keep the rows with targeted ny size
         m_list_df.append(
-            df.drop(df[(df["nb0"] != ny_size)].index) if df is not None else None
+            df.drop(df[(df["ny"] != ny_size)].index) if df is not None else None
         )
 
     # for i_hw, m_df in enumerate(m_list_df):

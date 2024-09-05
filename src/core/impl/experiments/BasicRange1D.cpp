@@ -6,7 +6,7 @@
 //                                const ADVParams &params) {
 
 //     auto const nx = params.nx;
-//     auto const nb0 = params.nb0;
+//     auto const ny = params.ny;
 //     auto const minRealX = params.minRealX;
 //     auto const dx = params.dx;
 //     auto const inv_dx = params.inv_dx;
@@ -19,7 +19,7 @@
 //         sycl::accessor ftmp(m_global_buff_ftmp, cgh, sycl::write_only,
 //                             sycl::no_init);
 
-//         cgh.parallel_for(sycl::range<1>(nb0), [=](sycl::id<1> itm) {
+//         cgh.parallel_for(sycl::range<1>(ny), [=](sycl::id<1> itm) {
 //             const int ivx = itm[0];
 
 //             for (int ix = 0; ix < nx; ++ix) {

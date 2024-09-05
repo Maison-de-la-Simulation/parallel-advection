@@ -5,13 +5,13 @@ AdvX::ReverseIndexes::operator()(sycl::queue &Q,
                                sycl::buffer<double, 3> &buff_fdistrib,
                                const ADVParams &params) {
     auto const nx = params.nx;
-    auto const nb0 = params.nb0;
-    auto const nb1 = params.nb1;
+    auto const ny = params.ny;
+    auto const ny1 = params.ny1;
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    const sycl::range nb_wg{nb1, 1, nb0};
+    const sycl::range nb_wg{ny1, 1, ny};
     const sycl::range wg_size{1, params.wg_size_x, 1};
 
     return Q.submit([&](sycl::handler &cgh) {
@@ -61,10 +61,10 @@ AdvX::ReverseIndexes::operator()(sycl::queue &Q,
 #else
             g.async_work_group_copy(fdist.get_pointer()
                                         + g.get_group_id(0)
-                                        + g.get_group_id(2) *nb1*nx, /* dest */
+                                        + g.get_group_id(2) *ny1*nx, /* dest */
                                     slice_ftmp.get_pointer(), /* source */
                                     nx, /* n elems */
-                                    nb1  /* stride */
+                                    ny1  /* stride */
             );
 #endif
         });   // end parallel_for_work_group

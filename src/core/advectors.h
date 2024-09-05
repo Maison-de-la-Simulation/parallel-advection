@@ -20,8 +20,8 @@ class BasicRange : public IAdvectorX {
     sycl::buffer<double, 3> m_global_buff_ftmp;
 
   public:
-    BasicRange(const size_t nx, const size_t nvx, const size_t nb1)
-        : m_global_buff_ftmp{sycl::range<3>(nvx, nx, nb1)} {}
+    BasicRange(const size_t nx, const size_t nvx, const size_t ny1)
+        : m_global_buff_ftmp{sycl::range<3>(nvx, nx, ny1)} {}
 
     sycl::event operator()(sycl::queue &Q,
                            sycl::buffer<double, 3> &buff_fdistrib,
@@ -34,8 +34,8 @@ class BasicRange : public IAdvectorX {
 //                            sycl::buffer<double, 3> &buff_fdistrib,
 //                            const ADVParams &params) override;
 
-//     explicit BasicRange2D(const size_t nx, const size_t nvx, const size_t nb1)
-//         : BasicRange(nx, nvx, nb1){};
+//     explicit BasicRange2D(const size_t nx, const size_t nvx, const size_t ny1)
+//         : BasicRange(nx, nvx, ny1){};
 // };
 
 // class BasicRange1D : public BasicRange {
@@ -44,8 +44,8 @@ class BasicRange : public IAdvectorX {
 //                            sycl::buffer<double, 3> &buff_fdistrib,
 //                            const ADVParams &params) override;
 
-//     explicit BasicRange1D(const size_t nx, const size_t nvx, const size_t nb1)
-//         : BasicRange(nx, nvx, nb1){};
+//     explicit BasicRange1D(const size_t nx, const size_t nvx, const size_t ny1)
+//         : BasicRange(nx, nvx, ny1){};
 // };
 
 class Hierarchical : public IAdvectorX {
@@ -187,8 +187,9 @@ class Exp1 : public IAdvectorX {
     sycl::event actual_advection(sycl::queue &Q,
                                  sycl::buffer<double, 3> &buff_fdistrib,
                                  const ADVParams &params,
-                                 const size_t &nb_batch_size,
-                                 const size_t &nb_offset);
+                                 const size_t &ny_batch_size,
+                                 const size_t &ny_offset,
+                                 const size_t &nx_rest_to_malloc);
 
 
   public:

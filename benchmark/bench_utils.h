@@ -43,14 +43,14 @@ static bm_vec_t IMPL_RANGE = {
 // =============================================
 [[nodiscard]] inline ADVParams
 createParams(const bool gpu,
-             const size_t &nb0,
+             const size_t &ny,
              const size_t &nx,
-             const size_t &nb1) {
+             const size_t &ny1) {
     ADVParams p;
 
     p.outputSolution = false;
     p.wg_size_x = 128;
-    p.wg_size_b = 1;
+    p.wg_size_y = 1;
 
     /* Static physicals params*/
     p.dt = 0.001;
@@ -62,8 +62,8 @@ createParams(const bool gpu,
     /* Dynamic benchmark params*/
     p.gpu = gpu;
     p.nx = nx;
-    p.nb0 = nb0;
-    p.nb1 = nb1;
+    p.ny = ny;
+    p.ny1 = ny1;
 
     p.update_deltas();
     return p;

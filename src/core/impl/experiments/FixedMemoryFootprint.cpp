@@ -5,18 +5,18 @@
 //                                        sycl::buffer<double, 2> &buff_fdistrib,
 //                                        const ADVParams &params) noexcept {
 //     auto const nx = params.nx;
-//     auto const nb0 = params.nb0;
+//     auto const ny = params.ny;
 //     auto const minRealX = params.minRealX;
 //     auto const dx = params.dx;
 //     auto const inv_dx = params.inv_dx;
 
 //     /* All this should be done in ctor not in kernel */
 //     auto const NB_SLICES_IN_MEMORY = 10;
-//     auto const NB_TOTAL_ITERATIONS = nb0 / NB_SLICES_IN_MEMORY;
-//     auto const REST_ITERATIONS = nb0 % NB_SLICES_IN_MEMORY;
+//     auto const NB_TOTAL_ITERATIONS = ny / NB_SLICES_IN_MEMORY;
+//     auto const REST_ITERATIONS = ny % NB_SLICES_IN_MEMORY;
 
 //     assert(REST_ITERATIONS ==
-//            0);   // for now nb0 need to be divisible by NB_SLICES
+//            0);   // for now ny need to be divisible by NB_SLICES
 
 //     // sycl::buffer<double, 2> FTMP_BUFF{sycl::range<2>{NB_SLICES_IN_MEMORY,
 //     // nx}};
@@ -24,7 +24,7 @@
 //         nx * NB_SLICES_IN_MEMORY * sizeof(double), Q);
 
 
-//     // const sycl::range<2> global_size{nb0, nx};
+//     // const sycl::range<2> global_size{ny, nx};
 //     // const sycl::range<2> local_size(1, nx);
 
 //     const sycl::range<2> nb_wg{NB_TOTAL_ITERATIONS, 1};

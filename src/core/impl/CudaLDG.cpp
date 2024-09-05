@@ -2,10 +2,10 @@
 
 #ifndef SYCL_IMPLEMENTATION_ONEAPI   // for DPCPP
 HIPSYCL_UNIVERSAL_TARGET
-void optimized_codepaths(double* ptr, int ib, int nx, int nb1, int idx_ipos1, int is, double& value)
+void optimized_codepaths(double* ptr, int ib, int nx, int ny1, int idx_ipos1, int is, double& value)
 {
   __hipsycl_if_target_cuda(
-        value = __ldg(ptr + (ib*nx*nb1+idx_ipos1*nb1+is));
+        value = __ldg(ptr + (ib*nx*ny1+idx_ipos1*ny1+is));
   );
 }
 #endif
@@ -15,13 +15,13 @@ AdvX::CudaLDG::operator()(sycl::queue &Q,
                           sycl::buffer<double, 3> &buff_fdistrib,
                           const ADVParams &params) {
     auto const nx = params.nx;
-    auto const nb0 = params.nb0;
-    auto const nb1 = params.nb1;
+    auto const ny = params.ny;
+    auto const ny1 = params.ny1;
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    const sycl::range nb_wg{nb0, 1, nb1};
+    const sycl::range nb_wg{ny, 1, ny1};
     const sycl::range wg_sise{1, params.wg_size_x, 1};
     // const sycl::range wg_sise{1, nx, 1};
 
@@ -75,11 +75,11 @@ throw std::logic_error("CudaLDG kernel is not compatible with DPCPP");
                         int idx_ipos1 = (nx + ipos1 + k) % nx;
 
                         double v = 0;
-                        optimized_codepaths(ptr, ib, nx, nb1, idx_ipos1, is, v);
-                        // auto value = __ldg(ptr + (ib*nx*nb1+idx_ipos1*nb1+is));
+                        optimized_codepaths(ptr, ib, nx, ny1, idx_ipos1, is, v);
+                        // auto value = __ldg(ptr + (ib*nx*ny1+idx_ipos1*ny1+is));
                         // double value = __ldg(&fdist[ivx][idx_ipos1][iz]);
 
-                        // auto value = *(ptr + (ib*nx*nb1+idx_ipos1*nb1+is));
+                        // auto value = *(ptr + (ib*nx*ny1+idx_ipos1*ny1+is));
 
                         // slice_ftmp[ix] += coef[k] * fdist[ib][idx_ipos1][iz];
                         slice_ftmp[ix] += coef[k] * v;
@@ -88,10 +88,10 @@ throw std::logic_error("CudaLDG kernel is not compatible with DPCPP");
 
             g.async_work_group_copy(fdist.get_pointer()
                                         + g.get_group_id(2)
-                                        + g.get_group_id(0) *nb1*nx, /* dest */
+                                        + g.get_group_id(0) *ny1*nx, /* dest */
                                     slice_ftmp.get_pointer(), /* source */
                                     nx, /* n elems */
-                                    nb1  /* stride */
+                                    ny1  /* stride */
             );
         });   // end parallel_for_work_group
 

@@ -5,13 +5,13 @@ AdvX::ReducedPrecision::operator()(sycl::queue &Q,
                                    sycl::buffer<double, 3> &buff_fdistrib,
                                    const ADVParams &params) {
     auto const nx = params.nx;
-    auto const nb0 = params.nb0;
-    auto const nb1 = params.nb1;
+    auto const ny = params.ny;
+    auto const ny1 = params.ny1;
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    const sycl::range nb_wg{nb0, 1, nb1};
+    const sycl::range nb_wg{ny, 1, ny1};
     const sycl::range wg_size{1, params.wg_size_x, 1};
 
     return Q.submit([&](sycl::handler &cgh) {
