@@ -1,5 +1,13 @@
 #include "IAdvectorX.h"
 #include "advectors.h"
+#include <cstddef>
+#include <experimental/mdspan>
+#include <memory>
+#include <type_traits>
+
+using mdspan_t =
+    std::experimental::mdspan<double, std::experimental::dextents<size_t, 3>,
+                              std::experimental::layout_right>;
 
 // this is streamY + straddlel malloc + twoDimwg
 //  TODO: implement percent_in_global_mem values
@@ -8,9 +16,58 @@
 constexpr size_t MAX_NX_ALLOC = 64;
 constexpr size_t MAX_NY = 128;
 
+template<typename RealType>
 struct StraddledBuffer {
-    // sycl::buffer
-    // sycl::local_accessor
+    template<typename Tp>
+    using ptr_t = std::shared_ptr<Tp>;
+
+    using globAcc2D =
+        typename sycl::accessor<RealType, 2,
+                                sycl::access::mode::discard_read_write,
+                                sycl::target::global_buffer>;
+    using localAcc2D = typename sycl::local_accessor<RealType, 2>;
+
+    ptr_t<globAcc2D> m_global_acc;
+    ptr_t<localAcc2D> m_local_acc;
+    size_t localNy, localNx; //TODO: careful if localNx is different than MAX_NX_ALLOC, we might want that ? For now we stay simple with only localNx == MAX_NX_ALLOC
+    size_t globalNy, globalNx; //size of local buffer
+
+    StraddledBuffer() = delete;
+    StraddledBuffer(const globAcc2D &globalAcc, const localAcc2D &localAcc)
+        : globalNy(globalAcc.get_range().get(0)),
+          globalNx(globalAcc.get_range().get(1)),
+          localNy(localAcc.get_range().get(0)),
+          localNx(localAcc.get_range().get(1)) {
+        m_global_acc = std::make_unique<globAcc2D>(globalAcc);
+        m_local_acc  = std::make_unique<localAcc2D>(localAcc);
+    }
+
+    RealType& operator()(size_t iy, size_t ix) {
+        if(ix < localNx)
+            // return localMdspan()(iy % localNy, ix);
+            return (*m_local_acc)[iy % localNy][ix];
+        else
+            // return globalMdspan()(iy, ix - localNx);
+            return (*m_global_acc)[iy][ix - localNx];
+    }
+    
+    const RealType operator()(size_t iy, size_t ix) const{
+        if(ix < localNx)
+            return localMdspan()(iy % localNy, ix);
+        else
+            return globalMdspan()(iy, ix - localNx);
+    }
+
+private:
+    mdspan_t localMdspan(){return mdspan_t(m_local_acc->get_pointer(), localNy, localNx);}
+    const mdspan_t localMdspan() const {return mdspan_t(m_local_acc->get_pointer(), localNy, localNx);}
+
+    mdspan_t globalMdspan(){return mdspan_t(m_global_acc->get_pointer(), globalNy, globalNx);}
+    const mdspan_t globalMdspan() const {return mdspan_t(m_global_acc->get_pointer(), globalNy, globalNx);}
+    // StraddledBuffer(const float percentage_in_local_mem, const size_t ny,
+    //                 const size_t nx, const size_t ny1, sycl::handler &cgh) {
+    // }
+
 
     // ctor(percentage alloc, ny, nx, ny1, cgh_for_local_accessor)
 
@@ -58,20 +115,13 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
                                          sycl::no_init);
 
     /*What about two kernels the first one fills the overslice as write only
-    memory and the second one fills the local accessor and solves the advection?
-    so we can use read only and write only
-    */
-    // Q.submit([&](sycl::handler &cgh) {
-    //     auto fdist =
-    //         buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
-
-    // }).wait();
+memory and the second one fills the local accessor and solves the advection?*/
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
             buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
 
-        auto overslice_ftmp =
+         StraddledBuffer<double>::globAcc2D overslice_ftmp =
             buff_rest_nx.get_access<sycl::access::mode::discard_read_write>(
                 cgh);
 
@@ -80,8 +130,11 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
         sycl::local_accessor<double, 2> slice_ftmp(
             sycl::range<2>(wg_size_y, local_malloc_size), cgh, sycl::no_init);
 
+
         cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<3> g) {
             // if y1 > 1 //if we have a stide, we transpose, else we copy
+            mdspan_t fdist_view(fdist.get_pointer(), ny, nx, ny1);
+            StraddledBuffer<double> BUFF(overslice_ftmp, slice_ftmp);
 
             /* Copy kernel*/
             g.parallel_for_work_item(
@@ -93,12 +146,17 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
                     const int iy =
                         wg_size_y * g.get_group_id(0) + ny_offset + local_ny;
 
-                    if (ix < MAX_NX_ALLOC) {
-                        slice_ftmp[local_ny][ix] = fdist[iy][ix][iy1];
-                    } else {
-                        overslice_ftmp[iy][ix - MAX_NX_ALLOC] =
-                            fdist[iy][ix][iy1];
-                    }
+
+                    BUFF(iy, ix) = fdist_view(iy, ix, iy1);
+                    // if (ix < MAX_NX_ALLOC) {
+                    //     // slice_ftmp[local_ny][ix] = fdist[iy][ix][iy1];
+                    //     (*BUFF.m_local_acc)[local_ny][ix] = fdist_view(iy, ix, iy1);
+                    //     // slice_ftmp[local_ny][ix] = fdist_view(iy, ix, iy1);
+                    // } else {
+                    //     (*BUFF.m_global_acc)[iy][ix - MAX_NX_ALLOC] = fdist_view(iy, ix, iy1);
+                    //     // overslice_ftmp[iy][ix - MAX_NX_ALLOC] = fdist_view(iy, ix, iy1);
+                    //     // fdist[iy][ix][iy1];
+                    // }
                 });   // barrier
 
             /* Solve kernel */
@@ -125,21 +183,24 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
 
                     const int ipos1 = leftNode - LAG_OFFSET;
 
-                    fdist[iy][ix][iy1] = 0.;
+                    fdist_view(iy, ix, iy1) = 0.;
                     for (int k = 0; k <= LAG_ORDER; k++) {
                         int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-                        if (idx_ipos1 < MAX_NX_ALLOC) {
-                            fdist[iy][ix][iy1] +=
-                                coef[k] * slice_ftmp[local_ny][idx_ipos1];
-                        } else {
-                            fdist[iy][ix][iy1] +=
-                                coef[k] *
-                                overslice_ftmp[iy][idx_ipos1 - MAX_NX_ALLOC];
-                        }
+                        fdist_view(iy, ix, iy1) +=
+                                coef[k] * BUFF(iy, idx_ipos1);
 
-                        // fdist[iy][ix][iy1] +=
-                        //     coef[k] * slice_ftmp[local_ny][idx_ipos1];
+                        // if (idx_ipos1 < MAX_NX_ALLOC) {
+                        //     fdist_view(iy, ix, iy1) +=
+                        //         coef[k] * (*BUFF.m_local_acc)[local_ny][idx_ipos1];
+                        //         // coef[k] * slice_ftmp[local_ny][idx_ipos1];
+                        // } else {
+                        //     fdist_view(iy, ix, iy1) +=
+                        //         coef[k] *
+                        //         (*BUFF.m_global_acc)[iy][idx_ipos1 - MAX_NX_ALLOC];
+                        //         // overslice_ftmp[iy][idx_ipos1 - MAX_NX_ALLOC];
+                        // }
+
                     }
                 });   // end parallel_for_work_item --> Implicit barrier
         });           // end parallel_for_work_group
