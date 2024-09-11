@@ -20,10 +20,10 @@
 //                             sycl::no_init);
 
 //         cgh.parallel_for(sycl::range<1>(ny), [=](sycl::id<1> itm) {
-//             const int ivx = itm[0];
+//             const int iy = itm[0];
 
 //             for (int ix = 0; ix < nx; ++ix) {
-//                 double const xFootCoord = displ(ix, ivx, params);
+//                 double const xFootCoord = displ(ix, iy, params);
 
 //                 // Corresponds to the index of the cell to the left of footCoord
 //                 const int leftNode =
@@ -37,11 +37,11 @@
 
 //                 const int ipos1 = leftNode - LAG_OFFSET;
 
-//                 ftmp[ivx][ix] = 0;
+//                 ftmp[iy][ix] = 0;
 //                 for (int k = 0; k <= LAG_ORDER; k++) {
 //                     int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-//                     ftmp[ivx][ix] += coef[k] * fdist[ivx][idx_ipos1];
+//                     ftmp[iy][ix] += coef[k] * fdist[iy][idx_ipos1];
 
 //                 }   // end for k
 //             }       // end for ix

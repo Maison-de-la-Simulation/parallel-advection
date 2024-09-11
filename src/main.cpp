@@ -14,18 +14,13 @@ advection(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
           sref::unique_ref<IAdvectorX> &advector, const ADVParams &params) {
 
     auto static const maxIter = params.maxIter;
-    /* First iteration not timed */
-    advector(Q, buff_fdistrib, params).wait_and_throw();
 
     auto start = std::chrono::high_resolution_clock::now();
     // Time loop
-    for (auto t = 0; t < maxIter-1; ++t) {
-        // If it's last iteration, we wait
-        if (t == maxIter - 2)
-            advector(Q, buff_fdistrib, params).wait_and_throw();
-        else
-            advector(Q, buff_fdistrib, params);
+    for (auto t = 0; t < maxIter; ++t) {
+        advector(Q, buff_fdistrib, params);
     }   // end for t < T
+    Q.wait_and_throw();
     auto end = std::chrono::high_resolution_clock::now();
 
     return (end - start);
@@ -94,7 +89,7 @@ main(int argc, char **argv) {
     std::cout << "PERF_DIAGS:" << std::endl;
     std::cout << "elapsed_time: " << elapsed_seconds.count() << " s\n";
 
-    auto gcells = ((ny*nx*ny1*(maxIter-1)) / elapsed_seconds.count()) / 1e9;
+    auto gcells = ((ny*nx*ny1*(maxIter)) / elapsed_seconds.count()) / 1e9;
     std::cout << "upd_cells_per_sec: " << gcells << " Gcell/sec\n";
     std::cout << "estimated_throughput: " << gcells * sizeof(double) * 2
               << " GB/s" << std::endl;

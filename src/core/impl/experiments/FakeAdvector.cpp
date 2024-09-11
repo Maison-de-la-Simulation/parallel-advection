@@ -14,9 +14,9 @@
 
 //         cgh.parallel_for(buff_fdistrib.get_range(), [=](sycl::id<2> itm) {
 //             const int ix = itm[1];
-//             const int ivx = itm[0];
+//             const int iy = itm[0];
 
-//             fdist[ivx][ix] += 1;
+//             fdist[iy][ix] += 1;
 //         });   // end parallel_for
 //     });       // end Q.submit
 // }

@@ -18,10 +18,10 @@ AdvX::BasicRange::operator()(sycl::queue &Q,
 
         cgh.parallel_for(buff_fdistrib.get_range(), [=](sycl::id<3> itm) {
             const int ix = itm[1];
-            const int ivx = itm[0];
+            const int iy = itm[0];
             const int iz = itm[2];
 
-            double const xFootCoord = displ(ix, ivx, params);
+            double const xFootCoord = displ(ix, iy, params);
 
             // Corresponds to the index of the cell to the left of footCoord
             const int leftNode =
@@ -35,11 +35,11 @@ AdvX::BasicRange::operator()(sycl::queue &Q,
 
             const int ipos1 = leftNode - LAG_OFFSET;
 
-            ftmp[ivx][ix][iz] = 0;   // initializing slice for each work item
+            ftmp[iy][ix][iz] = 0;   // initializing slice for each work item
             for (int k = 0; k <= LAG_ORDER; k++) {
                 int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-                ftmp[ivx][ix][iz] += coef[k] * fdist[ivx][idx_ipos1][iz];
+                ftmp[iy][ix][iz] += coef[k] * fdist[iy][idx_ipos1][iz];
             }
 
             // barrier

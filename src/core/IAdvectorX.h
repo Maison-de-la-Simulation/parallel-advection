@@ -56,7 +56,7 @@ class IAdvectorX {
     // ==========================================
     /* Computes the covered distance by x during dt. returns the feet coord */
     [[nodiscard]] static inline __attribute__((always_inline)) double
-    displ(const int ix, const int ivx, const ADVParams &params) noexcept {
+    displ(const int ix, const int iy, const ADVParams &params) noexcept {
         auto const minRealX = params.minRealX;
         auto const minRealVx = params.minRealVx;
         auto const dx = params.dx;
@@ -65,7 +65,7 @@ class IAdvectorX {
         auto const realWidthX = params.realWidthX;
 
         double const x = coord(ix, minRealX, dx);
-        double const vx = coord(ivx, minRealVx, dvx);
+        double const vx = coord(iy, minRealVx, dvx);
 
         double const displx = dt * vx;
 
@@ -77,7 +77,7 @@ class IAdvectorX {
     // ==========================================
     [[nodiscard]] static inline __attribute__((always_inline)) double
     displ(const int ix,
-          const int ivx,
+          const int iy,
           const double minRealX,
           const double minRealVx,
           const double realWidthX,
@@ -87,7 +87,7 @@ class IAdvectorX {
           ) noexcept {
 
         double const x = coord(ix, minRealX, dx);
-        double const vx = coord(ivx, minRealVx, dvx);
+        double const vx = coord(iy, minRealVx, dvx);
 
         double const displx = dt * vx;
 

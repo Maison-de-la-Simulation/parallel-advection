@@ -42,9 +42,9 @@ AdvX::TwoDimWG::operator()(sycl::queue &Q,
                     const int iz = g.get_group_id(2);
 
                     const int local_ny = it.get_local_id(0);
-                    const int ivx = wg_size_y * g.get_group_id(0) + local_ny;
+                    const int iy = wg_size_y * g.get_group_id(0) + local_ny;
 
-                    double const xFootCoord = displ(ix, ivx, params);
+                    double const xFootCoord = displ(ix, iy, params);
 
                     // index of the cell to the left of footCoord
                     const int leftNode =
@@ -63,7 +63,7 @@ AdvX::TwoDimWG::operator()(sycl::queue &Q,
                     for (int k = 0; k <= LAG_ORDER; k++) {
                         int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-                        slice_ftmp[local_ny][ix] += coef[k] * fdist[ivx][idx_ipos1][iz];
+                        slice_ftmp[local_ny][ix] += coef[k] * fdist[iy][idx_ipos1][iz];
                     }
                 });   // end parallel_for_work_item --> Implicit barrier
 
@@ -73,9 +73,9 @@ AdvX::TwoDimWG::operator()(sycl::queue &Q,
                                          const int iz = g.get_group_id(2);
 
                                          const int local_ny = it.get_local_id(0);
-                                         const int ivx = wg_size_y * g.get_group_id(0) + local_ny;
+                                         const int iy = wg_size_y * g.get_group_id(0) + local_ny;
 
-                                         fdist[ivx][ix][iz] = slice_ftmp[local_ny][ix];
+                                         fdist[iy][ix][iz] = slice_ftmp[local_ny][ix];
                                      });
 
             // g.async_work_group_copy(fdist.get_pointer()

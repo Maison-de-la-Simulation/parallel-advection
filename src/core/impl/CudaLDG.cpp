@@ -77,7 +77,7 @@ throw std::logic_error("CudaLDG kernel is not compatible with DPCPP");
                         double v = 0;
                         optimized_codepaths(ptr, ib, nx, ny1, idx_ipos1, is, v);
                         // auto value = __ldg(ptr + (ib*nx*ny1+idx_ipos1*ny1+is));
-                        // double value = __ldg(&fdist[ivx][idx_ipos1][iz]);
+                        // double value = __ldg(&fdist[iy][idx_ipos1][iz]);
 
                         // auto value = *(ptr + (ib*nx*ny1+idx_ipos1*ny1+is));
 

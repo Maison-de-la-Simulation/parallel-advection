@@ -47,18 +47,18 @@
 //     //             g.parallel_for_work_item(
 //     //                 sycl::range(1, nx), [&](sycl::h_item<2> item) {
 //     //                     const int ix = item.get_global_id(1);
-//     //                     const int ivx =
+//     //                     const int iy =
 //     //                         item.get_global_id(0) + first_row_number;
 
-//     //                     buff_ftmp[ix + nx * row_number] = fdist[ivx][ix];
+//     //                     buff_ftmp[ix + nx * row_number] = fdist[iy][ix];
 //     //                 });
 
 //     //             g.parallel_for_work_item(
 //     //                 sycl::range<2>(1, nx), [&](sycl::h_item<2> it) {
 //     //                     const int ix = it.get_global_id(1);
-//     //                     const int ivx = it.get_global_id(0) + first_row_number;
+//     //                     const int iy = it.get_global_id(0) + first_row_number;
 
-//     //                     double const xFootCoord = displ(ix, ivx, params);
+//     //                     double const xFootCoord = displ(ix, iy, params);
 
 //     //                     // Corresponds to the index of the cell to the left of
 //     //                     // footCoord
@@ -74,10 +74,10 @@
 
 //     //                     const int ipos1 = leftNode - LAG_OFFSET;
 
-//     //                     fdist[ivx][ix] = 0;
+//     //                     fdist[iy][ix] = 0;
 //     //                     for (int k = 0; k <= LAG_ORDER; k++) {
 //     //                         int idx_ipos1 = (nx + ipos1 + k) % nx;
-//     //                         fdist[ivx][ix] +=
+//     //                         fdist[iy][ix] +=
 //     //                             coef[k] * buff_ftmp[idx_ipos1 + nx * row_number];
 //     //                     }
 //     //                 });   // end parallel_for_work_item --> Implicit barrier

@@ -41,13 +41,13 @@ AdvX::StraddledMalloc::adv_opt3(sycl::queue &Q,
             g.parallel_for_work_item(
                 sycl::range{1, nx, 1}, [&](sycl::h_item<3> it) {
                     const int ix = it.get_local_id(1);
-                    const int ivx = g.get_group_id(0);
+                    const int iy = g.get_group_id(0);
                     const int iz = g.get_group_id(2);
 
                     //if ix > 6144; we use overslice_ftmp with index ix-MAX_NX_ALLOC
                     //else we use slice_ftmp
 
-                    double const xFootCoord = displ(ix, ivx, params);
+                    double const xFootCoord = displ(ix, iy, params);
 
                     // index of the cell to the left of footCoord
                     const int leftNode =
@@ -67,15 +67,15 @@ AdvX::StraddledMalloc::adv_opt3(sycl::queue &Q,
                         for (int k = 0; k <= LAG_ORDER; k++) {
                             int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-                            slice_ftmp[ix] += coef[k] * fdist[ivx][idx_ipos1][iz];
+                            slice_ftmp[ix] += coef[k] * fdist[iy][idx_ipos1][iz];
                         }
                     }
                     else{
-                        overslice_ftmp[ivx][ix-MAX_NX_ALLOC][iz] = 0.;
+                        overslice_ftmp[iy][ix-MAX_NX_ALLOC][iz] = 0.;
                         for (int k = 0; k <= LAG_ORDER; k++) {
                             int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-                            overslice_ftmp[ivx][ix-MAX_NX_ALLOC][iz] += coef[k] * fdist[ivx][idx_ipos1][iz];
+                            overslice_ftmp[iy][ix-MAX_NX_ALLOC][iz] += coef[k] * fdist[iy][idx_ipos1][iz];
                         }
 
                     }
@@ -84,13 +84,13 @@ AdvX::StraddledMalloc::adv_opt3(sycl::queue &Q,
             g.parallel_for_work_item(sycl::range{1, nx, 1},
                                      [&](sycl::h_item<3> it) {
                                          const int ix = it.get_local_id(1);
-                                         const int ivx = g.get_group_id(0);
+                                         const int iy = g.get_group_id(0);
                                          const int iz = g.get_group_id(2);
 
                                         if(ix < MAX_NX_ALLOC)                                         
-                                            fdist[ivx][ix][iz] = slice_ftmp[ix];
+                                            fdist[iy][ix][iz] = slice_ftmp[ix];
                                         else
-                                            fdist[ivx][ix][iz] = overslice_ftmp[ivx][ix-MAX_NX_ALLOC][iz];
+                                            fdist[iy][ix][iz] = overslice_ftmp[iy][ix-MAX_NX_ALLOC][iz];
                                      });
         });   // end parallel_for_work_group
     });       // end Q.submit

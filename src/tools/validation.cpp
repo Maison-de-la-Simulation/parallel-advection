@@ -15,7 +15,7 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
     auto const maxIter = params.maxIter;
 
     std::vector<double> all_l1_errors(params.ny1);
-    for (size_t iz=0; iz < params.ny1; iz++) {
+    for (size_t iy1=0; iy1 < params.ny1; iy1++) {
 
         double errorL1 = 0.0;
         {
@@ -40,11 +40,11 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
                  cgh.parallel_for(buff_fdistrib.get_range(), errorl1_reduc,
                                   [=](auto itm, auto &errorl1_reduc) {
                                       auto ix = itm[1];
-                                      auto ivx = itm[0];
-                                      auto f = fdist[itm];
+                                      auto iy = itm[0];
+                                      auto f = fdist[iy][ix][iy1];
 
                                       double const x = minRealX + ix * dx;
-                                      double const v = minRealVx + ivx * dvx;
+                                      double const v = minRealVx + iy * dvx;
                                       double const t = maxIter * dt;
 
                                       auto value =
@@ -56,7 +56,7 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
              });
         }
 
-        all_l1_errors[iz] = errorL1 / (params.nx * params.ny);
+        all_l1_errors[iy1] = errorL1 / (params.nx * params.ny);
     }
 
     auto highest_l1 =
