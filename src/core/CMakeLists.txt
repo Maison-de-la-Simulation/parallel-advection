@@ -13,7 +13,7 @@ target_sources(core
   # impl/HierarchicalAlloca.cpp
   # impl/FixedMemoryFootprint.cpp
   impl/StreamY.cpp
-  impl/ReducedPrecision.cpp
+  # impl/ReducedPrecision.cpp
   impl/StraddledMalloc.cpp
   impl/ReverseIndexes.cpp
   impl/TwoDimWG.cpp
