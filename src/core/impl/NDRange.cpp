@@ -25,7 +25,7 @@ AdvX::NDRange::operator()(sycl::queue &Q,
             [=](auto itm) {
                 const int ix = itm.get_local_id(1);
                 const int iy = itm.get_global_id(0);
-                const int iz = itm.get_global_id(2);
+                const int iy1 = itm.get_global_id(2);
 
                 double const xFootCoord = displ(ix, iy, params);
 
@@ -44,11 +44,11 @@ AdvX::NDRange::operator()(sycl::queue &Q,
                 for (int k = 0; k <= LAG_ORDER; k++) {
                     int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-                    slice_ftmp[ix] += coef[k] * fdist[iy][idx_ipos1][iz];
+                    slice_ftmp[ix] += coef[k] * fdist[iy][idx_ipos1][iy1];
                 }
 
                 sycl::group_barrier(itm.get_group());
-                fdist[iy][ix][iz] = slice_ftmp[ix];
+                fdist[iy][ix][iy1] = slice_ftmp[ix];
             }   // end lambda in parallel_for
         );      // end parallel_for nd_range
     });         // end Q.submit

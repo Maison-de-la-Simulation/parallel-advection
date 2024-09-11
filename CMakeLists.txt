@@ -1,6 +1,8 @@
 cmake_minimum_required (VERSION 3.20)
 
 project(SYCL-Advection LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(preventBuildInSource) # Prevent from build-in source tree
@@ -27,6 +29,7 @@ else()
 endif()
 
 add_subdirectory(src)
+add_subdirectory(thirdparty/mdspan)
 
 ################################################################################
 if("${ADVECTION_BUILD_BENCHMARKS}")

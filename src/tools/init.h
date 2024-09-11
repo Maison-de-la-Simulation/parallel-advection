@@ -2,7 +2,6 @@
 #include "unique_ref.h"
 #include <sycl/sycl.hpp>
 #include <advectors.h>
-// #include <AdvectionParams.h>
 
 // ==========================================
 // ==========================================

@@ -20,11 +20,11 @@ TEST(Init, FillBufferWithDefaultParams){
 
     sycl::host_accessor fdist(buff_fdistrib, sycl::read_only);
 
-    for (auto iz = 0; iz < ny1; ++iz) {
+    for (auto iy1 = 0; iy1 < ny1; ++iy1) {
         for (auto iv = 0; iv < ny; ++iv) {
             for (auto ix = 0; ix < nx; ++ix) {
                 double x = params.minRealX + ix * params.dx;
-                EXPECT_NEAR(fdist[iv][ix][iz], sycl::sin(4 * x * M_PI), EPS);
+                EXPECT_NEAR(fdist[iv][ix][iy1], sycl::sin(4 * x * M_PI), EPS);
             }
         }
     }
@@ -49,11 +49,11 @@ TEST(Init, FillBufferWithRandomParams){
 
     sycl::host_accessor fdist(buff_fdistrib, sycl::read_only);
 
-    for (auto iz = 0; iz < r3d.get(2); ++iz) {
+    for (auto iy1 = 0; iy1 < r3d.get(2); ++iy1) {
         for (auto ix = 0; ix < r3d.get(1); ++ix) {
             for (auto iv = 0; iv < r3d.get(0); ++iv) {
                 double x = params.minRealX + ix * params.dx;
-                EXPECT_NEAR(fdist[iv][ix][iz], sycl::sin(4 * x * M_PI), EPS);
+                EXPECT_NEAR(fdist[iv][ix][iy1], sycl::sin(4 * x * M_PI), EPS);
             }
         }
     }

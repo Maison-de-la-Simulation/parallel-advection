@@ -26,7 +26,7 @@ throw std::logic_error("Scoped kernel is not compatible with DPCPP");
                 sycl::distribute_items_and_wait(g, [&](auto /*sycl::s_item<3>*/ it) {
                     const int ix = it.get_local_id(g, 1);
                     const int iy = g.get_group_id(0);
-                    const int iz = g.get_group_id(2);
+                    const int iy1 = g.get_group_id(2);
 
                     double const xFootCoord = displ(ix, iy, params);
 
@@ -48,7 +48,7 @@ throw std::logic_error("Scoped kernel is not compatible with DPCPP");
                     for (int k = 0; k <= LAG_ORDER; k++) {
                         int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-                        slice_ftmp[ix] += coef[k] * fdist[iy][idx_ipos1][iz];
+                        slice_ftmp[ix] += coef[k] * fdist[iy][idx_ipos1][iy1];
                     }
                 });   // end distribute items
 
@@ -63,9 +63,9 @@ throw std::logic_error("Scoped kernel is not compatible with DPCPP");
                 // sycl::distribute_items_and_wait(g, [&](auto it) {
                 //     const int ix = it.get_local_id(g, 1);
                 //     const int iy = g.get_group_id(0);
-                //     const int iz = g.get_group_id(2);
+                //     const int iy1 = g.get_group_id(2);
 
-                //     fdist[iy][ix][iz] = slice_ftmp[ix];
+                //     fdist[iy][ix][iy1] = slice_ftmp[ix];
                 // });
         }); // end parallel regions
 #endif

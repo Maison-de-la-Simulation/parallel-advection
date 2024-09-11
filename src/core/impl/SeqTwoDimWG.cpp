@@ -39,19 +39,19 @@ AdvX::SeqTwoDimWG::operator()(sycl::queue &Q,
             g.parallel_for_work_item(sycl::range{wg_size_y, nx, 1},
                                      [&](sycl::h_item<3> it) {
                                          const int ix = it.get_local_id(1);
-                                         const int iz = g.get_group_id(2);
+                                         const int iy1 = g.get_group_id(2);
 
                                          const int local_ny = it.get_local_id(0);
                                          const int iy = wg_size_y * g.get_group_id(0) + local_ny;
 
-                                         slice_ftmp[local_ny][ix] = fdist[iy][ix][iz];
+                                         slice_ftmp[local_ny][ix] = fdist[iy][ix][iy1];
                                      });
 
 
             g.parallel_for_work_item(
                 sycl::range{1, nx, 1}, [&](sycl::h_item<3> it) {
                     const int ix = it.get_local_id(1);
-                    const int iz = g.get_group_id(2);
+                    const int iy1 = g.get_group_id(2);
 
                     // int local_iy = it.get_global_id(0);
                     // get_local_id(0);
@@ -75,11 +75,11 @@ AdvX::SeqTwoDimWG::operator()(sycl::queue &Q,
 
                         const int ipos1 = leftNode - LAG_OFFSET;
 
-                        fdist[iy][ix][iz] = 0.;
+                        fdist[iy][ix][iy1] = 0.;
                         for (int k = 0; k <= LAG_ORDER; k++) {
                             int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-                            fdist[iy][ix][iz] += coef[k] * slice_ftmp[iiy][idx_ipos1];
+                            fdist[iy][ix][iy1] += coef[k] * slice_ftmp[iiy][idx_ipos1];
                         }
                     }
 

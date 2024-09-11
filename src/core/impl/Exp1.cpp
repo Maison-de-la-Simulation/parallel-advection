@@ -87,17 +87,17 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
             g.parallel_for_work_item(
                 sycl::range{wg_size_y, nx, 1}, [&](sycl::h_item<3> it) {
                     const int ix = it.get_local_id(1);
-                    const int iz = g.get_group_id(2);
+                    const int iy1 = g.get_group_id(2);
 
                     const int local_ny = it.get_local_id(0);
                     const int iy =
                         wg_size_y * g.get_group_id(0) + ny_offset + local_ny;
 
                     if (ix < MAX_NX_ALLOC) {
-                        slice_ftmp[local_ny][ix] = fdist[iy][ix][iz];
+                        slice_ftmp[local_ny][ix] = fdist[iy][ix][iy1];
                     } else {
                         overslice_ftmp[iy][ix - MAX_NX_ALLOC] =
-                            fdist[iy][ix][iz];
+                            fdist[iy][ix][iy1];
                     }
                 });   // barrier
 
@@ -105,7 +105,7 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
             g.parallel_for_work_item(
                 sycl::range{wg_size_y, nx, 1}, [&](sycl::h_item<3> it) {
                     const int ix = it.get_local_id(1);
-                    const int iz = g.get_group_id(2);
+                    const int iy1 = g.get_group_id(2);
 
                     const int local_ny = it.get_local_id(0);
                     const int iy =
@@ -125,20 +125,20 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
 
                     const int ipos1 = leftNode - LAG_OFFSET;
 
-                    fdist[iy][ix][iz] = 0.;
+                    fdist[iy][ix][iy1] = 0.;
                     for (int k = 0; k <= LAG_ORDER; k++) {
                         int idx_ipos1 = (nx + ipos1 + k) % nx;
 
                         if (idx_ipos1 < MAX_NX_ALLOC) {
-                            fdist[iy][ix][iz] +=
+                            fdist[iy][ix][iy1] +=
                                 coef[k] * slice_ftmp[local_ny][idx_ipos1];
                         } else {
-                            fdist[iy][ix][iz] +=
+                            fdist[iy][ix][iy1] +=
                                 coef[k] *
                                 overslice_ftmp[iy][idx_ipos1 - MAX_NX_ALLOC];
                         }
 
-                        // fdist[iy][ix][iz] +=
+                        // fdist[iy][ix][iy1] +=
                         //     coef[k] * slice_ftmp[local_ny][idx_ipos1];
                     }
                 });   // end parallel_for_work_item --> Implicit barrier

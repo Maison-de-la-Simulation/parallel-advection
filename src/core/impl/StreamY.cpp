@@ -36,7 +36,7 @@ AdvX::StreamY::actual_advection(sycl::queue &Q,
                 sycl::range{1, nx, 1}, [&](sycl::h_item<3> it) {
                     const int ix = it.get_local_id(1);
                     const int iy = g.get_group_id(0) + ny_offset;
-                    const int iz = g.get_group_id(2);
+                    const int iy1 = g.get_group_id(2);
 
                     double const xFootCoord = displ(ix, iy, params);
 
@@ -56,7 +56,7 @@ AdvX::StreamY::actual_advection(sycl::queue &Q,
                     for (int k = 0; k <= LAG_ORDER; k++) {
                         int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-                        slice_ftmp[ix] += coef[k] * fdist[iy][idx_ipos1][iz];
+                        slice_ftmp[ix] += coef[k] * fdist[iy][idx_ipos1][iy1];
                     }
                 });   // end parallel_for_work_item --> Implicit barrier
 
@@ -65,9 +65,9 @@ AdvX::StreamY::actual_advection(sycl::queue &Q,
                 sycl::range{1, nx, 1}, [&](sycl::h_item<3> it) {
                     const int ix = it.get_local_id(1);
                     const int iy = g.get_group_id(0) + ny_offset;
-                    const int iz = g.get_group_id(2);
+                    const int iy1 = g.get_group_id(2);
 
-                    fdist[iy][ix][iz] = slice_ftmp[ix];
+                    fdist[iy][ix][iy1] = slice_ftmp[ix];
                 });
 #else
             g.async_work_group_copy(fdist.get_pointer() + g.get_group_id(2) +

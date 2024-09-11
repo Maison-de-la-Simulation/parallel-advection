@@ -14,7 +14,7 @@ AdvX::Sequential::operator()([[maybe_unused]] sycl::queue &Q,
     std::vector<double> slice_ftmp(nx);
     sycl::host_accessor fdist(buff_fdistrib, sycl::read_write);
 
-    for (auto iz = 0; iz < ny1; ++iz) {
+    for (auto iy1 = 0; iy1 < ny1; ++iy1) {
         for (auto iv = 0; iv < ny; ++iv) {
 
             for (int iix = 0; iix < nx; ++iix) {

@@ -42,7 +42,7 @@ AdvX::StraddledMalloc::adv_opt3(sycl::queue &Q,
                 sycl::range{1, nx, 1}, [&](sycl::h_item<3> it) {
                     const int ix = it.get_local_id(1);
                     const int iy = g.get_group_id(0);
-                    const int iz = g.get_group_id(2);
+                    const int iy1 = g.get_group_id(2);
 
                     //if ix > 6144; we use overslice_ftmp with index ix-MAX_NX_ALLOC
                     //else we use slice_ftmp
@@ -67,15 +67,15 @@ AdvX::StraddledMalloc::adv_opt3(sycl::queue &Q,
                         for (int k = 0; k <= LAG_ORDER; k++) {
                             int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-                            slice_ftmp[ix] += coef[k] * fdist[iy][idx_ipos1][iz];
+                            slice_ftmp[ix] += coef[k] * fdist[iy][idx_ipos1][iy1];
                         }
                     }
                     else{
-                        overslice_ftmp[iy][ix-MAX_NX_ALLOC][iz] = 0.;
+                        overslice_ftmp[iy][ix-MAX_NX_ALLOC][iy1] = 0.;
                         for (int k = 0; k <= LAG_ORDER; k++) {
                             int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-                            overslice_ftmp[iy][ix-MAX_NX_ALLOC][iz] += coef[k] * fdist[iy][idx_ipos1][iz];
+                            overslice_ftmp[iy][ix-MAX_NX_ALLOC][iy1] += coef[k] * fdist[iy][idx_ipos1][iy1];
                         }
 
                     }
@@ -85,12 +85,12 @@ AdvX::StraddledMalloc::adv_opt3(sycl::queue &Q,
                                      [&](sycl::h_item<3> it) {
                                          const int ix = it.get_local_id(1);
                                          const int iy = g.get_group_id(0);
-                                         const int iz = g.get_group_id(2);
+                                         const int iy1 = g.get_group_id(2);
 
                                         if(ix < MAX_NX_ALLOC)                                         
-                                            fdist[iy][ix][iz] = slice_ftmp[ix];
+                                            fdist[iy][ix][iy1] = slice_ftmp[ix];
                                         else
-                                            fdist[iy][ix][iz] = overslice_ftmp[iy][ix-MAX_NX_ALLOC][iz];
+                                            fdist[iy][ix][iy1] = overslice_ftmp[iy][ix-MAX_NX_ALLOC][iy1];
                                      });
         });   // end parallel_for_work_group
     });       // end Q.submit

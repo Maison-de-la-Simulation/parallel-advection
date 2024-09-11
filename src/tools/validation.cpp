@@ -30,7 +30,7 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
 #ifdef SYCL_IMPLEMENTATION_ONEAPI   // for DPCPP
                  auto errorl1_reduc =
                      sycl::reduction(errorl1_buff, cgh, sycl::plus<>());
-#else   // for openSYCL
+#else // for openSYCL
                  sycl::accessor errorl1_acc(errorl1_buff, cgh,
                                             sycl::read_write);
                  auto errorl1_reduc =

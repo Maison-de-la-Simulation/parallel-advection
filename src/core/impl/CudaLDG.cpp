@@ -77,11 +77,11 @@ throw std::logic_error("CudaLDG kernel is not compatible with DPCPP");
                         double v = 0;
                         optimized_codepaths(ptr, ib, nx, ny1, idx_ipos1, is, v);
                         // auto value = __ldg(ptr + (ib*nx*ny1+idx_ipos1*ny1+is));
-                        // double value = __ldg(&fdist[iy][idx_ipos1][iz]);
+                        // double value = __ldg(&fdist[iy][idx_ipos1][iy1]);
 
                         // auto value = *(ptr + (ib*nx*ny1+idx_ipos1*ny1+is));
 
-                        // slice_ftmp[ix] += coef[k] * fdist[ib][idx_ipos1][iz];
+                        // slice_ftmp[ix] += coef[k] * fdist[ib][idx_ipos1][iy1];
                         slice_ftmp[ix] += coef[k] * v;
                     }
                 });   // end parallel_for_work_item --> Implicit barrier

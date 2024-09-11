@@ -1,8 +1,6 @@
 #include "init.h"
 #include "unique_ref.h"
 #include <advectors.h>
-// #include <AdvectionParams.h>
-// #include <sycl/sycl.hpp>
 
 // To switch case on a str
 [[nodiscard]] constexpr unsigned int
@@ -25,9 +23,10 @@ kernel_impl_factory(const ADVParamsNonCopyable &params) {
     case str2int("Sequential"):
         return sref::make_unique<AdvX::Sequential>();
     case str2int("BasicRange"):
-        return sref::make_unique<AdvX::BasicRange>(params.nx, params.ny, params.ny1);
+        return sref::make_unique<AdvX::BasicRange>(params.nx, params.ny,
+                                                   params.ny1);
     // case str2int("BasicRange1D"):
-        // return sref::make_unique<AdvX::BasicRange1D>(params.nx, params.ny);
+    // return sref::make_unique<AdvX::BasicRange1D>(params.nx, params.ny);
     case str2int("Hierarchical"):
         return sref::make_unique<AdvX::Hierarchical>();
     // case str2int("HierarchicalAlloca"):

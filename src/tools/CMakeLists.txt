@@ -12,5 +12,6 @@ else()
 endif()
 
 target_link_libraries(tools PUBLIC adv1d::config adv1d::core)
+target_include_directories(tools PUBLIC ${CMAKE_SOURCE_DIR}/src/tools)
 
 add_library(adv1d::tools ALIAS tools)
