@@ -17,7 +17,7 @@ advection(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
 
     auto start = std::chrono::high_resolution_clock::now();
     // Time loop
-    for (auto t = 0; t < maxIter; ++t) {
+    for (size_t t = 0; t < maxIter; ++t) {
         advector(Q, buff_fdistrib, params);
     }   // end for t < T
     Q.wait_and_throw();

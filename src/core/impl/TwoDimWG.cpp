@@ -13,7 +13,7 @@ AdvX::TwoDimWG::operator()(sycl::queue &Q,
     auto const inv_dx = params.inv_dx;
 
     auto const wg_size_y = params.wg_size_y;
-    auto const wg_size_x = params.wg_size_x;
+    // auto const wg_size_x = params.wg_size_x;
 
     /* ny must be divisible by slice_size_dim_y */
     if(ny%wg_size_y != 0){

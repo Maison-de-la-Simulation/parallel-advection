@@ -3,12 +3,6 @@
 
 constexpr size_t MAX_NX_ALLOC = 6144; //A100
 
-// AdvX::StraddledMalloc::StraddledMalloc(const ADVParams &params){
-//     auto n_batch = std::ceil(params.ny / MAX_NY); //should be in
-//     constructor
-
-// }
-
 // ==========================================
 // ==========================================
 sycl::event
@@ -26,7 +20,6 @@ AdvX::StraddledMalloc::adv_opt3(sycl::queue &Q,
     const sycl::range nb_wg{ny, 1, ny1};
     const sycl::range wg_size{1, params.wg_size_x, 1};
 
-    //TODO we don't want this, we want to allocate a 1D slice for each problem in parallel, containing only the rest of NX slice in 1D
     sycl::buffer<double, 3> buff_rest_nx(sycl::range<3>{ny, nx_rest_to_malloc, ny1}, sycl::no_init);
 
     return Q.submit([&](sycl::handler &cgh) {
@@ -40,9 +33,9 @@ AdvX::StraddledMalloc::adv_opt3(sycl::queue &Q,
         cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<3> g) {
             g.parallel_for_work_item(
                 sycl::range{1, nx, 1}, [&](sycl::h_item<3> it) {
-                    const int ix = it.get_local_id(1);
-                    const int iy = g.get_group_id(0);
-                    const int iy1 = g.get_group_id(2);
+                    const auto ix = it.get_local_id(1);
+                    const auto iy = g.get_group_id(0);
+                    const auto iy1 = g.get_group_id(2);
 
                     //if ix > 6144; we use overslice_ftmp with index ix-MAX_NX_ALLOC
                     //else we use slice_ftmp
@@ -79,13 +72,13 @@ AdvX::StraddledMalloc::adv_opt3(sycl::queue &Q,
                         }
 
                     }
-                });   // end parallel_for_work_item --> Implicit barrier
+                }); // end parallel_for_work_item --> Implicit barrier
 
             g.parallel_for_work_item(sycl::range{1, nx, 1},
                                      [&](sycl::h_item<3> it) {
-                                         const int ix = it.get_local_id(1);
-                                         const int iy = g.get_group_id(0);
-                                         const int iy1 = g.get_group_id(2);
+                                         const auto ix = it.get_local_id(1);
+                                         const auto iy = g.get_group_id(0);
+                                         const auto iy1 = g.get_group_id(2);
 
                                         if(ix < MAX_NX_ALLOC)                                         
                                             fdist[iy][ix][iy1] = slice_ftmp[ix];
@@ -103,9 +96,9 @@ sycl::event
 AdvX::StraddledMalloc::operator()(sycl::queue &Q,
                             sycl::buffer<double, 3> &buff_fdistrib,
                             const ADVParams &params) {
-    auto const nx = params.nx;
-    auto const ny = params.ny;
-    auto const ny1 = params.ny1;
+    size_t const nx = params.nx;
+    // auto const ny = params.ny;
+    // auto const ny1 = params.ny1;
 
     //On A100 it breaks if we allocate more than 48 KiB per block, which is 6144 double
     //On MI250x it breaks if we allocate more than 64KiB per wg, which is 8192 double

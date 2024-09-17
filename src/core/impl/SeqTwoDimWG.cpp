@@ -14,7 +14,7 @@ AdvX::SeqTwoDimWG::operator()(sycl::queue &Q,
     auto const inv_dx = params.inv_dx;
 
     auto const wg_size_y = params.wg_size_y;
-    auto const wg_size_x = params.wg_size_x;
+    // auto const wg_size_x = params.wg_size_x;
 
     if(ny%wg_size_y != 0){
         throw std::invalid_argument("ny must be divisible by wg_size_y");
@@ -53,11 +53,7 @@ AdvX::SeqTwoDimWG::operator()(sycl::queue &Q,
                     const int ix = it.get_local_id(1);
                     const int iy1 = g.get_group_id(2);
 
-                    // int local_iy = it.get_global_id(0);
-                    // get_local_id(0);
-                    // const int iy = wg_size_y * g.get_group_id(0);
-
-                    for (int iiy=0; iiy<wg_size_y; iiy++) {
+                    for (size_t iiy=0; iiy < wg_size_y; iiy++) {
                         const int iy = wg_size_y * g.get_group_id(0) + iiy;
 
                         double const xFootCoord = displ(ix, iy, params);

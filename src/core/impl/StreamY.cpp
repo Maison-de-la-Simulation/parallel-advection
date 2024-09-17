@@ -1,12 +1,6 @@
 #include "IAdvectorX.h"
 #include "advectors.h"
 
-// AdvX::StreamY::StreamY(const ADVParams &params){
-//     auto n_batch = std::ceil(params.ny / MAX_NY); //should be in
-//     constructor
-
-// }
-
 // ==========================================
 // ==========================================
 sycl::event
@@ -16,7 +10,7 @@ AdvX::StreamY::actual_advection(sycl::queue &Q,
                                 const size_t &ny_offset) {
 
     auto const nx = params.nx;
-    auto const ny = params.ny;
+    // auto const ny = params.ny;
     auto const ny1 = params.ny1;
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
@@ -87,9 +81,9 @@ sycl::event
 AdvX::StreamY::operator()(sycl::queue &Q,
                           sycl::buffer<double, 3> &buff_fdistrib,
                           const ADVParams &params) {
-    auto const nx = params.nx;
+    // auto const nx = params.nx;
     auto const ny = params.ny;
-    auto const ny1 = params.ny1;
+    // auto const ny1 = params.ny1;
 
     // IFDEF ACPP_TARGETS=cuda:sm_80 ... ?
 
