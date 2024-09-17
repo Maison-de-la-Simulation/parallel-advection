@@ -34,7 +34,8 @@ class BasicRange : public IAdvectorX {
 //                            sycl::buffer<double, 3> &buff_fdistrib,
 //                            const ADVParams &params) override;
 
-//     explicit BasicRange2D(const size_t nx, const size_t nvx, const size_t ny1)
+//     explicit BasicRange2D(const size_t nx, const size_t nvx, const size_t
+//     ny1)
 //         : BasicRange(nx, nvx, ny1){};
 // };
 
@@ -44,7 +45,8 @@ class BasicRange : public IAdvectorX {
 //                            sycl::buffer<double, 3> &buff_fdistrib,
 //                            const ADVParams &params) override;
 
-//     explicit BasicRange1D(const size_t nx, const size_t nvx, const size_t ny1)
+//     explicit BasicRange1D(const size_t nx, const size_t nvx, const size_t
+//     ny1)
 //         : BasicRange(nx, nvx, ny1){};
 // };
 
@@ -113,8 +115,7 @@ class StreamY : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
     sycl::event actual_advection(sycl::queue &Q,
                                  sycl::buffer<double, 3> &buff_fdistrib,
-                                 const ADVParams &params,
-                                 const size_t &n_nvx,
+                                 const ADVParams &params, const size_t &n_nvx,
                                  const size_t &ny_offset);
 
   public:
@@ -138,10 +139,9 @@ class ReducedPrecision : public IAdvectorX {
 // =============================================================================
 class StraddledMalloc : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
-    sycl::event adv_opt3(sycl::queue &Q,
-                         sycl::buffer<double, 3> &buff_fdistrib,
+    sycl::event adv_opt3(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
                          const ADVParams &params,
-                        const size_t &nx_rest_to_malloc);
+                         const size_t &nx_rest_to_malloc);
 
   public:
     // StraddledMalloc(const ADVParams &params);
@@ -183,19 +183,62 @@ class SeqTwoDimWG : public IAdvectorX {
 
 // =============================================================================
 class Exp1 : public IAdvectorX {
-    using IAdvectorX::IAdvectorX;
-    sycl::event actual_advection(sycl::queue &Q,
-                                 sycl::buffer<double, 3> &buff_fdistrib,
-                                 const ADVParams &params,
-                                 const size_t &ny_batch_size,
-                                 const size_t &ny_offset,
-                                 const size_t &nx_rest_to_malloc);
 
+    static constexpr size_t MAX_NX_ALLOC = 64;
+        // 6144;   // TODO: setup this value depending on hw
+    static constexpr size_t MAX_NY_BATCH = 125;
+        // 65535;   // TODO: setup this value depending on hw
+
+    size_t ny_, nx_;
+    size_t overslice_nx_size_; //what's left to malloc in global memory
+    size_t n_batch_;
+    size_t last_batch_size_ny_, last_batch_offset_ny_;
+
+    double* buffer_rest_nx;
+
+    void init(sycl::queue &q) noexcept {
+        /* Get the number of batchs required */
+        double div =
+            static_cast<double>(ny_) / static_cast<double>(MAX_NY_BATCH);
+        auto floor_div = std::floor(div);
+        auto is_int = div == floor_div;
+
+        n_batch_ = is_int ? div : floor_div + 1;
+
+        last_batch_size_ny_ =
+            is_int && ny_ > MAX_NY_BATCH ? MAX_NY_BATCH : (ny_ % MAX_NY_BATCH);
+        last_batch_offset_ny_ = MAX_NY_BATCH * (n_batch_ - 1);
+
+
+        /* Get the size of the rest to malloc inside global mem */
+        auto overslice_nx_size_ = nx_ <= MAX_NX_ALLOC ? 0 : nx_ - MAX_NX_ALLOC;
+        
+        if(overslice_nx_size_ > 0){
+          buffer_rest_nx = sycl::malloc_device<double>(overslice_nx_size_*ny_, q);
+        }
+        else{
+          //TODO: what else?
+        }
+
+    }
+    //TODO: constructor with percentage_malloc
+    //TODO: here the straddled alloc is vertical, implement horizontal straddled
+
+    using IAdvectorX::IAdvectorX;
+    sycl::event
+    actual_advection(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
+                     const ADVParams &params, const size_t &ny_batch_size,
+                     const size_t &ny_offset);
 
   public:
     sycl::event operator()(sycl::queue &Q,
                            sycl::buffer<double, 3> &buff_fdistrib,
                            const ADVParams &params) override;
+
+    explicit Exp1(sycl::queue &q, const ADVParams &params)
+        : ny_(params.ny), nx_(params.nx) {
+        init(q);
+    }
 };
 
 // =============================================================================

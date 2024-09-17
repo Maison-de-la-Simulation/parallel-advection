@@ -6,7 +6,7 @@
 // ==========================================
 // ==========================================
 [[nodiscard]] sref::unique_ref<IAdvectorX>
-kernel_impl_factory(const ADVParamsNonCopyable &params);
+kernel_impl_factory(sycl::queue &q, const ADVParamsNonCopyable &params);
 
 // ==========================================
 // ==========================================

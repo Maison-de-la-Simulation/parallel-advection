@@ -16,7 +16,7 @@ static constexpr auto error_str =
 // // ==========================================
 // // ==========================================
 sref::unique_ref<IAdvectorX>
-kernel_impl_factory(const ADVParamsNonCopyable &params) {
+kernel_impl_factory(sycl::queue &q, const ADVParamsNonCopyable &params) {
     std::string kernel_name(params.kernelImpl.begin(), params.kernelImpl.end());
 
     switch (str2int(kernel_name.data())) {
@@ -50,7 +50,7 @@ kernel_impl_factory(const ADVParamsNonCopyable &params) {
     case str2int("SeqTwoDimWG"):
         return sref::make_unique<AdvX::SeqTwoDimWG>();
     case str2int("Exp1"):
-        return sref::make_unique<AdvX::Exp1>();
+        return sref::make_unique<AdvX::Exp1>(q, params);
     case str2int("CudaLDG"):
         return sref::make_unique<AdvX::CudaLDG>();
     default:

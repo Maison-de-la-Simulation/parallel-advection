@@ -74,7 +74,7 @@ main(int argc, char **argv) {
     sycl::buffer<double, 3> buff_fdistrib(sycl::range<3>(ny, nx, ny1));
     fill_buffer(Q, buff_fdistrib, params);
 
-    auto advector = kernel_impl_factory(strParams);
+    auto advector = kernel_impl_factory(Q, strParams);
 
     auto elapsed_seconds = advection(Q, buff_fdistrib, advector, params);
 
