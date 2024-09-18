@@ -51,6 +51,8 @@ kernel_impl_factory(const ADVParamsNonCopyable &params) {
         return sref::make_unique<AdvX::SeqTwoDimWG>();
     case str2int("Exp1"):
         return sref::make_unique<AdvX::Exp1>();
+    case str2int("Exp2"):
+        return sref::make_unique<AdvX::Exp2>(params);
     case str2int("CudaLDG"):
         return sref::make_unique<AdvX::CudaLDG>();
     default:

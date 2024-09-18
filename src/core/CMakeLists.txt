@@ -19,6 +19,7 @@ target_sources(core
   impl/TwoDimWG.cpp
   impl/SeqTwoDimWG.cpp
   impl/Exp1.cpp
+  impl/Exp2.cpp
   impl/CudaLDG.cpp
   )
 
