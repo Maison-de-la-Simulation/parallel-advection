@@ -2,6 +2,8 @@
 #include "advectors.h"
 #include <cstddef>
 #include <experimental/mdspan>
+#include <memory>
+#include <type_traits>
 
 using real_t = double;
 
@@ -22,8 +24,8 @@ using localAcc2D = typename sycl::local_accessor<real_t, 2>;
 
 //constexpr size_t MAX_NX_ALLOC = 6144;   // A100
 
-// constexpr size_t MAX_NX_ALLOC = 6144;
-// constexpr size_t MAX_NY = 65535;
+constexpr size_t MAX_NX_ALLOC = 6144;
+constexpr size_t MAX_NY = 65535;
 
 template <typename RealType> struct StraddledBuffer {
 
@@ -31,11 +33,11 @@ template <typename RealType> struct StraddledBuffer {
     mdspan2d_t m_global_mdpsan;
 
     StraddledBuffer() = delete;
-    StraddledBuffer(const localAcc2D &localAcc, RealType *global_ptr,
-                    size_t globalNx, size_t globalNy)
+    StraddledBuffer(const globAcc2D &globalAcc, const localAcc2D &localAcc)
         : m_local_mdpsan(localAcc.get_pointer(), localAcc.get_range().get(0),
                          localAcc.get_range().get(1)),
-          m_global_mdpsan(global_ptr, globalNy, globalNx) {}
+          m_global_mdpsan(globalAcc.get_pointer(), globalAcc.get_range().get(0),
+                          globalAcc.get_range().get(1)) {}
 
     RealType &operator()(size_t iy, size_t ix) const {
         auto localNx = m_local_mdpsan.extent(1);
@@ -59,7 +61,8 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
                              sycl::buffer<double, 3> &buff_fdistrib,
                              const ADVParams &params,
                              const size_t &ny_batch_size,
-                             const size_t &ny_offset) {
+                             const size_t &ny_offset,
+                             const size_t &nx_rest_to_malloc) {
 
     auto const nx = params.nx;
     auto const ny = params.ny;
@@ -71,20 +74,34 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
     auto const wg_size_y = params.wg_size_y;
     auto const wg_size_x = params.wg_size_x;
 
-    auto nx_rest_to_malloc = this->overslice_nx_size_;
-
     /* ny must be divisible by slice_size_dim_y */
     if (ny_batch_size % wg_size_y != 0) {
         throw std::invalid_argument(
             "ny_batch_size must be divisible by wg_size_y");
     }
+    // if (wg_size_y * nx > 6144) {
+    //     std::cout << "wg_size_y = " << wg_size_y << ", nx = " << nx
+    //               << std::endl;
+    //     throw std::invalid_argument(
+    //         "wg_size_y*nx must be < to 6144 (shared memory limit)");
+    // }
 
     const sycl::range nb_wg{ny_batch_size / wg_size_y, 1, ny1};
     const sycl::range wg_size{params.wg_size_y, params.wg_size_x, 1};
 
+    sycl::buffer<double, 2> buff_rest_nx(sycl::range{ny, nx_rest_to_malloc},
+                                         sycl::no_init);
+
+    /*What about two kernels the first one fills the overslice as write only
+memory and the second one fills the local accessor and solves the advection?*/
+
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
             buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
+
+        globAcc2D overslice_ftmp =
+            buff_rest_nx.get_access<sycl::access::mode::discard_read_write>(
+                cgh);
 
         /* We use a 2D local accessor here */
         auto local_malloc_size = nx > MAX_NX_ALLOC ? MAX_NX_ALLOC : nx;
@@ -98,10 +115,8 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
             g.parallel_for_work_item(
                 sycl::range{wg_size_y, nx, 1}, [&](sycl::h_item<3> it) {
                     mdspan3d_t fdist_view(fdist.get_pointer(), ny, nx, ny1);
-                    StraddledBuffer<double> BUFF(
-                        slice_ftmp, this->buffer_rest_nx, this->ny_,
-                        this->overslice_nx_size_);
-
+                    StraddledBuffer<double> BUFF(overslice_ftmp, slice_ftmp);
+                    
                     const int ix = it.get_local_id(1);
                     const int iy1 = g.get_group_id(2);
 
@@ -129,9 +144,7 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
             g.parallel_for_work_item(
                 sycl::range{wg_size_y, nx, 1}, [&](sycl::h_item<3> it) {
                     mdspan3d_t fdist_view(fdist.get_pointer(), ny, nx, ny1);
-                    StraddledBuffer<double> BUFF(
-                        slice_ftmp, this->buffer_rest_nx, this->ny_,
-                        this->overslice_nx_size_);
+                    StraddledBuffer<double> BUFF(overslice_ftmp, slice_ftmp);
 
                     const int ix = it.get_local_id(1);
                     const int iy1 = g.get_group_id(2);
@@ -189,30 +202,38 @@ AdvX::Exp1::operator()(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
     auto const ny = params.ny;
     auto const ny1 = params.ny1;
 
+    auto rest_malloc = nx <= MAX_NX_ALLOC ? 0 : nx - MAX_NX_ALLOC;
+
     // On A100 it breaks when ny (the first dimension) is >= 65536.
     // if (ny < MAX_NY) {
     //     /* If limit not exceeded we return a classical Hierarchical advector */
     //     AdvX::Hierarchical adv{};
     //     return adv(Q, buff_fdistrib, params);
     // } else {
-        // double div = static_cast<double>(ny) / static_cast<double>(MAX_NY);
-        // auto floor_div = std::floor(div);
-        // auto is_int = div == floor_div;
-        // auto n_batch = is_int ? div : floor_div + 1;
+        double div = static_cast<double>(ny) / static_cast<double>(MAX_NY);
+        auto floor_div = std::floor(div);
+        auto is_int = div == floor_div;
+        auto n_batch = is_int ? div : floor_div + 1;
 
-            // can we parallel_for this on multiple queues ? or CUDA streams?
-        for (int i_batch = 0; i_batch < this->n_batch_ - 1; ++i_batch) {
-            size_t ny_offset = (i_batch * this->MAX_NY_BATCH);
+        for (int i_batch = 0; i_batch < n_batch - 1;
+             ++i_batch) {   // can we parallel_for this on multiple GPUs?
+                            // multiple queues ? or other CUDA streams?
 
-            actual_advection(Q, buff_fdistrib, params, this->MAX_NY_BATCH, ny_offset)
+            size_t ny_offset = (i_batch * MAX_NY);
+
+            actual_advection(Q, buff_fdistrib, params, MAX_NY, ny_offset,
+                             rest_malloc)
                 .wait();
         }
 
         // for the last one we take the rest, we add n_batch-1 because we
         // processed MAX_SIZE-1 each batch
-  
+        auto const ny_size =
+            is_int ? MAX_NY : (ny % MAX_NY);   // + (n_batch - 1);
+        auto const ny_offset = MAX_NY * (n_batch - 1);
+
         // return the last advection with the rest
-        return actual_advection(Q, buff_fdistrib, params, last_batch_size_ny_,
-                                last_batch_offset_ny_);
-        // }
+        return actual_advection(Q, buff_fdistrib, params, ny_size, ny_offset,
+                                rest_malloc);
+    // }
 }
