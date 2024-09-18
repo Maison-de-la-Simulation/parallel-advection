@@ -29,6 +29,7 @@ usage() {
 # Argument parsing
 # =================================================
 BUILD_TESTS=false  # Initialize the boolean variable
+BUILD_DEBUG=false
 
 while [ "$#" -gt 0 ]; do
     case $1 in
