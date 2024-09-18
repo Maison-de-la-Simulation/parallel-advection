@@ -2,8 +2,6 @@
 #include "advectors.h"
 #include <cstddef>
 #include <experimental/mdspan>
-#include <memory>
-#include <type_traits>
 
 using real_t = double;
 
