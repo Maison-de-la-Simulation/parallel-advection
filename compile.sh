@@ -17,7 +17,7 @@ CMAKE_OPTIONS+=" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
 usage() {
     echo "Simple compilation script. Automatically builds the project for a combination (hw, sycl)."
     echo "For multiple devices compilation flows, please compile manually."
-    echo "Usage: $0 [--hw <mi250|a100|x86_64>] [--sycl <intel-llvm|acpp|oneapi>] [--benchmark_BUILD_DIR=<directory>] [--build-tests] [--run-tests]"
+    echo "Usage: $0 [--hw <mi250|a100|cpu>] [--sycl <intel-llvm|acpp|oneapi>] [--benchmark_BUILD_DIR=<directory>] [--build-tests] [--run-tests] [--debug]"
     echo "Compilers must be present in PATH:"
     echo "           intel-llvm : ${INTELLLVM_COMPILER}"
     echo "           acpp       : ${ACPP_COMPILER}"
@@ -51,6 +51,10 @@ while [ "$#" -gt 0 ]; do
         --run-tests)
             RUN_TESTS=true
             shift 1  # Remove --run-tests from the list
+            ;;
+        --debug)
+            BUILD_DEBUG=true
+            shift 1
             ;;
         *)
             usage  # Handle unknown options
@@ -112,8 +116,8 @@ elif [ "$HARDWARE" == "a100" ]; then
         echo $ERR_SYCL_UNKNOWN
         usage
     fi
-elif [ "$HARDWARE" == "x86_64" ]; then
-    # Add options for x86_64 and different SYCL implementations
+elif [ "$HARDWARE" == "cpu" ]; then
+    # Add options for cpu and different SYCL implementations
     if [ "$SYCL_IMPL" == "intel-llvm" ]; then
         CMAKE_OPTIONS+=" -DDPCPP_FSYCL_TARGETS='-fsycl-targets=spir64_x86_64'"
     elif [ "$SYCL_IMPL" == "acpp" ]; then
@@ -140,7 +144,10 @@ if $BUILD_TESTS; then
     CMAKE_OPTIONS+=" -DADVECTION_BUILD_TESTS=ON"
 fi
 
-
+# Add tests compilation if specified
+if $BUILD_DEBUG; then
+    CMAKE_OPTIONS+=" -DCMAKE_BUILD_TYPE=Debug"
+fi
 
 # =================================================
 # Configure
