@@ -48,24 +48,6 @@ AdvX::Exp2::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
             sycl::range<2>(wg_size_y, nx), cgh, sycl::no_init);
 
         cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<3> g) {
-            /* Copy kernel*/
-            g.parallel_for_work_item(
-                sycl::range{wg_size_y, nx, 1}, [&](sycl::h_item<3> it) {
-                    mdspan3d_t fdist_view(fdist.get_pointer(), ny, nx, ny1);
-                    mdspan2d_t localAcc_view(slice_ftmp.get_pointer(),
-                                             slice_ftmp.get_range().get(0),
-                                             slice_ftmp.get_range().get(1));
-
-                    const int ix = it.get_local_id(1);
-                    const int iy1 = g.get_group_id(2);
-
-                    const int local_ny = it.get_local_id(0);
-                    const int iy =
-                        wg_size_y * g.get_group_id(0) + ny_offset + local_ny;
-
-                    localAcc_view(local_ny, ix) = fdist_view(iy, ix, iy1);
-                });   // barrier
-
             /* Solve kernel */
             g.parallel_for_work_item(
                 sycl::range{wg_size_y, nx, 1}, [&](sycl::h_item<3> it) {
@@ -95,14 +77,32 @@ AdvX::Exp2::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
 
                     const int ipos1 = leftNode - LAG_OFFSET;
 
-                    fdist_view(iy, ix, iy1) = 0.;
+                    localAcc_view(local_ny, ix) = 0;
                     for (int k = 0; k <= LAG_ORDER; k++) {
                         int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-                        fdist_view(iy, ix, iy1) +=
-                            coef[k] * localAcc_view(local_ny, idx_ipos1);
+                        localAcc_view(local_ny, ix) +=
+                            coef[k] * fdist_view(iy, idx_ipos1, iy1);
                     }
                 });   // end parallel_for_work_item --> Implicit barrier
+
+            /* Copy kernel*/
+            g.parallel_for_work_item(
+                sycl::range{wg_size_y, nx, 1}, [&](sycl::h_item<3> it) {
+                    mdspan3d_t fdist_view(fdist.get_pointer(), ny, nx, ny1);
+                    mdspan2d_t localAcc_view(slice_ftmp.get_pointer(),
+                                             slice_ftmp.get_range().get(0),
+                                             slice_ftmp.get_range().get(1));
+
+                    const int ix = it.get_local_id(1);
+                    const int iy1 = g.get_group_id(2);
+
+                    const int local_ny = it.get_local_id(0);
+                    const int iy =
+                        wg_size_y * g.get_group_id(0) + ny_offset + local_ny;
+
+                     fdist_view(iy, ix, iy1) = localAcc_view(local_ny, ix);
+                });   // barrier
         });           // end parallel_for_work_group
     });               // end Q.submit
 }   // end actual_advection
