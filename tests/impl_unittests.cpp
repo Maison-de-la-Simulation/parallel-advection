@@ -19,7 +19,7 @@ TEST(Impl, BasicRange) {
     auto advector =
         sref::make_unique<AdvX::BasicRange>(params.nx, params.ny, params.ny1);
 
-    for (int i = 0; i < params.maxIter; ++i)
+    for (size_t i = 0; i < params.maxIter; ++i)
         advector(Q, buff_fdistrib, params).wait_and_throw();
 
     auto err = validate_result(Q, buff_fdistrib, params);
@@ -37,7 +37,7 @@ TEST(Impl, Hierarchical) {
 
     auto advector = sref::make_unique<AdvX::Hierarchical>();
 
-    for (int i = 0; i < params.maxIter; ++i)
+    for (size_t i = 0; i < params.maxIter; ++i)
         advector(Q, buff_fdistrib, params).wait_and_throw();
 
     auto err = validate_result(Q, buff_fdistrib, params);
@@ -55,7 +55,7 @@ TEST(Impl, NDRange) {
 
     auto advector = sref::make_unique<AdvX::NDRange>();
 
-    for (int i = 0; i < params.maxIter; ++i)
+    for (size_t i = 0; i < params.maxIter; ++i)
         advector(Q, buff_fdistrib, params).wait_and_throw();
 
     auto err = validate_result(Q, buff_fdistrib, params);
@@ -73,7 +73,7 @@ TEST(Impl, Scoped) {
 
     auto advector = sref::make_unique<AdvX::Scoped>();
 
-    for (int i = 0; i < params.maxIter; ++i)
+    for (size_t i = 0; i < params.maxIter; ++i)
         advector(Q, buff_fdistrib, params).wait_and_throw();
 
     auto err = validate_result(Q, buff_fdistrib, params);
@@ -91,7 +91,7 @@ TEST(Impl, ReverseIndexes) {
 
     auto advector = sref::make_unique<AdvX::ReverseIndexes>();
 
-    for (int i = 0; i < params.maxIter; ++i)
+    for (size_t i = 0; i < params.maxIter; ++i)
         advector(Q, buff_fdistrib, params).wait_and_throw();
 
     auto err = validate_result(Q, buff_fdistrib, params);
@@ -109,7 +109,7 @@ TEST(Impl, SeqTwoDimWG) {
 
     auto advector = sref::make_unique<AdvX::SeqTwoDimWG>();
 
-    for (int i = 0; i < params.maxIter; ++i)
+    for (size_t i = 0; i < params.maxIter; ++i)
         advector(Q, buff_fdistrib, params).wait_and_throw();
 
     auto err = validate_result(Q, buff_fdistrib, params);
@@ -127,7 +127,7 @@ TEST(Impl, StraddledMalloc) {
 
     auto advector = sref::make_unique<AdvX::StraddledMalloc>();
 
-    for (int i = 0; i < params.maxIter; ++i)
+    for (size_t i = 0; i < params.maxIter; ++i)
         advector(Q, buff_fdistrib, params).wait_and_throw();
 
     auto err = validate_result(Q, buff_fdistrib, params);
@@ -145,7 +145,7 @@ TEST(Impl, StreamY) {
 
     auto advector = sref::make_unique<AdvX::StreamY>();
 
-    for (int i = 0; i < params.maxIter; ++i)
+    for (size_t i = 0; i < params.maxIter; ++i)
         advector(Q, buff_fdistrib, params).wait_and_throw();
 
     auto err = validate_result(Q, buff_fdistrib, params);
@@ -163,7 +163,7 @@ TEST(Impl, TwoDimWG) {
 
     auto advector = sref::make_unique<AdvX::TwoDimWG>();
 
-    for (int i = 0; i < params.maxIter; ++i)
+    for (size_t i = 0; i < params.maxIter; ++i)
         advector(Q, buff_fdistrib, params).wait_and_throw();
 
     auto err = validate_result(Q, buff_fdistrib, params);
@@ -181,7 +181,7 @@ TEST(Impl, Exp1) {
 
     auto advector = sref::make_unique<AdvX::Exp1>();
 
-    for (int i = 0; i < params.maxIter; ++i)
+    for (size_t i = 0; i < params.maxIter; ++i)
         advector(Q, buff_fdistrib, params).wait_and_throw();
 
     auto err = validate_result(Q, buff_fdistrib, params);

@@ -87,7 +87,7 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
     // }
 
     const sycl::range nb_wg{ny_batch_size / wg_size_y, 1, ny1};
-    const sycl::range wg_size{params.wg_size_y, params.wg_size_x, 1};
+    const sycl::range wg_size{wg_size_y, wg_size_x, 1};
 
     sycl::buffer<double, 2> buff_rest_nx(sycl::range{ny, nx_rest_to_malloc},
                                          sycl::no_init);
@@ -200,7 +200,7 @@ AdvX::Exp1::operator()(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
                        const ADVParams &params) {
     auto const nx = params.nx;
     auto const ny = params.ny;
-    auto const ny1 = params.ny1;
+    // auto const ny1 = params.ny1;
 
     auto rest_malloc = nx <= MAX_NX_ALLOC ? 0 : nx - MAX_NX_ALLOC;
 

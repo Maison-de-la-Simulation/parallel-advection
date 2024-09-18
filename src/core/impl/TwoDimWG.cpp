@@ -25,7 +25,7 @@ AdvX::TwoDimWG::operator()(sycl::queue &Q,
     }
 
     const sycl::range nb_wg{ny/wg_size_y, 1, ny1};
-    const sycl::range wg_size{wg_size_y, params.wg_size_x, 1};
+    const sycl::range wg_size{wg_size_y, wg_size_x, 1};
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =

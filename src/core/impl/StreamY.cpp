@@ -16,7 +16,7 @@ AdvX::StreamY::actual_advection(sycl::queue &Q,
                                 const size_t &ny_offset) {
 
     auto const nx = params.nx;
-    auto const ny = params.ny;
+    // auto const ny = params.ny;
     auto const ny1 = params.ny1;
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
@@ -34,9 +34,9 @@ AdvX::StreamY::actual_advection(sycl::queue &Q,
         cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<3> g) {
             g.parallel_for_work_item(
                 sycl::range{1, nx, 1}, [&](sycl::h_item<3> it) {
-                    const int ix = it.get_local_id(1);
-                    const int iy = g.get_group_id(0) + ny_offset;
-                    const int iy1 = g.get_group_id(2);
+                    const size_t ix = it.get_local_id(1);
+                    const size_t iy = g.get_group_id(0) + ny_offset;
+                    const size_t iy1 = g.get_group_id(2);
 
                     double const xFootCoord = displ(ix, iy, params);
 
@@ -63,9 +63,9 @@ AdvX::StreamY::actual_advection(sycl::queue &Q,
 #ifdef SYCL_IMPLEMENTATION_ONEAPI   // for DPCPP
             g.parallel_for_work_item(
                 sycl::range{1, nx, 1}, [&](sycl::h_item<3> it) {
-                    const int ix = it.get_local_id(1);
-                    const int iy = g.get_group_id(0) + ny_offset;
-                    const int iy1 = g.get_group_id(2);
+                    const size_t ix = it.get_local_id(1);
+                    const size_t iy = g.get_group_id(0) + ny_offset;
+                    const size_t iy1 = g.get_group_id(2);
 
                     fdist[iy][ix][iy1] = slice_ftmp[ix];
                 });
@@ -87,9 +87,9 @@ sycl::event
 AdvX::StreamY::operator()(sycl::queue &Q,
                           sycl::buffer<double, 3> &buff_fdistrib,
                           const ADVParams &params) {
-    auto const nx = params.nx;
+    // auto const nx = params.nx;
     auto const ny = params.ny;
-    auto const ny1 = params.ny1;
+    // auto const ny1 = params.ny1;
 
     // IFDEF ACPP_TARGETS=cuda:sm_80 ... ?
 

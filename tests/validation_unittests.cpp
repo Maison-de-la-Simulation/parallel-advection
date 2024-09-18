@@ -49,7 +49,7 @@ TEST(Validation, ValidateEachIterFor10Iterations){
 
     double err;
     params.maxIter = 0;
-    for(auto it=0; it < 10; ++it){
+    for(size_t it=0; it < 10; ++it){
         params.maxIter++;
 
         advector(Q, buff_fdistrib, params).wait_and_throw();
@@ -81,7 +81,7 @@ TEST(Validation, ValidateNIterations){
 
     auto advector = sref::make_unique<AdvX::BasicRange>(params.nx, params.ny, params.ny1);
 
-    for(auto it=0; it<params.maxIter; ++it)
+    for(size_t it=0; it<params.maxIter; ++it)
         advector(Q, buff_fdistrib, params).wait_and_throw();
 
     auto err = validate_result(Q, buff_fdistrib, params, false);

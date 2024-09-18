@@ -40,9 +40,9 @@ AdvX::StraddledMalloc::adv_opt3(sycl::queue &Q,
         cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<3> g) {
             g.parallel_for_work_item(
                 sycl::range{1, nx, 1}, [&](sycl::h_item<3> it) {
-                    const int ix = it.get_local_id(1);
-                    const int iy = g.get_group_id(0);
-                    const int iy1 = g.get_group_id(2);
+                    const size_t ix = it.get_local_id(1);
+                    const size_t iy = g.get_group_id(0);
+                    const size_t iy1 = g.get_group_id(2);
 
                     //if ix > 6144; we use overslice_ftmp with index ix-MAX_NX_ALLOC
                     //else we use slice_ftmp
@@ -83,9 +83,9 @@ AdvX::StraddledMalloc::adv_opt3(sycl::queue &Q,
 
             g.parallel_for_work_item(sycl::range{1, nx, 1},
                                      [&](sycl::h_item<3> it) {
-                                         const int ix = it.get_local_id(1);
-                                         const int iy = g.get_group_id(0);
-                                         const int iy1 = g.get_group_id(2);
+                                         const size_t ix = it.get_local_id(1);
+                                         const size_t iy = g.get_group_id(0);
+                                         const size_t iy1 = g.get_group_id(2);
 
                                         if(ix < MAX_NX_ALLOC)                                         
                                             fdist[iy][ix][iy1] = slice_ftmp[ix];
@@ -104,8 +104,8 @@ AdvX::StraddledMalloc::operator()(sycl::queue &Q,
                             sycl::buffer<double, 3> &buff_fdistrib,
                             const ADVParams &params) {
     auto const nx = params.nx;
-    auto const ny = params.ny;
-    auto const ny1 = params.ny1;
+    // auto const ny = params.ny;
+    // auto const ny1 = params.ny1;
 
     //On A100 it breaks if we allocate more than 48 KiB per block, which is 6144 double
     //On MI250x it breaks if we allocate more than 64KiB per wg, which is 8192 double

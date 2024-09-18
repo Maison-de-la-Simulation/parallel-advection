@@ -1,4 +1,5 @@
 #include "advectors.h"
+#include <cstddef>
 
 sycl::event
 AdvX::Sequential::operator()([[maybe_unused]] sycl::queue &Q,
@@ -14,16 +15,15 @@ AdvX::Sequential::operator()([[maybe_unused]] sycl::queue &Q,
     std::vector<double> slice_ftmp(nx);
     sycl::host_accessor fdist(buff_fdistrib, sycl::read_write);
 
-    for (auto iy1 = 0; iy1 < ny1; ++iy1) {
-        for (auto iv = 0; iv < ny; ++iv) {
-
-            for (int iix = 0; iix < nx; ++iix) {
+    for (size_t iy1 = 0; iy1 < ny1; ++iy1) {
+        for (size_t iv = 0; iv < ny; ++iv) {
+            for (size_t iix = 0; iix < nx; ++iix) {
                 // slice_x[iix] = fdist[iix][iv];
                 slice_ftmp[iix] = 0;
             }
 
             // For each x with regards to current
-            for (auto ix = 0; ix < nx; ++ix) {
+            for (size_t ix = 0; ix < nx; ++ix) {
 
                 double const xFootCoord = displ(ix, iv, params);
 
@@ -47,7 +47,7 @@ AdvX::Sequential::operator()([[maybe_unused]] sycl::queue &Q,
                 // fdist[ix][iv] = ftmp;
             }   // end for X
 
-            for (int iix = 0; iix < nx; ++iix) {
+            for (size_t iix = 0; iix < nx; ++iix) {
                 fdist[iix][iv][ny1] = slice_ftmp[iix];
             }
 

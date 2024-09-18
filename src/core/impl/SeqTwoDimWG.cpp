@@ -24,7 +24,7 @@ AdvX::SeqTwoDimWG::operator()(sycl::queue &Q,
     }
 
     const sycl::range nb_wg{ny/wg_size_y, 1, ny1};
-    const sycl::range wg_size{wg_size_y, params.wg_size_x, 1};
+    const sycl::range wg_size{wg_size_y, wg_size_x, 1};
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
@@ -57,7 +57,7 @@ AdvX::SeqTwoDimWG::operator()(sycl::queue &Q,
                     // get_local_id(0);
                     // const int iy = wg_size_y * g.get_group_id(0);
 
-                    for (int iiy=0; iiy<wg_size_y; iiy++) {
+                    for (size_t iiy=0; iiy<wg_size_y; iiy++) {
                         const int iy = wg_size_y * g.get_group_id(0) + iiy;
 
                         double const xFootCoord = displ(ix, iy, params);
