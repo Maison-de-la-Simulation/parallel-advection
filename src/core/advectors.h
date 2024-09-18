@@ -186,7 +186,7 @@ class Exp1 : public IAdvectorX {
 
     static constexpr size_t MAX_NX_ALLOC = 64;
         // 6144;   // TODO: setup this value depending on hw
-    static constexpr size_t MAX_NY_BATCH = 127;
+    static constexpr size_t MAX_NY_BATCH = 125;
         // 65535;   // TODO: setup this value depending on hw
 
     size_t ny_, nx_;

@@ -69,6 +69,9 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
     auto const inv_dx = params.inv_dx;
 
     auto const wg_size_y = params.wg_size_y;
+    auto const wg_size_x = params.wg_size_x;
+
+    auto nx_rest_to_malloc = this->overslice_nx_size_;
 
     /* ny must be divisible by slice_size_dim_y */
     if (ny_batch_size % wg_size_y != 0) {
@@ -182,9 +185,9 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
 sycl::event
 AdvX::Exp1::operator()(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
                        const ADVParams &params) {
-    // auto const nx = params.nx;
-    // auto const ny = params.ny;
-    // auto const ny1 = params.ny1;
+    auto const nx = params.nx;
+    auto const ny = params.ny;
+    auto const ny1 = params.ny1;
 
     // On A100 it breaks when ny (the first dimension) is >= 65536.
     // if (ny < MAX_NY) {
@@ -198,7 +201,7 @@ AdvX::Exp1::operator()(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
         // auto n_batch = is_int ? div : floor_div + 1;
 
             // can we parallel_for this on multiple queues ? or CUDA streams?
-        for (size_t i_batch = 0; i_batch < this->n_batch_ - 1; ++i_batch) {
+        for (int i_batch = 0; i_batch < this->n_batch_ - 1; ++i_batch) {
             size_t ny_offset = (i_batch * this->MAX_NY_BATCH);
 
             actual_advection(Q, buff_fdistrib, params, this->MAX_NY_BATCH, ny_offset)

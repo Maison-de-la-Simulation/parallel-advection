@@ -1,14 +1,11 @@
 #include "advectors.h"
 
-#ifndef SYCL_IMPLEMENTATION_ONEAPI
+#ifndef SYCL_IMPLEMENTATION_ONEAPI   // for DPCPP
 HIPSYCL_UNIVERSAL_TARGET
 void optimized_codepaths(double* ptr, int ib, int nx, int ny1, int idx_ipos1, int is, double& value)
 {
   __hipsycl_if_target_cuda(
         value = __ldg(ptr + (ib*nx*ny1+idx_ipos1*ny1+is));
-  );
-  __hipsycl_if_target_host(
-        value = *(ptr + (ib*nx*ny1+idx_ipos1*ny1+is));
   );
 }
 #endif
