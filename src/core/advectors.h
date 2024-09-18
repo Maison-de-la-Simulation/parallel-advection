@@ -186,34 +186,35 @@ class Exp1 : public IAdvectorX {
 
     static constexpr size_t MAX_NX_ALLOC = 64;
         // 6144;   // TODO: setup this value depending on hw
-    static constexpr size_t MAX_NY_BATCH = 512;
+    static constexpr size_t MAX_NY_BATCH = 127;
         // 65535;   // TODO: setup this value depending on hw
 
-    sycl::queue q_;
+    size_t ny_, nx_;
     size_t overslice_nx_size_; //what's left to malloc in global memory
     size_t n_batch_;
     size_t last_batch_size_ny_, last_batch_offset_ny_;
 
     double* buffer_rest_nx;
 
-    void init(sycl::queue &q, const size_t nx, const size_t ny) noexcept {
+    void init(sycl::queue &q) noexcept {
         /* Get the number of batchs required */
         double div =
-            static_cast<double>(ny) / static_cast<double>(MAX_NY_BATCH);
+            static_cast<double>(ny_) / static_cast<double>(MAX_NY_BATCH);
         auto floor_div = std::floor(div);
-        auto div_is_int = div == floor_div;
+        auto is_int = div == floor_div;
 
-        n_batch_ = div_is_int ? div : floor_div + 1;
+        n_batch_ = is_int ? div : floor_div + 1;
 
         last_batch_size_ny_ =
-            div_is_int && ny > MAX_NY_BATCH ? MAX_NY_BATCH : (ny % MAX_NY_BATCH);
+            is_int && ny_ > MAX_NY_BATCH ? MAX_NY_BATCH : (ny_ % MAX_NY_BATCH);
         last_batch_offset_ny_ = MAX_NY_BATCH * (n_batch_ - 1);
 
+
         /* Get the size of the rest to malloc inside global mem */
-        auto overslice_nx_size_ = nx <= MAX_NX_ALLOC ? 0 : nx - MAX_NX_ALLOC;
+        auto overslice_nx_size_ = nx_ <= MAX_NX_ALLOC ? 0 : nx_ - MAX_NX_ALLOC;
         
         if(overslice_nx_size_ > 0){
-          buffer_rest_nx = sycl::malloc_device<double>(overslice_nx_size_*ny, q);
+          buffer_rest_nx = sycl::malloc_device<double>(overslice_nx_size_*ny_, q);
         }
         else{
           //TODO: what else?
@@ -234,17 +235,10 @@ class Exp1 : public IAdvectorX {
                            sycl::buffer<double, 3> &buff_fdistrib,
                            const ADVParams &params) override;
 
-    explicit Exp1(sycl::queue &q, const ADVParams &p) : q_(q) { init(q_, p.nx, p.ny); }
-
-    // ~Exp1() { sycl::free(buffer_rest_nx, q_); }
-
-    // void reset_buffer(const size_t ny){
-    //     for (size_t i = 0; i < ny; i++) {
-    //         for (size_t j = 0; j < overslice_nx_size_; j++) {
-    //           buffer_rest_nx[i*overslice_nx_size_ + j] = 0;
-    //         }
-    //     }
-    // }
+    explicit Exp1(sycl::queue &q, const ADVParams &params)
+        : ny_(params.ny), nx_(params.nx) {
+        init(q);
+    }
 };
 
 // =============================================================================
