@@ -17,7 +17,7 @@ CMAKE_OPTIONS+=" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
 usage() {
     echo "Simple compilation script. Automatically builds the project for a combination (hw, sycl)."
     echo "For multiple devices compilation flows, please compile manually."
-    echo "Usage: $0 [--hw <mi250|a100|x86_64>] [--sycl <intel-llvm|acpp|oneapi>] [--benchmark_BUILD_DIR=<directory>] [--build-tests] [--run-tests] [--debug]"
+    echo "Usage: $0 [--hw <mi250|a100|x86_64>] [--sycl <intel-llvm|acpp|oneapi>] [--benchmark_BUILD_DIR=<directory>] [--build-tests] [--run-tests]"
     echo "Compilers must be present in PATH:"
     echo "           intel-llvm : ${INTELLLVM_COMPILER}"
     echo "           acpp       : ${ACPP_COMPILER}"
@@ -51,10 +51,6 @@ while [ "$#" -gt 0 ]; do
         --run-tests)
             RUN_TESTS=true
             shift 1  # Remove --run-tests from the list
-            ;;
-        --debug)
-            DEBUG_BUILD=true
-            shift 1
             ;;
         *)
             usage  # Handle unknown options
@@ -144,10 +140,7 @@ if $BUILD_TESTS; then
     CMAKE_OPTIONS+=" -DADVECTION_BUILD_TESTS=ON"
 fi
 
-# Add debug flag
-if $DEBUG_BUILD; then
-    CMAKE_OPTIONS+=" -DCMAKE_BUILD_TYPE=Debug"
-fi
+
 
 # =================================================
 # Configure
