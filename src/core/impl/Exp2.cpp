@@ -1,6 +1,9 @@
 #include "IAdvectorX.h"
 #include "advectors.h"
 #include <experimental/mdspan>
+#include <hipSYCL/sycl/handler.hpp>
+#include <hipSYCL/sycl/libkernel/h_item.hpp>
+#include <hipSYCL/sycl/usm.hpp>
 
 using mdspan3d_t =
     std::experimental::mdspan<double, std::experimental::dextents<size_t, 3>,
@@ -8,6 +11,9 @@ using mdspan3d_t =
 using mdspan2d_t =
     std::experimental::mdspan<double, std::experimental::dextents<size_t, 2>,
                               std::experimental::layout_right>;
+
+
+//TODO faire 2 noyaux un en local mem un en global mem
 
 // ==========================================
 // ==========================================
@@ -37,8 +43,75 @@ AdvX::Exp2::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
             "wg_size_y*nx must be < to 6144 (shared memory limit)");
     }
 
-    const sycl::range nb_wg{ny_batch_size / wg_size_y, 1, ny1};
+    const sycl::range nb_wg_local {k_local_  / wg_size_y, 1, ny1};
+    const sycl::range nb_wg_global{k_global_ / wg_size_y, 1, ny1};
+
     const sycl::range wg_size{wg_size_y, wg_size_x, 1};
+    
+    const size_t global_offset = k_local_;
+    
+    double* global_buffer_ = sycl::malloc_shared<double>(nx*k_global_, Q);
+
+    /* k_global: kernels running in the global memory */
+    Q.submit([&](sycl::handler &cgh) {
+        auto fdist =
+            buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
+
+        cgh.parallel_for_work_group(nb_wg_global, wg_size, [=](auto g){
+            /* Solve kernel */
+            g.parallel_for_work_item(
+                sycl::range{wg_size_y, nx, 1}, [&](sycl::h_item<3> it){
+                    mdspan3d_t fdist_view(fdist.get_pointer(), ny, nx, ny1);
+                    mdspan2d_t scratch_view(global_buffer_, k_global_, nx);
+
+                    const int ix = it.get_local_id(1);
+                    const int iy1 = g.get_group_id(2);
+
+                    const size_t k_ny = g.get_group_id(0);
+                    const int local_ny = it.get_local_id(0);
+                    const int iy = wg_size_y * k_ny + ny_offset +
+                                   local_ny + global_offset;
+
+                    double const xFootCoord = displ(ix, iy, params);
+                    const int leftNode =
+                        sycl::floor((xFootCoord - minRealX) * inv_dx);
+                    const double d_prev1 =
+                        LAG_OFFSET +
+                        inv_dx * (xFootCoord - coord(leftNode, minRealX, dx));
+                    auto coef = lag_basis(d_prev1);
+
+                    const int ipos1 = leftNode - LAG_OFFSET;
+                    
+                    scratch_view(k_ny, ix) = 0;
+                    for (int k = 0; k <= LAG_ORDER; k++) {
+                        int idx_ipos1 = (nx + ipos1 + k) % nx;
+
+                        scratch_view(k_ny, ix) +=
+                            coef[k] * fdist_view(iy, idx_ipos1, iy1);
+                    }
+            }); //end parallel_for_work_item
+
+            /* Copy kernel */
+            g.parallel_for_work_item(
+                sycl::range{wg_size_y, nx, 1}, [&](sycl::h_item<3> it){
+                    mdspan3d_t fdist_view(fdist.get_pointer(), ny, nx, ny1);
+                    mdspan2d_t scratch_view(global_buffer_, k_global_, nx);
+
+                    const int ix = it.get_local_id(1);
+                    const int iy1 = g.get_group_id(2);
+
+                    const size_t k_ny = g.get_group_id(0);
+                    const int local_ny = it.get_local_id(0);
+                    const int iy = wg_size_y * k_ny + ny_offset +
+                                   local_ny + global_offset;
+
+                     fdist_view(iy, ix, iy1) = scratch_view(k_ny, ix);
+
+            }); //end parallel_for_work_item
+        }); // end parallel_for_work_group
+    }); //end Q.submit
+
+    Q.wait();
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
@@ -47,7 +120,7 @@ AdvX::Exp2::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
         sycl::local_accessor<double, 2> slice_ftmp(
             sycl::range<2>(wg_size_y, nx), cgh, sycl::no_init);
 
-        cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<3> g) {
+        cgh.parallel_for_work_group(nb_wg_local, wg_size, [=](sycl::group<3> g) {
             /* Solve kernel */
             g.parallel_for_work_item(
                 sycl::range{wg_size_y, nx, 1}, [&](sycl::h_item<3> it) {

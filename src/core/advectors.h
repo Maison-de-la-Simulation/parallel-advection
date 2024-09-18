@@ -1,5 +1,8 @@
 #pragma once
+#include "AdvectionParams.h"
 #include "IAdvectorX.h"
+#include <hipSYCL/sycl/queue.hpp>
+#include <hipSYCL/sycl/usm.hpp>
 
 /* Contains headers for different implementations of advector interface */
 namespace AdvX {
@@ -208,20 +211,8 @@ class Exp2 : public IAdvectorX {
                                  const size_t &ny_batch_size,
                                  const size_t &ny_offset);
 
-    static constexpr size_t MAX_NY_BATCHS   = 64;
-    static constexpr float  P_LOCAL_KERNELS = 0.5;
-
-    size_t n_batch_;
-    size_t last_ny_size_;
-    size_t last_ny_offset_;
-    
-
-  public:
-    sycl::event operator()(sycl::queue &Q,
-                           buff3d &buff_fdistrib,
-                           const ADVParams &params) override;
-
-    Exp2(const ADVParams &p){
+    void init_batchs(const ADVParams &p){
+        /* Compute number of batchs */
         double div =
             static_cast<double>(p.ny) / static_cast<double>(MAX_NY_BATCHS);
         auto floor_div = std::floor(div);
@@ -230,8 +221,54 @@ class Exp2 : public IAdvectorX {
 
         last_ny_size_ = div_is_int ? MAX_NY_BATCHS : (p.ny % MAX_NY_BATCHS);
         last_ny_offset_ = MAX_NY_BATCHS * (n_batch_ - 1);
-
     }
+
+    /* Max number of batch submitted */
+    static constexpr size_t MAX_NY_BATCHS   = 65535;
+
+    size_t n_batch_;
+    size_t last_ny_size_;
+    size_t last_ny_offset_;
+
+    /* Number of kernels to run in global memory */
+    // float p_local_kernels = 0.5; //half by default
+    size_t k_local_;
+    size_t k_global_;
+
+    sycl::queue q_;
+    // double* global_buffer_;
+    
+
+  public:
+    sycl::event operator()(sycl::queue &Q,
+                           buff3d &buff_fdistrib,
+                           const ADVParams &params) override;
+
+    Exp2(const ADVParams &params){
+      init_batchs(params);
+      k_global_  = 0;
+      k_local_ = params.ny*params.ny1;
+    }
+
+    Exp2(const ADVParams &params, const float percent_in_global_mem_per_ny1_slice,
+         const sycl::queue &q)
+        : q_(q) {
+        init_batchs(params);
+
+        /* n_kernel_per_ny1 = params.ny; TODO: attention ça c'est vrai seulement
+         quand ny < MAX_NY et qu'on a un seul batch, sinon on le percentage doit
+         s'appliquer pour chaque taille de batch_ny!!! */
+        auto div = params.ny * percent_in_global_mem_per_ny1_slice;
+        k_local_ = std::floor(div);
+        k_global_ = params.ny - k_local_;
+
+        // global_buffer_ =
+        //     sycl::malloc_device<double>(k_global_ * params.nx, q);
+
+        // std::cout << "k_global:" << k_global_ << " k_local:" << k_local_ << std::endl;
+    }
+
+    // ~Exp2(){sycl::free(global_buffer_, q_);}
 };
 
 // =============================================================================
