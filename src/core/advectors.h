@@ -224,6 +224,7 @@ class Exp1 : public IAdvectorX {
 
 
     Exp1() = delete;
+
     Exp1(const ADVParams &p, const sycl::queue &q) : q_(q) {
       init_batchs(p);
 

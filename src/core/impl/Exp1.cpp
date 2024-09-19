@@ -98,8 +98,7 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
         auto nx_rest_malloc = nx_rest_malloc_;
 
         cgh.parallel_for_work_group(
-            nb_wg, wg_size,
-            [=, ptr = this->global_vertical_buffer_](sycl::group<3> g) {
+            nb_wg, wg_size, [=](sycl::group<3> g) {
                 // if y1 > 1 //if we have a stide, we transpose, else we copy
 
                 /* Copy kernel*/

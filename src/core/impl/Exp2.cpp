@@ -46,6 +46,8 @@ AdvX::Exp2::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
     const sycl::range wg_size{wg_size_y, wg_size_x, 1};
     
     const size_t global_offset = k_local_;
+    const auto k_global = k_global_;
+    const auto ptr_global = global_buffer_;
     
     /* k_global: kernels running in the global memory */
     Q.submit([&](sycl::handler &cgh) {
@@ -57,7 +59,7 @@ AdvX::Exp2::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
             g.parallel_for_work_item(
                 sycl::range{wg_size_y, nx, 1}, [&](sycl::h_item<3> it){
                     mdspan3d_t fdist_view(fdist.get_pointer(), ny, nx, ny1);
-                    mdspan2d_t scratch_view(global_buffer_, k_global_, nx);
+                    mdspan2d_t scratch_view(ptr_global, k_global, nx);
 
                     const int ix = it.get_local_id(1);
                     const int iy1 = g.get_group_id(2);
@@ -90,7 +92,7 @@ AdvX::Exp2::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
             g.parallel_for_work_item(
                 sycl::range{wg_size_y, nx, 1}, [&](sycl::h_item<3> it){
                     mdspan3d_t fdist_view(fdist.get_pointer(), ny, nx, ny1);
-                    mdspan2d_t scratch_view(global_buffer_, k_global_, nx);
+                    mdspan2d_t scratch_view(ptr_global, k_global, nx);
 
                     const int ix = it.get_local_id(1);
                     const int iy1 = g.get_group_id(2);
