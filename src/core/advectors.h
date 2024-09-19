@@ -1,8 +1,6 @@
 #pragma once
 #include "AdvectionParams.h"
 #include "IAdvectorX.h"
-#include <hipSYCL/sycl/queue.hpp>
-#include <hipSYCL/sycl/usm.hpp>
 
 /* Contains headers for different implementations of advector interface */
 namespace AdvX {

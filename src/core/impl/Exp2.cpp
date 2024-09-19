@@ -1,9 +1,6 @@
 #include "IAdvectorX.h"
 #include "advectors.h"
 #include <experimental/mdspan>
-#include <hipSYCL/sycl/handler.hpp>
-#include <hipSYCL/sycl/libkernel/h_item.hpp>
-#include <hipSYCL/sycl/usm.hpp>
 
 using mdspan3d_t =
     std::experimental::mdspan<double, std::experimental::dextents<size_t, 3>,
@@ -50,8 +47,6 @@ AdvX::Exp2::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
     
     const size_t global_offset = k_local_;
     
-    double* global_buffer_ = sycl::malloc_shared<double>(nx*k_global_, Q);
-
     /* k_global: kernels running in the global memory */
     Q.submit([&](sycl::handler &cgh) {
         auto fdist =
@@ -111,7 +106,7 @@ AdvX::Exp2::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
         }); // end parallel_for_work_group
     }); //end Q.submit
 
-    Q.wait();
+    // Q.wait();
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
