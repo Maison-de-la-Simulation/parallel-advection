@@ -13,8 +13,7 @@ using mdspan2d_t =
                               std::experimental::layout_right>;
 
 using globAcc2D =
-    typename sycl::accessor<real_t, 2,
-                            sycl::access::mode::discard_read_write,
+    typename sycl::accessor<real_t, 2, sycl::access::mode::discard_read_write,
                             sycl::target::global_buffer>;
 
 using localAcc2D = typename sycl::local_accessor<real_t, 2>;
@@ -31,14 +30,19 @@ template <typename RealType> struct StraddledBuffer {
           m_global_mdpsan(globalAcc.get_pointer(), globalAcc.get_range().get(0),
                           globalAcc.get_range().get(1)) {}
 
+    StraddledBuffer(RealType *globalPtr, const size_t globalNy,
+                    const size_t globalNx, const localAcc2D &localAcc)
+        : m_local_mdpsan(localAcc.get_pointer(), localAcc.get_range().get(0),
+                         localAcc.get_range().get(1)),
+          m_global_mdpsan(globalPtr, globalNy, globalNx) {}
+
     RealType &operator()(size_t iy, size_t ix) const {
         auto localNx = m_local_mdpsan.extent(1);
         auto localNy = m_local_mdpsan.extent(0);
 
-        if (ix < localNx){
+        if (ix < localNx) {
             return m_local_mdpsan(iy % localNy, ix);
-        }
-        else{
+        } else {
             return m_global_mdpsan(iy, ix - localNx);
         }
     }
@@ -74,16 +78,16 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
     const sycl::range nb_wg{ny_batch_size / wg_size_y, 1, ny1};
     const sycl::range wg_size{wg_size_y, wg_size_x, 1};
 
-    sycl::buffer<double, 2> buff_rest_nx(sycl::range{ny, nx_rest_malloc_},
-                                         sycl::no_init);
+    // sycl::buffer<double, 2> buff_rest_nx(sycl::range{ny, nx_rest_malloc_},
+    //                                      sycl::no_init);
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
             buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
 
-        globAcc2D overslice_ftmp =
-            buff_rest_nx.get_access<sycl::access::mode::discard_read_write>(
-                cgh);
+        // globAcc2D overslice_ftmp =
+        //     buff_rest_nx.get_access<sycl::access::mode::discard_read_write>(
+        //         cgh);
 
         /* We use a 2D local accessor here */
         auto local_malloc_size = nx > MAX_NX_ALLOC ? MAX_NX_ALLOC : nx;
@@ -97,8 +101,9 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
             g.parallel_for_work_item(
                 sycl::range{wg_size_y, nx, 1}, [&](sycl::h_item<3> it) {
                     mdspan3d_t fdist_view(fdist.get_pointer(), ny, nx, ny1);
-                    StraddledBuffer<double> BUFF(overslice_ftmp, slice_ftmp);
-                    
+                    StraddledBuffer<double> BUFF(global_vertical_buffer_, ny,
+                                                 nx_rest_malloc_, slice_ftmp);
+
                     const int ix = it.get_local_id(1);
                     const int iy1 = g.get_group_id(2);
 
@@ -113,7 +118,8 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
             g.parallel_for_work_item(
                 sycl::range{wg_size_y, nx, 1}, [&](sycl::h_item<3> it) {
                     mdspan3d_t fdist_view(fdist.get_pointer(), ny, nx, ny1);
-                    StraddledBuffer<double> BUFF(overslice_ftmp, slice_ftmp);
+                    StraddledBuffer<double> BUFF(global_vertical_buffer_, ny,
+                                                 nx_rest_malloc_, slice_ftmp);
 
                     const int ix = it.get_local_id(1);
                     const int iy1 = g.get_group_id(2);
@@ -142,20 +148,6 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
 
                         fdist_view(iy, ix, iy1) +=
                             coef[k] * BUFF(iy, idx_ipos1);
-
-                        // if (idx_ipos1 < MAX_NX_ALLOC) {
-                        //     fdist_view(iy, ix, iy1) +=
-                        //         coef[k] *
-                        //         (*BUFF.m_local_acc)[local_ny][idx_ipos1];
-                        //         // coef[k] * slice_ftmp[local_ny][idx_ipos1];
-                        // } else {
-                        //     fdist_view(iy, ix, iy1) +=
-                        //         coef[k] *
-                        //         (*BUFF.m_global_acc)[iy][idx_ipos1 -
-                        //         MAX_NX_ALLOC];
-                        //         // overslice_ftmp[iy][idx_ipos1 -
-                        //         // // MAX_NX_ALLOC];
-                        // }
                     }
                 });   // end parallel_for_work_item --> Implicit barrier
         });           // end parallel_for_work_group
@@ -167,19 +159,15 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
 sycl::event
 AdvX::Exp1::operator()(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
                        const ADVParams &params) {
-    auto const nx = params.nx;
-    auto const ny = params.ny;
-    // auto const ny1 = params.ny1;
 
-
-    //can be parallel on multiple queues ? or other CUDA streams?
+    // can be parallel on multiple queues ? or other CUDA streams?
     for (size_t i_batch = 0; i_batch < n_batch_ - 1; ++i_batch) {
         size_t ny_offset = (i_batch * MAX_NY_BATCHS);
-        actual_advection(Q, buff_fdistrib, params, MAX_NY_BATCHS, ny_offset).wait();
+        actual_advection(Q, buff_fdistrib, params, MAX_NY_BATCHS, ny_offset)
+            .wait();
     }
 
-
-        // return the last advection with the rest
-        return actual_advection(Q, buff_fdistrib, params, last_ny_size_,
-                                last_ny_offset_);
+    // return the last advection with the rest
+    return actual_advection(Q, buff_fdistrib, params, last_ny_size_,
+                            last_ny_offset_);
 }

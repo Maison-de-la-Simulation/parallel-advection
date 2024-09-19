@@ -1,6 +1,8 @@
 #pragma once
 #include "AdvectionParams.h"
 #include "IAdvectorX.h"
+#include <hipSYCL/sycl/queue.hpp>
+#include <hipSYCL/sycl/usm.hpp>
 
 /* Contains headers for different implementations of advector interface */
 namespace AdvX {
@@ -198,6 +200,8 @@ class Exp1 : public IAdvectorX {
     static constexpr size_t MAX_NX_ALLOC    = 64;
 
 
+    sycl::queue q_;
+    double* global_vertical_buffer_;
     size_t n_batch_;
     size_t last_ny_size_;
     size_t last_ny_offset_;
@@ -222,14 +226,16 @@ class Exp1 : public IAdvectorX {
 
 
     Exp1() = delete;
-    Exp1(const ADVParams &p){
+    Exp1(const ADVParams &p, const sycl::queue &q) : q_(q) {
       init_batchs(p);
 
+
       nx_rest_malloc_ = p.nx <= MAX_NX_ALLOC ? 0 : p.nx - MAX_NX_ALLOC;
+      global_vertical_buffer_ = nx_rest_malloc_ > 0 ? sycl::malloc_device<double>(p.ny * nx_rest_malloc_, q_) : nullptr;
+    
     }
 
-
-
+    ~Exp1() { sycl::free(global_vertical_buffer_, q_); }
 };
 
 // =============================================================================
