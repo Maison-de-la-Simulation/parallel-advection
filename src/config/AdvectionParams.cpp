@@ -66,6 +66,7 @@ void ADVParamsNonCopyable::setup(const ConfigMap& configMap)
   maxIter = configMap.getInteger("run", "maxIter", 1000);
   gpu = configMap.getBool("run", "gpu", false);
   outputSolution = configMap.getBool("run", "outputSolution", false);
+  percent_loc = configMap.getFloat("run", "percent_loc", 1.0);
 
   kernelImpl = configMap.getString("run", "kernelImpl", "BasicRange");
   wg_size_x = configMap.getInteger("run", "workGroupSizeX", 128);
@@ -107,7 +108,8 @@ void ADVParamsNonCopyable::print()
   std::cout << "maxIter    : " << maxIter    << std::endl;
   std::cout << "ny (nvx)   : " << ny    << std::endl;
   std::cout << "nx         : " << nx    << std::endl;
-  std::cout << "ny1         : " << ny1    << std::endl;
+  std::cout << "ny1        : " << ny1    << std::endl;
+  std::cout << "percent_loc: " << percent_loc << std::endl;
   std::cout << "dt         : " << dt    << std::endl;
   std::cout << "dx         : " << dx    << std::endl;
   std::cout << "dvx        : " << dvx    << std::endl;

@@ -16,6 +16,9 @@ struct ADVParams {
   //The implementation of the kernel, correspond to core/impl cpp files
   // std::string kernelImpl;
 
+  //The percentage of ny rows to compute in local memory
+  float percent_loc = 1.0;
+
   // Outputs the solution to solution.log file to be read with the ipynb
   bool outputSolution = false;
 

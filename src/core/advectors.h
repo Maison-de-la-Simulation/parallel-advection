@@ -236,7 +236,7 @@ class Exp2 : public IAdvectorX {
     size_t k_global_;
 
     sycl::queue q_;
-    // double* global_buffer_;
+    double* global_buffer_;
     
 
   public:
@@ -250,7 +250,7 @@ class Exp2 : public IAdvectorX {
       k_local_ = params.ny*params.ny1;
     }
 
-    Exp2(const ADVParams &params, const float percent_in_global_mem_per_ny1_slice,
+    Exp2(const ADVParams &params, const float percent_in_local_mem_per_ny1_slice,
          const sycl::queue &q)
         : q_(q) {
         init_batchs(params);
@@ -258,17 +258,17 @@ class Exp2 : public IAdvectorX {
         /* n_kernel_per_ny1 = params.ny; TODO: attention ça c'est vrai seulement
          quand ny < MAX_NY et qu'on a un seul batch, sinon on le percentage doit
          s'appliquer pour chaque taille de batch_ny!!! */
-        auto div = params.ny * percent_in_global_mem_per_ny1_slice;
+        auto div = params.ny * percent_in_local_mem_per_ny1_slice;
         k_local_ = std::floor(div);
         k_global_ = params.ny - k_local_;
 
-        // global_buffer_ =
-        //     sycl::malloc_device<double>(k_global_ * params.nx, q);
+        global_buffer_ =
+            sycl::malloc_device<double>(k_global_ * params.nx, q);
 
         // std::cout << "k_global:" << k_global_ << " k_local:" << k_local_ << std::endl;
     }
 
-    // ~Exp2(){sycl::free(global_buffer_, q_);}
+    ~Exp2(){sycl::free(global_buffer_, q_);}
 };
 
 // =============================================================================
