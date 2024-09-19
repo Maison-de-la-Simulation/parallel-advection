@@ -1,8 +1,6 @@
 #pragma once
 #include "AdvectionParams.h"
 #include "IAdvectorX.h"
-#include <hipSYCL/sycl/queue.hpp>
-#include <hipSYCL/sycl/usm.hpp>
 
 /* Contains headers for different implementations of advector interface */
 namespace AdvX {
@@ -197,8 +195,8 @@ class Exp1 : public IAdvectorX {
 
     /* Max number of batch submitted */
     static constexpr size_t MAX_NY_BATCHS   = 128;
+    /* Max number of elements in the local accessor */
     static constexpr size_t MAX_NX_ALLOC    = 64;
-
 
     sycl::queue q_;
     double* global_vertical_buffer_;
@@ -231,8 +229,14 @@ class Exp1 : public IAdvectorX {
 
 
       nx_rest_malloc_ = p.nx <= MAX_NX_ALLOC ? 0 : p.nx - MAX_NX_ALLOC;
-      global_vertical_buffer_ = nx_rest_malloc_ > 0 ? sycl::malloc_device<double>(p.ny * nx_rest_malloc_, q_) : nullptr;
-    
+
+      if(nx_rest_malloc_ > 0){
+        //TODO: don't allocate full ny, only the actual batch_size_ny
+        global_vertical_buffer_ = sycl::malloc_device<double>(p.ny * nx_rest_malloc_, q_);
+      }
+      else {
+        global_vertical_buffer_ = nullptr;
+      }
     }
 
     ~Exp1() { sycl::free(global_vertical_buffer_, q_); }
