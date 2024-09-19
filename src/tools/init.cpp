@@ -50,10 +50,8 @@ kernel_impl_factory(const sycl::queue &q, const ADVParamsNonCopyable &params) {
     case str2int("SeqTwoDimWG"):
         return sref::make_unique<AdvX::SeqTwoDimWG>();
     case str2int("Exp1"):
-        return sref::make_unique<AdvX::Exp1>();
+        return sref::make_unique<AdvX::Exp1>(params);
     case str2int("Exp2"):
-        return sref::make_unique<AdvX::Exp2>(params);
-    case str2int("Exp22"):
         return sref::make_unique<AdvX::Exp2>(params, params.percent_loc, q);
     case str2int("CudaLDG"):
         return sref::make_unique<AdvX::CudaLDG>();

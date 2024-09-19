@@ -192,14 +192,46 @@ class Exp1 : public IAdvectorX {
                                  buff3d &buff_fdistrib,
                                  const ADVParams &params,
                                  const size_t &ny_batch_size,
-                                 const size_t &ny_offset,
-                                 const size_t &nx_rest_to_malloc);
+                                 const size_t &ny_offset);
 
+
+    /* Max number of batch submitted */
+    static constexpr size_t MAX_NY_BATCHS   = 128;
+    static constexpr size_t MAX_NX_ALLOC    = 64;
+
+
+    size_t n_batch_;
+    size_t last_ny_size_;
+    size_t last_ny_offset_;
+    size_t nx_rest_malloc_;
+
+    void init_batchs(const ADVParams &p){
+        /* Compute number of batchs */
+        double div =
+            static_cast<double>(p.ny) / static_cast<double>(MAX_NY_BATCHS);
+        auto floor_div = std::floor(div);
+        auto div_is_int = div == floor_div;
+        n_batch_ = div_is_int ? div : floor_div + 1;
+
+        last_ny_size_ = div_is_int ? MAX_NY_BATCHS : (p.ny % MAX_NY_BATCHS);
+        last_ny_offset_ = MAX_NY_BATCHS * (n_batch_ - 1);
+    }
 
   public:
     sycl::event operator()(sycl::queue &Q,
                            buff3d &buff_fdistrib,
                            const ADVParams &params) override;
+
+
+    Exp1() = delete;
+    Exp1(const ADVParams &p){
+      init_batchs(p);
+
+      nx_rest_malloc_ = p.nx <= MAX_NX_ALLOC ? 0 : p.nx - MAX_NX_ALLOC;
+    }
+
+
+
 };
 
 // =============================================================================
@@ -244,12 +276,15 @@ class Exp2 : public IAdvectorX {
                            buff3d &buff_fdistrib,
                            const ADVParams &params) override;
 
+    Exp2() = delete;
+
     Exp2(const ADVParams &params){
       init_batchs(params);
       k_global_  = 0;
       k_local_ = params.ny*params.ny1;
     }
 
+    //TODO: gérer le cas ou percent_loc est 1 ou 0 (on fait tou dans la local mem ou tout dnas la global)
     Exp2(const ADVParams &params, const float percent_in_local_mem_per_ny1_slice,
          const sycl::queue &q)
         : q_(q) {
