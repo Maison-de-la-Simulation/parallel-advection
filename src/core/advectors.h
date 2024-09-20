@@ -10,8 +10,7 @@ class Sequential : public IAdvectorX {
     using IAdvectorX::IAdvectorX;   // Inheriting constructor
 
   public:
-    sycl::event operator()(sycl::queue &Q,
-                           buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
                            const ADVParams &params) override;
 };
 
@@ -25,8 +24,7 @@ class BasicRange : public IAdvectorX {
     BasicRange(const size_t nx, const size_t nvx, const size_t ny1)
         : m_global_buff_ftmp{sycl::range<3>(nvx, nx, ny1)} {}
 
-    sycl::event operator()(sycl::queue &Q,
-                           buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
                            const ADVParams &params) override;
 };
 
@@ -36,7 +34,8 @@ class BasicRange : public IAdvectorX {
 //                            buff3d &buff_fdistrib,
 //                            const ADVParams &params) override;
 
-//     explicit BasicRange2D(const size_t nx, const size_t nvx, const size_t ny1)
+//     explicit BasicRange2D(const size_t nx, const size_t nvx, const size_t
+//     ny1)
 //         : BasicRange(nx, nvx, ny1){};
 // };
 
@@ -46,7 +45,8 @@ class BasicRange : public IAdvectorX {
 //                            buff3d &buff_fdistrib,
 //                            const ADVParams &params) override;
 
-//     explicit BasicRange1D(const size_t nx, const size_t nvx, const size_t ny1)
+//     explicit BasicRange1D(const size_t nx, const size_t nvx, const size_t
+//     ny1)
 //         : BasicRange(nx, nvx, ny1){};
 // };
 
@@ -54,8 +54,7 @@ class Hierarchical : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
 
   public:
-    sycl::event operator()(sycl::queue &Q,
-                           buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
                            const ADVParams &params) override;
 };
 
@@ -63,8 +62,7 @@ class NDRange : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
 
   public:
-    sycl::event operator()(sycl::queue &Q,
-                           buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
                            const ADVParams &params) override;
 };
 
@@ -72,8 +70,7 @@ class Scoped : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
 
   public:
-    sycl::event operator()(sycl::queue &Q,
-                           buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
                            const ADVParams &params) override;
 };
 
@@ -113,17 +110,14 @@ class Scoped : public IAdvectorX {
 // =============================================================================
 class StreamY : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
-    sycl::event actual_advection(sycl::queue &Q,
-                                 buff3d &buff_fdistrib,
-                                 const ADVParams &params,
-                                 const size_t &n_nvx,
+    sycl::event actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
+                                 const ADVParams &params, const size_t &n_nvx,
                                  const size_t &ny_offset);
 
   public:
     // StreamY(const ADVParams &params);
 
-    sycl::event operator()(sycl::queue &Q,
-                           buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
                            const ADVParams &params) override;
 };
 
@@ -132,24 +126,21 @@ class ReducedPrecision : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
 
   public:
-    sycl::event operator()(sycl::queue &Q,
-                           buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
                            const ADVParams &params) override;
 };
 
 // =============================================================================
 class StraddledMalloc : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
-    sycl::event adv_opt3(sycl::queue &Q,
-                         buff3d &buff_fdistrib,
+    sycl::event adv_opt3(sycl::queue &Q, buff3d &buff_fdistrib,
                          const ADVParams &params,
-                        const size_t &nx_rest_to_malloc);
+                         const size_t &nx_rest_to_malloc);
 
   public:
     // StraddledMalloc(const ADVParams &params);
 
-    sycl::event operator()(sycl::queue &Q,
-                           buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
                            const ADVParams &params) override;
 };
 
@@ -158,8 +149,7 @@ class ReverseIndexes : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
 
   public:
-    sycl::event operator()(sycl::queue &Q,
-                           buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
                            const ADVParams &params) override;
 };
 
@@ -168,8 +158,7 @@ class TwoDimWG : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
 
   public:
-    sycl::event operator()(sycl::queue &Q,
-                           buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
                            const ADVParams &params) override;
 };
 
@@ -178,34 +167,31 @@ class SeqTwoDimWG : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
 
   public:
-    sycl::event operator()(sycl::queue &Q,
-                           buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
                            const ADVParams &params) override;
 };
 
 // =============================================================================
 class Exp1 : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
-    sycl::event actual_advection(sycl::queue &Q,
-                                 buff3d &buff_fdistrib,
+    sycl::event actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
                                  const ADVParams &params,
                                  const size_t &ny_batch_size,
                                  const size_t &ny_offset);
 
-
     /* Max number of batch submitted */
-    static constexpr size_t MAX_NY_BATCHS   = 128;
+    static constexpr size_t MAX_NY_BATCHS = 128;
     /* Max number of elements in the local accessor */
-    static constexpr size_t MAX_NX_ALLOC    = 64;
+    static constexpr size_t MAX_NX_ALLOC = 64;
 
     sycl::queue q_;
-    double* global_vertical_buffer_;
+    double *global_vertical_buffer_;
     size_t n_batch_;
     size_t last_ny_size_;
     size_t last_ny_offset_;
     size_t nx_rest_malloc_;
 
-    void init_batchs(const ADVParams &p){
+    void init_batchs(const ADVParams &p) {
         /* Compute number of batchs */
         double div =
             static_cast<double>(p.ny) / static_cast<double>(MAX_NY_BATCHS);
@@ -218,41 +204,40 @@ class Exp1 : public IAdvectorX {
     }
 
   public:
-    sycl::event operator()(sycl::queue &Q,
-                           buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
                            const ADVParams &params) override;
-
 
     Exp1() = delete;
 
     Exp1(const ADVParams &p, const sycl::queue &q) : q_(q) {
-      init_batchs(p);
+        init_batchs(p);
 
+        nx_rest_malloc_ = p.nx <= MAX_NX_ALLOC ? 0 : p.nx - MAX_NX_ALLOC;
 
-      nx_rest_malloc_ = p.nx <= MAX_NX_ALLOC ? 0 : p.nx - MAX_NX_ALLOC;
-
-      if(nx_rest_malloc_ > 0){
-        //TODO: don't allocate full ny, only the actual batch_size_ny
-        global_vertical_buffer_ = sycl::malloc_device<double>(p.ny * nx_rest_malloc_, q_);
-      }
-      else {
-        global_vertical_buffer_ = nullptr;
-      }
+        if (nx_rest_malloc_ > 0) {
+            // TODO: don't allocate full ny, only the actual batch_size_ny
+            global_vertical_buffer_ =
+                sycl::malloc_device<double>(p.ny * nx_rest_malloc_, q_);
+        } else {
+            global_vertical_buffer_ = nullptr;
+        }
     }
 
-    ~Exp1() { sycl::free(global_vertical_buffer_, q_); }
+    ~Exp1() {
+        if (nx_rest_malloc_ > 0)
+            sycl::free(global_vertical_buffer_, q_);
+    }
 };
 
 // =============================================================================
 class Exp2 : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
-    sycl::event actual_advection(sycl::queue &Q,
-                                 buff3d &buff_fdistrib,
+    sycl::event actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
                                  const ADVParams &params,
                                  const size_t &ny_batch_size,
                                  const size_t &ny_offset);
 
-    void init_batchs(const ADVParams &p){
+    void init_batchs(const ADVParams &p) {
         /* Compute number of batchs */
         double div =
             static_cast<double>(p.ny) / static_cast<double>(MAX_NY_BATCHS);
@@ -265,7 +250,7 @@ class Exp2 : public IAdvectorX {
     }
 
     /* Max number of batch submitted */
-    static constexpr size_t MAX_NY_BATCHS   = 65535;
+    static constexpr size_t MAX_NY_BATCHS = 65535;
 
     size_t n_batch_;
     size_t last_ny_size_;
@@ -277,25 +262,24 @@ class Exp2 : public IAdvectorX {
     size_t k_global_;
 
     sycl::queue q_;
-    double* global_buffer_;
-    
+    double *global_buffer_;
 
   public:
-    sycl::event operator()(sycl::queue &Q,
-                           buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
                            const ADVParams &params) override;
 
     Exp2() = delete;
 
-    Exp2(const ADVParams &params){
-      init_batchs(params);
-      k_global_  = 0;
-      k_local_ = params.ny*params.ny1;
+    Exp2(const ADVParams &params) {
+        init_batchs(params);
+        k_global_ = 0;
+        k_local_ = params.ny * params.ny1;
     }
 
-    //TODO: gérer le cas ou percent_loc est 1 ou 0 (on fait tou dans la local mem ou tout dnas la global)
-    Exp2(const ADVParams &params, const float percent_in_local_mem_per_ny1_slice,
-         const sycl::queue &q)
+    // TODO: gérer le cas ou percent_loc est 1 ou 0 (on fait tou dans la local
+    // mem ou tout dnas la global)
+    Exp2(const ADVParams &params,
+         const float percent_in_local_mem_per_ny1_slice, const sycl::queue &q)
         : q_(q) {
         init_batchs(params);
 
@@ -306,13 +290,18 @@ class Exp2 : public IAdvectorX {
         k_local_ = std::floor(div);
         k_global_ = params.ny - k_local_;
 
-        global_buffer_ =
-            sycl::malloc_device<double>(k_global_ * params.nx, q);
+        if (k_global_ > 0) {
+            global_buffer_ = sycl::malloc_device<double>(
+                k_global_ * params.nx * params.ny1, q);
+        } else {
+            global_buffer_ = nullptr;
+        }
 
-        // std::cout << "k_global:" << k_global_ << " k_local:" << k_local_ << std::endl;
+        // std::cout << "k_global:" << k_global_ << " k_local:" << k_local_ <<
+        // std::endl;
     }
 
-    ~Exp2(){sycl::free(global_buffer_, q_);}
+    ~Exp2() { if(global_buffer_ != nullptr) sycl::free(global_buffer_, q_); }
 };
 
 // =============================================================================
@@ -320,8 +309,7 @@ class CudaLDG : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
 
   public:
-    sycl::event operator()(sycl::queue &Q,
-                           buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
                            const ADVParams &params) override;
 };
 

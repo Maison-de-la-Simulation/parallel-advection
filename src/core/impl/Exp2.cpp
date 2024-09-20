@@ -48,8 +48,9 @@ AdvX::Exp2::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
     const size_t global_offset = k_local_;
     const auto k_global = k_global_;
     const auto ptr_global = global_buffer_;
-    
+
     /* k_global: kernels running in the global memory */
+    // if(k_global > 0)
     Q.submit([&](sycl::handler &cgh) {
         auto fdist =
             buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
@@ -59,7 +60,7 @@ AdvX::Exp2::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
             g.parallel_for_work_item(
                 sycl::range{wg_size_y, nx, 1}, [&](sycl::h_item<3> it){
                     mdspan3d_t fdist_view(fdist.get_pointer(), ny, nx, ny1);
-                    mdspan2d_t scratch_view(ptr_global, k_global, nx);
+                    mdspan3d_t scratch_view(ptr_global, k_global, nx, ny1);
 
                     const int ix = it.get_local_id(1);
                     const int iy1 = g.get_group_id(2);
@@ -79,11 +80,11 @@ AdvX::Exp2::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
 
                     const int ipos1 = leftNode - LAG_OFFSET;
                     
-                    scratch_view(k_ny, ix) = 0;
+                    scratch_view(k_ny, ix, iy1) = 0;
                     for (int k = 0; k <= LAG_ORDER; k++) {
                         int idx_ipos1 = (nx + ipos1 + k) % nx;
 
-                        scratch_view(k_ny, ix) +=
+                        scratch_view(k_ny, ix, iy1) +=
                             coef[k] * fdist_view(iy, idx_ipos1, iy1);
                     }
             }); //end parallel_for_work_item
@@ -92,7 +93,7 @@ AdvX::Exp2::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
             g.parallel_for_work_item(
                 sycl::range{wg_size_y, nx, 1}, [&](sycl::h_item<3> it){
                     mdspan3d_t fdist_view(fdist.get_pointer(), ny, nx, ny1);
-                    mdspan2d_t scratch_view(ptr_global, k_global, nx);
+                    mdspan3d_t scratch_view(ptr_global, k_global, nx, ny1);
 
                     const int ix = it.get_local_id(1);
                     const int iy1 = g.get_group_id(2);
@@ -102,13 +103,11 @@ AdvX::Exp2::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
                     const int iy = wg_size_y * k_ny + ny_offset +
                                    local_ny + global_offset;
 
-                     fdist_view(iy, ix, iy1) = scratch_view(k_ny, ix);
+                     fdist_view(iy, ix, iy1) = scratch_view(k_ny, ix, iy1);
 
             }); //end parallel_for_work_item
         }); // end parallel_for_work_group
     }); //end Q.submit
-
-    // Q.wait();
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
