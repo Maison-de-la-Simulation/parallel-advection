@@ -12,38 +12,38 @@ using mdspan2d_t =
     std::experimental::mdspan<real_t, std::experimental::dextents<size_t, 2>,
                               std::experimental::layout_right>;
 
-using globAcc2D =
-    typename sycl::accessor<real_t, 2, sycl::access::mode::discard_read_write,
-                            sycl::target::global_buffer>;
+// using globAcc3D =
+//     typename sycl::accessor<real_t, 3, sycl::access::mode::discard_read_write,
+//                             sycl::target::global_buffer>;
 
 using localAcc2D = typename sycl::local_accessor<real_t, 2>;
 
 template <typename RealType> struct StraddledBuffer {
 
     mdspan2d_t m_local_mdpsan;
-    mdspan2d_t m_global_mdpsan;
+    mdspan3d_t m_global_mdpsan;
 
     StraddledBuffer() = delete;
-    StraddledBuffer(const globAcc2D &globalAcc, const localAcc2D &localAcc)
-        : m_local_mdpsan(localAcc.get_pointer(), localAcc.get_range().get(0),
-                         localAcc.get_range().get(1)),
-          m_global_mdpsan(globalAcc.get_pointer(), globalAcc.get_range().get(0),
-                          globalAcc.get_range().get(1)) {}
+    // StraddledBuffer(const globAcc2D &globalAcc, const localAcc2D &localAcc)
+    //     : m_local_mdpsan(localAcc.get_pointer(), localAcc.get_range().get(0),
+    //                      localAcc.get_range().get(1)),
+    //       m_global_mdpsan(globalAcc.get_pointer(), globalAcc.get_range().get(0),
+    //                       globalAcc.get_range().get(1), glo) {}
 
     StraddledBuffer(RealType *globalPtr, const size_t globalNy,
-                    const size_t globalNx, const localAcc2D &localAcc)
+                    const size_t globalNx, const size_t globalNy1, const localAcc2D &localAcc)
         : m_local_mdpsan(localAcc.get_pointer(), localAcc.get_range().get(0),
                          localAcc.get_range().get(1)),
-          m_global_mdpsan(globalPtr, globalNy, globalNx) {}
+          m_global_mdpsan(globalPtr, globalNy, globalNx, globalNy1) {}
 
-    RealType &operator()(size_t iy, size_t ix) const {
+    RealType &operator()(size_t iy, size_t ix, size_t iy1) const {
         auto localNx = m_local_mdpsan.extent(1);
         auto localNy = m_local_mdpsan.extent(0);
 
         if (ix < localNx) {
             return m_local_mdpsan(iy % localNy, ix);
         } else {
-            return m_global_mdpsan(iy, ix - localNx);
+            return m_global_mdpsan(iy, ix - localNx, iy1);
         }
     }
 
@@ -106,7 +106,7 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
                     sycl::range{wg_size_y, nx, 1}, [&](sycl::h_item<3> it) {
                         mdspan3d_t fdist_view(fdist.get_pointer(), ny, nx, ny1);
                         StraddledBuffer<double> BUFF(
-                            ptr_global, ny, nx_rest_malloc, slice_ftmp);
+                            ptr_global, ny, nx_rest_malloc, ny1, slice_ftmp);
 
                         const int ix = it.get_local_id(1);
                         const int iy1 = g.get_group_id(2);
@@ -115,7 +115,7 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
                         const int iy = wg_size_y * g.get_group_id(0) +
                                        ny_offset + local_ny;
 
-                        BUFF(iy, ix) = fdist_view(iy, ix, iy1);
+                        BUFF(iy, ix, iy1) = fdist_view(iy, ix, iy1);
                     });   // barrier
 
                 /* Solve kernel */
@@ -123,7 +123,7 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
                     sycl::range{wg_size_y, nx, 1}, [&](sycl::h_item<3> it) {
                         mdspan3d_t fdist_view(fdist.get_pointer(), ny, nx, ny1);
                         StraddledBuffer<double> BUFF(
-                            ptr_global, ny, nx_rest_malloc, slice_ftmp);
+                            ptr_global, ny, nx_rest_malloc, ny1, slice_ftmp);
 
                         const int ix = it.get_local_id(1);
                         const int iy1 = g.get_group_id(2);
@@ -152,7 +152,7 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
                             int idx_ipos1 = (nx + ipos1 + k) % nx;
 
                             fdist_view(iy, ix, iy1) +=
-                                coef[k] * BUFF(iy, idx_ipos1);
+                                coef[k] * BUFF(iy, idx_ipos1, iy1);
                         }
                     });   // end parallel_for_work_item --> Implicit barrier
             });           // end parallel_for_work_group

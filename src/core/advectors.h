@@ -217,7 +217,7 @@ class Exp1 : public IAdvectorX {
         if (nx_rest_malloc_ > 0) {
             // TODO: don't allocate full ny, only the actual batch_size_ny
             global_vertical_buffer_ =
-                sycl::malloc_device<double>(p.ny * nx_rest_malloc_, q_);
+                sycl::malloc_device<double>(p.ny * nx_rest_malloc_ * p.ny1, q_);
         } else {
             global_vertical_buffer_ = nullptr;
         }
