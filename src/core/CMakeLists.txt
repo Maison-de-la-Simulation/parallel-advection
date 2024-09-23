@@ -20,6 +20,7 @@ target_sources(core
   impl/SeqTwoDimWG.cpp
   impl/Exp1.cpp
   impl/Exp2.cpp
+  impl/Exp3.cpp
   impl/CudaLDG.cpp
   )
 

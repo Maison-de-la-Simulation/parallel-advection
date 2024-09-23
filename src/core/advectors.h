@@ -215,7 +215,7 @@ class Exp1 : public IAdvectorX {
         nx_rest_malloc_ = p.nx <= MAX_NX_ALLOC ? 0 : p.nx - MAX_NX_ALLOC;
 
         if (nx_rest_malloc_ > 0) {
-            // TODO: don't allocate full ny, only the actual batch_size_ny
+            // TODO: don't allocate full ny, only the current batch_size_ny size
             global_vertical_buffer_ =
                 sycl::malloc_device<double>(p.ny * nx_rest_malloc_ * p.ny1, q_);
         } else {
@@ -302,6 +302,62 @@ class Exp2 : public IAdvectorX {
     }
 
     ~Exp2() { if(global_buffer_ != nullptr) sycl::free(global_buffer_, q_); }
+};
+
+// =============================================================================
+class Exp3 : public IAdvectorX {
+    using IAdvectorX::IAdvectorX;
+    sycl::event actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
+                                 const ADVParams &params,
+                                 const size_t &ny_batch_size,
+                                 const size_t &ny_offset);
+
+    sycl::queue q_;
+    size_t n_batch_;
+    size_t last_ny_size_;
+    size_t last_ny_offset_;
+
+    size_t concurrent_ny_slices_;
+
+    double* scratch_;
+
+     void init_batchs(const ADVParams &p) {
+        /* Compute number of batchs */
+        double div = static_cast<double>(p.ny) /
+                     static_cast<double>(concurrent_ny_slices_);
+        auto floor_div = std::floor(div);
+        auto div_is_int = div == floor_div;
+        n_batch_ = div_is_int ? div : floor_div + 1;
+
+        last_ny_size_ =
+            div_is_int ? concurrent_ny_slices_ : (p.ny % concurrent_ny_slices_);
+        last_ny_offset_ = concurrent_ny_slices_ * (n_batch_ - 1);
+    }
+
+  public:
+    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
+                           const ADVParams &params) override;
+
+    Exp3() = delete;
+
+    Exp3(const ADVParams &params, const sycl::queue &q) : q_(q) {
+        /*TODO: this percent_loc is not actually percent_in_local_memory but is
+        used to obtain CONCURRENT_NY_SLICES, we could specify this value with a
+        MAX_GLOBAL_MEM_ALLOC size or directly with the number of concurrent ny
+        slices we want to process or a max size to not exceed */
+        auto div = params.ny * params.percent_loc;
+        concurrent_ny_slices_ = std::floor(div);
+        /*TODO: check concurrent_ny_slices_ does not exceed max memory available
+        when creating the buffer*/
+
+        init_batchs(params);
+
+        scratch_ = sycl::malloc_device<double>(
+            concurrent_ny_slices_ * params.nx * params.ny1, q_);
+    }
+
+    ~Exp3(){sycl::free(scratch_, q_);}
+
 };
 
 // =============================================================================
