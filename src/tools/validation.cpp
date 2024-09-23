@@ -1,6 +1,6 @@
 #include "validation.h"
-#include <hipSYCL/sycl/sycl.hpp>
 #include <iostream>
+
 // ==========================================
 // ==========================================
 double
@@ -122,14 +122,14 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
 //              auto err = sycl::fabs(fdist[iy][ix][iy1] - value);
 //              ferr[iy][ix][iy1] = err;
 
-//              sycl::group_barrier(itm.get_group());
+            //  sycl::group_barrier(itm.get_group());
 
-//             //  //  outputValues[iy1] =
-//             //  //  reduce_over_group(itm.get_group(), ferr[iy][ix][iy1],
-//             //  //  sycl::plus<double>());
-//             //  outputValues[iy1] = 10e-16;
+            // //  //  outputValues[iy1] =
+            // //  //  reduce_over_group(itm.get_group(), ferr[iy][ix][iy1],
+            // //  //  sycl::plus<double>());
+            // //  outputValues[iy1] = 10e-16;
 
-//             //  sycl::group_barrier(itm.get_group());
+            // //  sycl::group_barrier(itm.get_group());
 
 //             //  double *first = outputValues.get_pointer();
 //             //  double *last = first + ny1;
