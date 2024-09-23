@@ -28,15 +28,13 @@ AdvX::Exp3::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
       =====================
         In ctor
     =======================*/
-    const sycl::range logical_wg(
-        1, 1,
-        ny1);   // TODO: careful check size is not excedding max work group size
-    const sycl::range physical_wg(1, 1, 128);   // TODO: adapt for performance
+    // TODO: careful check size is not excedding max work group size
+    const sycl::range logical_wg(1, nx, ny1);
+    const sycl::range physical_wg(1, 1, 128);// TODO: adapt for performance
 
-    const sycl::range nb_wg(ny_batch_size, nx, 1);
-    /* need a for loop to do all the ny batchs with CONCURRENT_NY_SLICES */
     /*=====================
     =======================*/
+    const sycl::range nb_wg(ny_batch_size, 1, 1);
 
     const auto scratch = scratch_;
     const auto concurrent_ny_slice = concurrent_ny_slices_;
@@ -56,12 +54,11 @@ AdvX::Exp3::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
                 mdspan3d_t fdist_view(fdist.get_pointer(), ny, nx, ny1);
                 mdspan3d_t scr_view(scratch, concurrent_ny_slice, nx, ny1);
 
-                const int ix = it.get_global_id(1);
-                const int iy1 = g.get_local_id(2);
+                const int ix = it.get_local_id(1);
+                const int iy1 = it.get_local_id(2);
 
-                const int scr_iy = it.get_global_id(0);
-
-                const int iy = it.get_global_id(0) + ny_offset;
+                const int scr_iy = g.get_group_id(0);
+                const int iy = scr_iy + ny_offset;
 
                 double const xFootCoord = displ(ix, iy, params);
 
@@ -77,7 +74,7 @@ AdvX::Exp3::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
 
                 const int ipos1 = leftNode - LAG_OFFSET;
 
-                scr_view(scr_iy, ix, iy1) = 0;
+                scr_view(scr_iy, ix, iy1) = 0.;
                 for (int k = 0; k <= LAG_ORDER; k++) {
                     int idx_ipos1 = (nx + ipos1 + k) % nx;
 
@@ -92,11 +89,11 @@ AdvX::Exp3::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
                 mdspan3d_t fdist_view(fdist.get_pointer(), ny, nx, ny1);
                 mdspan3d_t scr_view(scratch, concurrent_ny_slice, nx, ny1);
 
-                const int ix = it.get_global_id(1);
-                const int iy1 = g.get_local_id(2);
+                const int ix = it.get_local_id(1);
+                const int iy1 = it.get_local_id(2);
 
-                const int scr_iy = it.get_global_id(0);
-                const int iy = it.get_global_id(0) + ny_offset;
+                const int scr_iy = g.get_group_id(0);
+                const int iy = scr_iy + ny_offset;
 
                 fdist_view(iy, ix, iy1) = scr_view(scr_iy, ix, iy1);
             });   // barrier
