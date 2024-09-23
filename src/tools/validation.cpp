@@ -58,7 +58,7 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
              });
         }
 
-        all_l1_errors[iy1] = errorL1 / (params.nx * params.ny);
+        all_l1_errors[iy1] = errorL1 / (params.nx * params.ny * params.ny1);
     }
 
     auto highest_l1 =
