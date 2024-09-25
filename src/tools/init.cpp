@@ -78,5 +78,5 @@ fill_buffer(sycl::queue &q, sycl::buffer<double, 3> &buff_fdist,
             double x = params.minRealX + ix * params.dx;
             fdist[itm] = sycl::sin(4 * x * M_PI);
         });   // end parallel_for
-    });       // end q.submit
+    }).wait();       // end q.submit
 }

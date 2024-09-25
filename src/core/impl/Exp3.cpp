@@ -30,7 +30,7 @@ AdvX::Exp3::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
     =======================*/
     // TODO: careful check size is not excedding max work group size
     const sycl::range logical_wg(1, nx, ny1);
-    const sycl::range physical_wg(1, 1, 128);// TODO: adapt for performance
+    const sycl::range physical_wg(1, 1, 128);   // TODO: adapt for performance
 
     /*=====================
     =======================*/
@@ -48,9 +48,9 @@ AdvX::Exp3::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
         // sycl::local_accessor<double, 2> slice_ftmp(sycl::range<2>(wg_size_y,
         // nx), cgh, sycl::no_init);
 
-        cgh.parallel_for_work_group(nb_wg, logical_wg, [=](sycl::group<3> g) {
+        cgh.parallel_for_work_group(nb_wg, physical_wg, [=](sycl::group<3> g) {
             /* Solve kernel */
-            g.parallel_for_work_item(physical_wg, [&](sycl::h_item<3> it) {
+            g.parallel_for_work_item(logical_wg, [&](sycl::h_item<3> it) {
                 mdspan3d_t fdist_view(fdist.get_pointer(), ny, nx, ny1);
                 mdspan3d_t scr_view(scratch, concurrent_ny_slice, nx, ny1);
 
@@ -85,7 +85,7 @@ AdvX::Exp3::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
 
             /* Copy kernel*/
             // TODO: probably can use contiguous copy or something?
-            g.parallel_for_work_item(physical_wg, [&](sycl::h_item<3> it) {
+            g.parallel_for_work_item(logical_wg, [&](sycl::h_item<3> it) {
                 mdspan3d_t fdist_view(fdist.get_pointer(), ny, nx, ny1);
                 mdspan3d_t scr_view(scratch, concurrent_ny_slice, nx, ny1);
 

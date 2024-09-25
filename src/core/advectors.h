@@ -193,8 +193,8 @@ class Exp1 : public IAdvectorX {
 
     void init_batchs(const ADVParams &p) {
         /* Compute number of batchs */
-        double div =
-            static_cast<double>(p.ny) / static_cast<double>(MAX_NY_BATCHS);
+        float div =
+            static_cast<float>(p.ny) / static_cast<float>(MAX_NY_BATCHS);
         auto floor_div = std::floor(div);
         auto div_is_int = div == floor_div;
         n_batch_ = div_is_int ? div : floor_div + 1;
@@ -239,8 +239,8 @@ class Exp2 : public IAdvectorX {
 
     void init_batchs(const ADVParams &p) {
         /* Compute number of batchs */
-        double div =
-            static_cast<double>(p.ny) / static_cast<double>(MAX_NY_BATCHS);
+        float div =
+            static_cast<float>(p.ny) / static_cast<float>(MAX_NY_BATCHS);
         auto floor_div = std::floor(div);
         auto div_is_int = div == floor_div;
         n_batch_ = div_is_int ? div : floor_div + 1;
@@ -296,9 +296,6 @@ class Exp2 : public IAdvectorX {
         } else {
             global_buffer_ = nullptr;
         }
-
-        // std::cout << "k_global:" << k_global_ << " k_local:" << k_local_ <<
-        // std::endl;
     }
 
     ~Exp2() { if(global_buffer_ != nullptr) sycl::free(global_buffer_, q_); }
@@ -323,8 +320,8 @@ class Exp3 : public IAdvectorX {
 
      void init_batchs(const ADVParams &p) {
         /* Compute number of batchs */
-        double div = static_cast<double>(p.ny) /
-                     static_cast<double>(concurrent_ny_slices_);
+        double div = static_cast<float>(p.ny) /
+                     static_cast<float>(concurrent_ny_slices_);
         auto floor_div = std::floor(div);
         auto div_is_int = div == floor_div;
         n_batch_ = div_is_int ? div : floor_div + 1;
