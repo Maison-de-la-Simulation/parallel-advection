@@ -23,16 +23,12 @@ AdvX::Exp4::operator()(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
       =====================
         In ctor
     =======================*/
-    // TODO: careful check size is not excedding max work group size
     const sycl::range logical_wg(1, nx, ny1);
     const sycl::range physical_wg(1, 1, 128);   // TODO: adapt for performance
-
     /*=====================
     =======================*/
-    const sycl::range nb_wg(ny, 1, 1);
 
-    // const auto scratch = scratch_;
-    // const auto concurrent_ny_slice = concurrent_ny_slices_;
+    const sycl::range nb_wg(ny, 1, 1);
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
