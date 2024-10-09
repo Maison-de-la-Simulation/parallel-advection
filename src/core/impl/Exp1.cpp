@@ -3,6 +3,15 @@
 #include <cstddef>
 #include <experimental/mdspan>
 
+/* =================================================================
+Straddledmalloc: horizontal distribution of data between local and global
+memory
+- Only one type of kernel
+- Modulo in the accessor [] of the data
+- Streaming in Y with blocks BY
+- GridStride (Done by hierarchical) in BY and X dims
+==================================================================== */
+
 using real_t = double;
 
 using mdspan3d_t =

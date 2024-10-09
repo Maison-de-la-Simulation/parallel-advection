@@ -2,6 +2,27 @@
 #include "advectors.h"
 #include <experimental/mdspan>
 
+/* =================================================================
+Vertical distribution of data between local and global memory
+- Two types of kernels
+    - Ones working in global memory
+    - Ones working in local memory
+- No modulo in accessor, each kernels works in different buffer
+- Parameter p (percent_in_local_mem) what is the percentage of kernels to run
+with local memory, the rest will be allocated in global memory
+    - Limitation: for now p is only calculated wrt Y size, should be Y*Y1?
+    - Example: Y = 100, p=0.6
+        - 60 kernels will run with local memory
+        - 40 kernels will run into global memory (3D buffer of size 40*nx*ny1
+            is allocated)
+
+
+
+- Streaming in Y with blocks BY
+- GridStride (Done by hierarchical) in BY and X dims
+==================================================================== */
+
+
 using mdspan3d_t =
     std::experimental::mdspan<double, std::experimental::dextents<size_t, 3>,
                               std::experimental::layout_right>;
@@ -9,8 +30,6 @@ using mdspan2d_t =
     std::experimental::mdspan<double, std::experimental::dextents<size_t, 2>,
                               std::experimental::layout_right>;
 
-
-//TODO faire 2 noyaux un en local mem un en global mem
 
 // ==========================================
 // ==========================================

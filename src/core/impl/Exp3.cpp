@@ -2,6 +2,16 @@
 #include "advectors.h"
 #include <experimental/mdspan>
 
+/* =================================================================
+Scratch is fully in global memory, parallelizing on Y1 rather than Y
+
+- Each WI will be placed on the Y1 dimension, iterating sequentially through X
+- Parameter p, controlling the number of Y slices done concurrently
+- Buffer of size concurrent_ny_slices_*nx*ny1 is allocated
+    - Controlling memory footprint/perf with p
+
+==================================================================== */
+
 using mdspan3d_t =
     std::experimental::mdspan<double, std::experimental::dextents<size_t, 3>,
                               std::experimental::layout_right>;
@@ -44,7 +54,7 @@ AdvX::Exp3::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
             buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
 
         /*TODO: use the local accessor if it's possible (i.e. if nx*ny1 <
-         * MAX_ALLOC) */
+         * MAX_ALLOC) that's Exp4 */
         // sycl::local_accessor<double, 2> slice_ftmp(sycl::range<2>(wg_size_y,
         // nx), cgh, sycl::no_init);
 
@@ -115,6 +125,10 @@ AdvX::Exp3::operator()(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
         actual_advection(Q, buff_fdistrib, params, concurrent_ny_slices_,
                          ny_offset)
             .wait();
+        /* on est obligé de wait à moins d'utiliser plein de petits buffers et
+        de soumettre plein de tout petit noyaux
+        comme des local_accessor et dire quand la petite slice est process pour
+        liberer la petite slice en memoire */
     }
 
     // return the last advection with the rest

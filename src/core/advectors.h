@@ -369,28 +369,6 @@ class Exp4 : public IAdvectorX {
 
     static constexpr size_t MAX_ALLOC_SIZE_ = 6144; //TODO this is for A100
 
-    // sycl::queue q_;
-    // size_t n_batch_;
-    // size_t last_ny_size_;
-    // size_t last_ny_offset_;
-
-    // size_t concurrent_ny_slices_;
-
-    // size_t local_alloc_size_;
-
-    //  void init_batchs(const ADVParams &p) {
-    //     /* Compute number of batchs */
-    //     double div = static_cast<float>(p.ny) /
-    //                  static_cast<float>(concurrent_ny_slices_);
-    //     auto floor_div = std::floor(div);
-    //     auto div_is_int = div == floor_div;
-    //     n_batch_ = div_is_int ? div : floor_div + 1;
-
-    //     last_ny_size_ =
-    //         div_is_int ? concurrent_ny_slices_ : (p.ny % concurrent_ny_slices_);
-    //     last_ny_offset_ = concurrent_ny_slices_ * (n_batch_ - 1);
-    // }
-
   public:
     sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
                            const ADVParams &params) override;
@@ -403,20 +381,7 @@ class Exp4 : public IAdvectorX {
                 "nx*ny > MAX_ALLOC_SIZE_: a single slice of the problem cannot "
                 "fit in local memory, Exp4 not possible");
         }
-
-        // local_alloc_size_ = params.nx * params.ny1;
-
-        /*TODO: check concurrent_ny_slices_ does not exceed max memory available
-        when creating the buffer*/
-
-        // init_batchs(params);
-
-        // scratch_ = sycl::malloc_device<double>(
-            // concurrent_ny_slices_ * params.nx * params.ny1, q_);
     }
-
-    // ~Exp4(){sycl::free(scratch_, q_);}
-
 };
 
 // =============================================================================
