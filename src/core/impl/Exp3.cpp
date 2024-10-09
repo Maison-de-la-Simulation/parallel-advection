@@ -1,6 +1,5 @@
 #include "IAdvectorX.h"
 #include "advectors.h"
-#include <experimental/mdspan>
 
 /* =================================================================
 Scratch is fully in global memory, parallelizing on Y1 rather than Y
@@ -11,13 +10,6 @@ Scratch is fully in global memory, parallelizing on Y1 rather than Y
     - Controlling memory footprint/perf with p
 
 ==================================================================== */
-
-using mdspan3d_t =
-    std::experimental::mdspan<double, std::experimental::dextents<size_t, 3>,
-                              std::experimental::layout_right>;
-using mdspan2d_t =
-    std::experimental::mdspan<double, std::experimental::dextents<size_t, 2>,
-                              std::experimental::layout_right>;
 
 // ==========================================
 // ==========================================

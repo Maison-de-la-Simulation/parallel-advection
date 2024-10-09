@@ -1,17 +1,10 @@
 #include "IAdvectorX.h"
 #include "advectors.h"
-#include <experimental/mdspan>
+
 /* =================================================================
 Same as Exp3 but buffer is allocated in local memory this time
 - Problem, we allocate (nx*ny1) in local memory which can be too much
 ==================================================================== */
-
-using mdspan3d_t =
-    std::experimental::mdspan<double, std::experimental::dextents<size_t, 3>,
-                              std::experimental::layout_right>;
-using mdspan2d_t =
-    std::experimental::mdspan<double, std::experimental::dextents<size_t, 2>,
-                              std::experimental::layout_right>;
 
 // ==========================================
 // ==========================================

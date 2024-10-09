@@ -1,7 +1,6 @@
 #include "IAdvectorX.h"
 #include "advectors.h"
 #include <cstddef>
-#include <experimental/mdspan>
 
 /* =================================================================
 Straddledmalloc: horizontal distribution of data between local and global
@@ -11,15 +10,6 @@ memory
 - Streaming in Y with blocks BY
 - GridStride (Done by hierarchical) in BY and X dims
 ==================================================================== */
-
-using real_t = double;
-
-using mdspan3d_t =
-    std::experimental::mdspan<real_t, std::experimental::dextents<size_t, 3>,
-                              std::experimental::layout_right>;
-using mdspan2d_t =
-    std::experimental::mdspan<real_t, std::experimental::dextents<size_t, 2>,
-                              std::experimental::layout_right>;
 
 // using globAcc3D =
 //     typename sycl::accessor<real_t, 3, sycl::access::mode::discard_read_write,

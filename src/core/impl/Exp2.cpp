@@ -1,6 +1,5 @@
 #include "IAdvectorX.h"
 #include "advectors.h"
-#include <experimental/mdspan>
 
 /* =================================================================
 Vertical distribution of data between local and global memory
@@ -21,15 +20,6 @@ with local memory, the rest will be allocated in global memory
 - Streaming in Y with blocks BY
 - GridStride (Done by hierarchical) in BY and X dims
 ==================================================================== */
-
-
-using mdspan3d_t =
-    std::experimental::mdspan<double, std::experimental::dextents<size_t, 3>,
-                              std::experimental::layout_right>;
-using mdspan2d_t =
-    std::experimental::mdspan<double, std::experimental::dextents<size_t, 2>,
-                              std::experimental::layout_right>;
-
 
 // ==========================================
 // ==========================================

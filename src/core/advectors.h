@@ -3,6 +3,16 @@
 #include "IAdvectorX.h"
 #include <cstddef>
 #include <stdexcept>
+#include <experimental/mdspan>
+
+using real_t = double;
+
+using mdspan3d_t =
+    std::experimental::mdspan<real_t, std::experimental::dextents<size_t, 3>,
+                              std::experimental::layout_right>;
+using mdspan2d_t =
+    std::experimental::mdspan<real_t, std::experimental::dextents<size_t, 2>,
+                              std::experimental::layout_right>;
 
 /* Contains headers for different implementations of advector interface */
 namespace AdvX {
