@@ -27,7 +27,7 @@ SETS = {
                    "NDRange"],
     "use_gpu": [True,
                 False],
-    "(nx,nvx)": [(1024, 2**x) for x in range(8, 20)],
+    "(n1,nvx)": [(1024, 2**x) for x in range(8, 20)],
 }
 
 ## PROFILE MODE OPT

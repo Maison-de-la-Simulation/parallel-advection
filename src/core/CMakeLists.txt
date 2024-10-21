@@ -22,6 +22,7 @@ target_sources(core
   impl/Exp2.cpp
   impl/Exp3.cpp
   impl/Exp4.cpp
+  impl/Exp5.cpp
   impl/CudaLDG.cpp
   )
 

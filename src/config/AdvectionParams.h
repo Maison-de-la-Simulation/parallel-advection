@@ -16,7 +16,7 @@ struct ADVParams {
   //The implementation of the kernel, correspond to core/impl cpp files
   // std::string kernelImpl;
 
-  //The percentage of ny rows to compute in local memory
+  //The percentage of n0 rows to compute in local memory
   float percent_loc = 1.0;
 
   // Outputs the solution to solution.log file to be read with the ipynb
@@ -26,14 +26,14 @@ struct ADVParams {
   size_t maxIter = 100;
 
   // Number of points for
-  size_t nx = 1024; //dimension of interest
-  size_t ny = 32;    //batch dimension (corresponds to velocities Vx)
-  size_t ny1 = 32;   //stride for x, is also a batch dimension
-  //We get ny1*ny independent problems of size nx, and x has a stride of ny1
+  size_t n1 = 1024; //dimension of interest
+  size_t n0 = 32;    //batch dimension (corresponds to velocities Vx)
+  size_t n2 = 32;   //stride for x, is also a batch dimension
+  //We get n2*n0 independent problems of size n1, and x has a stride of n2
 
   // Sizes of the SYCL work groups
-  size_t wg_size_x = 128;
-  size_t wg_size_y = 1;
+  size_t wg_size_1 = 128;
+  size_t wg_size_0 = 1;
 
   // Deltas : taille physique d'une cellule discrète (en x, vx, t)
   double dt  = 0.0001;

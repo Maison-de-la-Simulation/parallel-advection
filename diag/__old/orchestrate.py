@@ -69,13 +69,13 @@ if __name__ == "__main__":
 
     for kernelImpl in p.SETS["kernelImpl"]:
         for use_gpu in p.SETS["use_gpu"]:
-            for sizes in p.SETS["(nx,nvx)"]:
-                nx = sizes[0]
+            for sizes in p.SETS["(n1,nvx)"]:
+                n1 = sizes[0]
                 nvx = sizes[1]
 
                 use_gpu_str = "gpu" if use_gpu else "cpu"
 
-                unique_prefix = f"adv_{kernelImpl}_{nx}_{nvx}_{use_gpu_str}"
+                unique_prefix = f"adv_{kernelImpl}_{n1}_{nvx}_{use_gpu_str}"
 
                 # append with "--" so we can send it as an arg for other script
                 use_gpu_str = "--" + use_gpu_str
@@ -99,7 +99,7 @@ if __name__ == "__main__":
                             f"--inifile={new_inifile_host}",
                             f"--kernel={kernelImpl}",
                             use_gpu_str,
-                            f"--nx={nx}",
+                            f"--n1={n1}",
                             f"--nvx={nvx}",
                         ]
                     )
@@ -138,8 +138,8 @@ if __name__ == "__main__":
 
                         global_data_as_list.append(
                             [
-                                nx * nvx,
-                                nx,
+                                n1 * nvx,
+                                n1,
                                 nvx,
                                 kernelImpl,
                                 df["error"].mean(),
@@ -161,7 +161,7 @@ if __name__ == "__main__":
             global_data_as_list,
             columns=[
                 "global_size",
-                "nx",
+                "n1",
                 "nvx",
                 "kernel",
                 "error_mean",

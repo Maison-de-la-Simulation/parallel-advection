@@ -16,16 +16,16 @@ BM_STREAM(benchmark::State &state){
     /* Benchmark infos */
     state.counters.insert({
         {"gpu", p.gpu},
-        {"ny", p.ny},
-        {"nx", p.nx},
-        {"ny1", p.ny1},
+        {"n0", p.n0},
+        {"n1", p.n1},
+        {"n2", p.n2},
         {"kernel_id", -1},
         {"wg_size", p.wg_size},
     });
 
     /* SYCL setup */
     auto Q = createSyclQueue(p.gpu, state);
-    sycl::buffer<double, 1> fdist(sycl::range<1>(p.ny*p.nx*p.ny1));
+    sycl::buffer<double, 1> fdist(sycl::range<1>(p.n0*p.n1*p.n2));
 
     /* Fill buffer with zeroes */
     Q.submit([&](sycl::handler &cgh) {
@@ -42,8 +42,8 @@ BM_STREAM(benchmark::State &state){
 
     p.maxIter = state.iterations();
 
-    state.SetItemsProcessed(p.maxIter * p.ny * p.nx);
-    state.SetBytesProcessed(p.maxIter * p.ny * p.nx * sizeof(double));
+    state.SetItemsProcessed(p.maxIter * p.n0 * p.n1);
+    state.SetBytesProcessed(p.maxIter * p.n0 * p.n1 * sizeof(double));
 
     //No validation because it's FakeAdvector
 }
@@ -51,9 +51,9 @@ BM_STREAM(benchmark::State &state){
 BENCHMARK(BM_STREAM)
     ->ArgsProduct({
         {1, 0},     /*gpu*/
-        NY_RANGE, /*ny*/
-        {NX},  /*nx*/
-        NS_RANGE /*ny1*/
+        NY_RANGE, /*n0*/
+        {n1},  /*n1*/
+        NS_RANGE /*n2*/
     })
     ->UseRealTime() /* real time benchmark */
     ->Unit(benchmark::kMillisecond);

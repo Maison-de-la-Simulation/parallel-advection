@@ -2,13 +2,13 @@ import configparser
 from optparse import OptionParser
 import sys
 
-#python3 edit_ini_file.py --inifile=advection.ini --kernel=BasicRange2D --gpu --nx=512 --nvx=65000
+#python3 edit_ini_file.py --inifile=advection.ini --kernel=BasicRange2D --gpu --n1=512 --nvx=65000
 
 def edit_ini_file(
     inifile : str,
     kernelImpl : str,
     use_gpu : bool,
-    nx : int,
+    n1 : int,
     nvx : int):
 
     config = configparser.ConfigParser()
@@ -19,7 +19,7 @@ def edit_ini_file(
         config['run']['gpu'] = "false"
 
     config['run']['kernelImpl'] = kernelImpl
-    config['geometry']['nx'] = str(nx)
+    config['geometry']['n1'] = str(n1)
     config['geometry']['nvx'] = str(nvx)
 
     with open(inifile, 'w') as configfile:
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     parser.add_option("--gpu", action="store_true", dest="use_gpu", help="Use the GPU")
     parser.add_option("--cpu", action="store_false", dest="use_gpu", help="Use the CPU")
 
-    parser.add_option("--nx", dest="nx", action="store", type=int,
+    parser.add_option("--n1", dest="n1", action="store", type=int,
                       help="Number of point for x")
     parser.add_option("--nvx", dest="nvx", action="store", type=int,
                       help="Number of point for vx")
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     inifile    = options.__dict__['inifile']
     kernelImpl = options.__dict__['kernelImpl']
     use_gpu    = options.__dict__['use_gpu']
-    nx         = options.__dict__['nx']
+    n1         = options.__dict__['n1']
     nvx        = options.__dict__['nvx']
 
-    edit_ini_file(inifile, kernelImpl, use_gpu, nx, nvx)
+    edit_ini_file(inifile, kernelImpl, use_gpu, n1, nvx)

@@ -5,8 +5,8 @@
 //                                sycl::buffer<double, 3> &buff_fdistrib,
 //                                const ADVParams &params) {
 
-//     auto const nx = params.nx;
-//     auto const ny = params.ny;
+//     auto const n1 = params.n1;
+//     auto const n0 = params.n0;
 //     auto const minRealX = params.minRealX;
 //     auto const dx = params.dx;
 //     auto const inv_dx = params.inv_dx;
@@ -19,11 +19,11 @@
 //         sycl::accessor ftmp(m_global_buff_ftmp, cgh, sycl::write_only,
 //                             sycl::no_init);
 
-//         cgh.parallel_for(sycl::range<1>(ny), [=](sycl::id<1> itm) {
-//             const int iy = itm[0];
+//         cgh.parallel_for(sycl::range<1>(n0), [=](sycl::id<1> itm) {
+//             const int i0 = itm[0];
 
-//             for (int ix = 0; ix < nx; ++ix) {
-//                 double const xFootCoord = displ(ix, iy, params);
+//             for (int i1 = 0; i1 < n1; ++i1) {
+//                 double const xFootCoord = displ(i1, i0, params);
 
 //                 // Corresponds to the index of the cell to the left of footCoord
 //                 const int leftNode =
@@ -37,14 +37,14 @@
 
 //                 const int ipos1 = leftNode - LAG_OFFSET;
 
-//                 ftmp[iy][ix] = 0;
+//                 ftmp[i0][i1] = 0;
 //                 for (int k = 0; k <= LAG_ORDER; k++) {
-//                     int idx_ipos1 = (nx + ipos1 + k) % nx;
+//                     int idx_ipos1 = (n1 + ipos1 + k) % n1;
 
-//                     ftmp[iy][ix] += coef[k] * fdist[iy][idx_ipos1];
+//                     ftmp[i0][i1] += coef[k] * fdist[i0][idx_ipos1];
 
 //                 }   // end for k
-//             }       // end for ix
+//             }       // end for i1
 //             // barrier
 //         });   // end parallel_for
 //     });       // end Q.submit

@@ -1,7 +1,7 @@
 #include "advectors.h"
 
 sycl::event
-AdvX::NDRange::operator()(sycl::queue &Q,
+AdvX::Exp5::operator()(sycl::queue &Q,
                           sycl::buffer<double, 3> &buff_fdistrib,
                           const ADVParams &params) {
     auto const n1 = params.n1;
@@ -11,8 +11,8 @@ AdvX::NDRange::operator()(sycl::queue &Q,
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    const sycl::range global_size{n0, n1, n2};
-    const sycl::range local_size{1, n1, 1};
+    const sycl::range global_size{n0, 1         , wg_size_2_/n2};
+    const sycl::range local_size {1 , wg_size_1_, wg_size_2_};
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
@@ -26,6 +26,10 @@ AdvX::NDRange::operator()(sycl::queue &Q,
                 const int i1 = itm.get_local_id(1);
                 const int i0 = itm.get_global_id(0);
                 const int i2 = itm.get_global_id(2);
+
+                //for ii2 += wg_size_2_
+                    //for ii1 += wg_size_1_
+
 
                 double const xFootCoord = displ(i1, i0, params);
 

@@ -12,14 +12,14 @@ TEST(Validation, ValidateNoIteration){
     std::srand(static_cast<unsigned>(std::time(0)));
 
     ADVParams params;
-    params.nx  = 1 + std::rand() % 1024;
-    params.ny = 1 + std::rand() % 128;
-    params.ny1  = 1 + std::rand() % 64;
+    params.n1  = 1 + std::rand() % 1024;
+    params.n0 = 1 + std::rand() % 128;
+    params.n2  = 1 + std::rand() % 64;
 
     params.maxIter = 0;
     params.update_deltas();
 
-    const sycl::range<3> r3d(params.ny, params.nx, params.ny1);
+    const sycl::range<3> r3d(params.n0, params.n1, params.n2);
     sycl::buffer<double, 3> buff_fdistrib(r3d);
 
     sycl::queue Q;
@@ -33,19 +33,19 @@ TEST(Validation, ValidateNoIteration){
 // =============================================================================
 TEST(Validation, ValidateEachIterFor10Iterations){
     ADVParams params;
-    params.nx  = 512;
-    params.ny = 1 + std::rand() % 30;
-    params.ny1  = 1 + std::rand() % 30;
+    params.n1  = 512;
+    params.n0 = 1 + std::rand() % 30;
+    params.n2  = 1 + std::rand() % 30;
     params.update_deltas();
 
-    const sycl::range<3> r3d(params.ny, params.nx, params.ny1);
+    const sycl::range<3> r3d(params.n0, params.n1, params.n2);
     sycl::buffer<double, 3> buff_fdistrib(r3d);
 
     sycl::queue Q;
     fill_buffer(Q, buff_fdistrib, params);
 
     /* Creating a BasicRange advector */
-    auto advector = sref::make_unique<AdvX::BasicRange>(params.nx, params.ny, params.ny1);
+    auto advector = sref::make_unique<AdvX::BasicRange>(params.n1, params.n0, params.n2);
 
     double err;
     params.maxIter = 0;
@@ -66,20 +66,20 @@ TEST(Validation, ValidateEachIterFor10Iterations){
 // =============================================================================
 TEST(Validation, ValidateNIterations){
     ADVParams params;
-    params.nx  = 1024;
-    params.ny = 16;
-    params.ny1  = 16;
+    params.n1  = 1024;
+    params.n0 = 16;
+    params.n2  = 16;
 
     params.maxIter = 1 + std::rand() % 100;
     params.update_deltas();
 
-    const sycl::range<3> r3d(params.ny, params.nx, params.ny1);
+    const sycl::range<3> r3d(params.n0, params.n1, params.n2);
     sycl::buffer<double, 3> buff_fdistrib(r3d);
 
     sycl::queue Q;
     fill_buffer(Q, buff_fdistrib, params);
 
-    auto advector = sref::make_unique<AdvX::BasicRange>(params.nx, params.ny, params.ny1);
+    auto advector = sref::make_unique<AdvX::BasicRange>(params.n1, params.n0, params.n2);
 
     for(size_t it=0; it<params.maxIter; ++it)
         advector(Q, buff_fdistrib, params).wait_and_throw();

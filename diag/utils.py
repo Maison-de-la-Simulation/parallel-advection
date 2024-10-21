@@ -108,7 +108,7 @@ def clean_raw_df(
     df["kernel_id"] = df["kernel_id"].map(kernel_id)
 
     # setting up things to work with old utils.py
-    df["global_size"] = df["ny"] * df["nx"] * df["ny1"]
+    df["global_size"] = df["n0"] * df["n1"] * df["n2"]
 
     grouped_rows = [df.iloc[i : i + 3] for i in range(0, len(df), 3)]
 
@@ -319,7 +319,7 @@ def create_pp_values(dfs_list: list, ny_size: int, best_runtimes):
     Args:
         dfs_list (list): List of DataFrames used to compute perf-port,
         same order as hw list
-        ny_size (int): Which size of ny to keep for the perf-port. All other
+        ny_size (int): Which size of n0 to keep for the perf-port. All other
         sizes will be removed from DataFrames.
 
     Returns:
@@ -345,7 +345,7 @@ def create_pp_values(dfs_list: list, ny_size: int, best_runtimes):
     # we have general structure of pp_val dict of dict
     m_list_df = []  # list of dataframes we will use, same order as hw list
     for df in dfs_list:
-        # we only keep the rows with targeted ny size. ny = global_size/nx and nx = 1024
+        # we only keep the rows with targeted n0 size. n0 = global_size/n1 and n1 = 1024
         m_list_df.append(
             df.drop(df[(df["global_size"]/1024 != ny_size)].index) if df is not None else None
         )
