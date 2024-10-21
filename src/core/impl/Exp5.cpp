@@ -18,6 +18,12 @@ AdvX::Exp5::operator()(sycl::queue &Q,
     auto const wg2 = wg_size_2_;
     auto const wg1 = wg_size_1_;
 
+
+    if(wg2*n1 > MAX_ALLOC_SIZE_){
+                throw std::invalid_argument(
+            "wg_size_0*n1 must be < to 6144 (local memory limit)");
+    }
+
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
             buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
