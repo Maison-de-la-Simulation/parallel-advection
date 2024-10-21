@@ -59,6 +59,8 @@ kernel_impl_factory(const sycl::queue &q, const ADVParamsNonCopyable &params) {
         return sref::make_unique<AdvX::Exp4>(params);
     case str2int("Exp5"):
         return sref::make_unique<AdvX::Exp5>(params);
+    case str2int("Exp6"):
+        return sref::make_unique<AdvX::Exp6>(params, q);
     case str2int("CudaLDG"):
         return sref::make_unique<AdvX::CudaLDG>();
     default:

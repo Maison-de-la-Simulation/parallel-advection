@@ -3,6 +3,7 @@
 #include "IAdvectorX.h"
 #include <cmath>
 #include <cstddef>
+#include <hipSYCL/sycl/usm.hpp>
 #include <stdexcept>
 #include <experimental/mdspan>
 
@@ -432,6 +433,46 @@ class Exp5 : public IAdvectorX {
          we can adjust the wg_size with the max size of local accessor, but
          in the best case we prefer to use PREF_WG_SIZE as total number of threads
         */
+    }
+};
+
+// =============================================================================
+class Exp6 : public IAdvectorX {
+    using IAdvectorX::IAdvectorX;
+    sycl::event actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
+                                 const ADVParams &params,
+                                 const size_t &ny_batch_size,
+                                 const size_t &ny_offset);
+/*Same as Exp5 but in global memory*/
+
+    static constexpr size_t MAX_ALLOC_SIZE_ = 6144; //TODO this is for A100
+    static constexpr size_t WARP_SIZE_    = 32; //for A100
+    static constexpr size_t PREF_WG_SIZE_ = 128; //for A100
+
+    size_t wg_size_1_;
+    size_t wg_size_2_;
+    sycl::queue q_;
+    double* scratch_;
+
+  public:
+    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
+                           const ADVParams &params) override;
+
+    Exp6() = delete;
+
+    Exp6(const ADVParams &params, const sycl::queue &q) : q_(q) {
+
+        wg_size_1_ = std::ceil(PREF_WG_SIZE_ / params.n2);
+        wg_size_2_ =
+            wg_size_1_ > 1 ? params.n2 : PREF_WG_SIZE_;
+
+        /* TODO: allocate only for concurrent slice in dim0*/
+        scratch_ =
+            sycl::malloc_device<double>(params.n0 * params.n1 * params.n2, q_);
+    }
+
+    ~Exp6(){
+      sycl::free(scratch_, q_);
     }
 };
 
