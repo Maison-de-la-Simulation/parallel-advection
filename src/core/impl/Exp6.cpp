@@ -27,7 +27,7 @@ AdvX::Exp6::operator()(sycl::queue &Q,
         cgh.parallel_for(
             sycl::nd_range<3>{global_size, local_size},
             [=](auto itm) {
-                mdspan3d_t scr(scratch, n0, n2, n1);
+                mdspan3d_t scr(scratch, n0, n1, n2);
 
                 const int i0 = itm.get_global_id(0);
                 const int i1 = itm.get_local_id(1);
@@ -48,11 +48,11 @@ AdvX::Exp6::operator()(sycl::queue &Q,
 
                     const int ipos1 = leftNode - LAG_OFFSET;
 
-                    scr(i0, i2, ii1) = 0;   // initializing slice for each work item
+                    scr(i0, ii1, i2) = 0;   // initializing slice for each work item
                     for (int k = 0; k <= LAG_ORDER; k++) {
                         int id1_ipos = (n1 + ipos1 + k) % n1;
 
-                        scr(i0, i2, ii1) += coef[k] * fdist[i0][id1_ipos][i2];
+                        scr(i0, ii1, i2) += coef[k] * fdist[i0][id1_ipos][i2];
                     }
                 }
                 // }
@@ -60,7 +60,7 @@ AdvX::Exp6::operator()(sycl::queue &Q,
                 sycl::group_barrier(itm.get_group());
 
                 for(int ii1 = i1; ii1 < n1; ii1 += wg1){
-                    fdist[i0][ii1][i2] = scr(i0, i2, ii1);
+                    fdist[i0][ii1][i2] = scr(i0, ii1, i2);
                 }
             }   // end lambda in parallel_for
         );      // end parallel_for nd_range
