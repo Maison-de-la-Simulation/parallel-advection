@@ -101,22 +101,22 @@ void ADVParamsNonCopyable::print()
   std::cout << "##########################" << std::endl;
   std::cout << "Runtime parameters:" << std::endl;
   std::cout << "##########################" << std::endl;
-  std::cout << "kernelImpl : " << kernelImpl << std::endl;
-  std::cout << "wgSizeX    : " << wg_size_1    << std::endl;
-  std::cout << "wgSizeY    : " << wg_size_0    << std::endl;
-  std::cout << "gpu        : " << gpu    << std::endl;
-  std::cout << "maxIter    : " << maxIter    << std::endl;
-  std::cout << "n0 (nvx)   : " << n0    << std::endl;
-  std::cout << "n1         : " << n1    << std::endl;
-  std::cout << "n2        : " << n2    << std::endl;
-  std::cout << "percent_loc: " << percent_loc << std::endl;
-  std::cout << "dt         : " << dt    << std::endl;
-  std::cout << "dx         : " << dx    << std::endl;
-  std::cout << "dvx        : " << dvx    << std::endl;
-  std::cout << "minRealX   : " << minRealX    << std::endl;
-  std::cout << "maxRealX   : " << maxRealX    << std::endl;
-  std::cout << "minRealVx  : " << minRealVx    << std::endl;
-  std::cout << "maxRealVx  : " << maxRealVx    << std::endl;
+  std::cout << "kernelImpl  : " << kernelImpl << std::endl;
+  std::cout << "wgSizeX     : " << wg_size_1    << std::endl;
+  std::cout << "wgSizeY     : " << wg_size_0    << std::endl;
+  std::cout << "gpu         : " << gpu    << std::endl;
+  std::cout << "maxIter     : " << maxIter    << std::endl;
+  std::cout << "n0 (nvx)    : " << n0    << std::endl;
+  std::cout << "n1          : " << n1    << std::endl;
+  std::cout << "n2          : " << n2    << std::endl;
+  std::cout << "percent_loc : " << percent_loc << std::endl;
+  std::cout << "dt          : " << dt    << std::endl;
+  std::cout << "dx          : " << dx    << std::endl;
+  std::cout << "dvx         : " << dvx    << std::endl;
+  std::cout << "minRealX    : " << minRealX    << std::endl;
+  std::cout << "maxRealX    : " << maxRealX    << std::endl;
+  std::cout << "minRealVx   : " << minRealVx    << std::endl;
+  std::cout << "maxRealVx   : " << maxRealVx    << std::endl;
   std::cout << std::endl;
 
 } // ADVParams::print
