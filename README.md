@@ -10,7 +10,7 @@ For one time step, the algorithm's structure is as follow:
 ![Advection process](docs/fig/AdvectionProcess.png)
 
 ### SYCL Implementations
-The algorithm is implemented in various ways using different SYCL constructs. It requires shared memory allocation via the [local accessor](https://registry.khronos.org/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:accessor.local). The implementations are in the `src/core/impl` directory.
+The algorithm is implemented in various ways using different SYCL constructs. It requires local memory allocation via the [local accessor](https://registry.khronos.org/SYCL/specs/sycl-2020/html/sycl-2020.html#sec:accessor.local). The implementations are in the `src/core/impl` directory.
 
 # Build the project:
 You can use the `compile.sh` script to compile for various hardware and sycl-implementations. For multi-device compilation flows, build the project manually.

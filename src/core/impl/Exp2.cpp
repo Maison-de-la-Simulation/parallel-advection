@@ -46,7 +46,7 @@ AdvX::Exp2::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
     }
     if (wg_size_0 * n1 > 6144) {
         throw std::invalid_argument(
-            "wg_size_0*n1 must be < to 6144 (shared memory limit)");
+            "wg_size_0*n1 must be < to 6144 (local memory limit)");
     }
 
     const sycl::range nb_wg_local {k_local_  / wg_size_0, 1, n2};
