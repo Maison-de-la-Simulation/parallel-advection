@@ -190,7 +190,7 @@ def create_pp_values(dfs_list: list, ny_size: int):
     Args:
         dfs_list (list): List of DataFrames used to compute perf-port,
         same order as hw list
-        ny_size (int): Which size of ny to keep for the perf-port. All other
+        ny_size (int): Which size of n0 to keep for the perf-port. All other
         sizes will be removed from DataFrames.
 
     Returns:
@@ -216,9 +216,9 @@ def create_pp_values(dfs_list: list, ny_size: int):
     # we have general structure of pp_val dict of dict
     m_list_df = []  # list of dataframes we will use, same order as hw list
     for df in dfs_list:
-        # we only keep the rows with targeted ny size
+        # we only keep the rows with targeted n0 size
         m_list_df.append(
-            df.drop(df[(df["ny"] != ny_size)].index) if df is not None else None
+            df.drop(df[(df["n0"] != ny_size)].index) if df is not None else None
         )
 
     # for i_hw, m_df in enumerate(m_list_df):

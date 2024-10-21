@@ -181,7 +181,7 @@ echo ""
 # Build
 # =================================================
 echo "### Building project..."
-cmake --build . --parallel 24
+cmake --build . --parallel 16
 
 # Check the exit status of the build
 if [ $? -ne 0 ]; then

@@ -23,7 +23,7 @@ using bm_vec_t = std::vector<int64_t>;
 static bm_vec_t NB_LARGE_RANGE = benchmark::CreateRange(2 << 5, 2 << 20, 2);
 static bm_vec_t NB_RANGE = {16384, 32768, 65535};
 static bm_vec_t NS_RANGE = {1, 2, 4, 8, 16, 32, 64};
-static int64_t  NX = 1024;
+static int64_t  n1 = 1024;
 
 static bm_vec_t WG_SIZES_X_RANGE = {1, 4, 8, 64, 128, 256, 512, 1024};
 
@@ -43,14 +43,14 @@ static bm_vec_t IMPL_RANGE = {
 // =============================================
 [[nodiscard]] inline ADVParams
 createParams(const bool gpu,
-             const size_t &ny,
-             const size_t &nx,
-             const size_t &ny1) {
+             const size_t &n0,
+             const size_t &n1,
+             const size_t &n2) {
     ADVParams p;
 
     p.outputSolution = false;
-    p.wg_size_x = 128;
-    p.wg_size_y = 1;
+    p.wg_size_1 = 128;
+    p.wg_size_0 = 1;
 
     /* Static physicals params*/
     p.dt = 0.001;
@@ -61,9 +61,9 @@ createParams(const bool gpu,
 
     /* Dynamic benchmark params*/
     p.gpu = gpu;
-    p.nx = nx;
-    p.ny = ny;
-    p.ny1 = ny1;
+    p.n1 = n1;
+    p.n0 = n0;
+    p.n2 = n2;
 
     p.update_deltas();
     return p;

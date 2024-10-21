@@ -12,12 +12,12 @@ TEST(Impl, BasicRange) {
     ADVParams params;
     sycl::queue Q;
 
-    sycl::range<3> r3d(params.ny, params.nx, params.ny1);
+    sycl::range<3> r3d(params.n0, params.n1, params.n2);
     sycl::buffer<double, 3> buff_fdistrib(r3d);
     fill_buffer(Q, buff_fdistrib, params);
 
     auto advector =
-        sref::make_unique<AdvX::BasicRange>(params.nx, params.ny, params.ny1);
+        sref::make_unique<AdvX::BasicRange>(params.n1, params.n0, params.n2);
 
     for (size_t i = 0; i < params.maxIter; ++i)
         advector(Q, buff_fdistrib, params).wait_and_throw();
@@ -31,7 +31,7 @@ TEST(Impl, Hierarchical) {
     ADVParams params;
     sycl::queue Q;
 
-    sycl::range<3> r3d(params.ny, params.nx, params.ny1);
+    sycl::range<3> r3d(params.n0, params.n1, params.n2);
     sycl::buffer<double, 3> buff_fdistrib(r3d);
     fill_buffer(Q, buff_fdistrib, params);
 
@@ -49,7 +49,7 @@ TEST(Impl, NDRange) {
     ADVParams params;
     sycl::queue Q;
 
-    sycl::range<3> r3d(params.ny, params.nx, params.ny1);
+    sycl::range<3> r3d(params.n0, params.n1, params.n2);
     sycl::buffer<double, 3> buff_fdistrib(r3d);
     fill_buffer(Q, buff_fdistrib, params);
 
@@ -67,7 +67,7 @@ TEST(Impl, Scoped) {
     ADVParams params;
     sycl::queue Q;
 
-    sycl::range<3> r3d(params.ny, params.nx, params.ny1);
+    sycl::range<3> r3d(params.n0, params.n1, params.n2);
     sycl::buffer<double, 3> buff_fdistrib(r3d);
     fill_buffer(Q, buff_fdistrib, params);
 
@@ -85,7 +85,7 @@ TEST(Impl, ReverseIndexes) {
     ADVParams params;
     sycl::queue Q;
 
-    sycl::range<3> r3d(params.ny, params.nx, params.ny1);
+    sycl::range<3> r3d(params.n0, params.n1, params.n2);
     sycl::buffer<double, 3> buff_fdistrib(r3d);
     fill_buffer(Q, buff_fdistrib, params);
 
@@ -103,7 +103,7 @@ TEST(Impl, SeqTwoDimWG) {
     ADVParams params;
     sycl::queue Q;
 
-    sycl::range<3> r3d(params.ny, params.nx, params.ny1);
+    sycl::range<3> r3d(params.n0, params.n1, params.n2);
     sycl::buffer<double, 3> buff_fdistrib(r3d);
     fill_buffer(Q, buff_fdistrib, params);
 
@@ -121,7 +121,7 @@ TEST(Impl, StraddledMalloc) {
     ADVParams params;
     sycl::queue Q;
 
-    sycl::range<3> r3d(params.ny, params.nx, params.ny1);
+    sycl::range<3> r3d(params.n0, params.n1, params.n2);
     sycl::buffer<double, 3> buff_fdistrib(r3d);
     fill_buffer(Q, buff_fdistrib, params);
 
@@ -139,7 +139,7 @@ TEST(Impl, StreamY) {
     ADVParams params;
     sycl::queue Q;
 
-    sycl::range<3> r3d(params.ny, params.nx, params.ny1);
+    sycl::range<3> r3d(params.n0, params.n1, params.n2);
     sycl::buffer<double, 3> buff_fdistrib(r3d);
     fill_buffer(Q, buff_fdistrib, params);
 
@@ -157,7 +157,7 @@ TEST(Impl, TwoDimWG) {
     ADVParams params;
     sycl::queue Q;
 
-    sycl::range<3> r3d(params.ny, params.nx, params.ny1);
+    sycl::range<3> r3d(params.n0, params.n1, params.n2);
     sycl::buffer<double, 3> buff_fdistrib(r3d);
     fill_buffer(Q, buff_fdistrib, params);
 
@@ -175,11 +175,11 @@ TEST(Impl, Exp1) {
     ADVParams params;
     sycl::queue Q;
 
-    sycl::range<3> r3d(params.ny, params.nx, params.ny1);
+    sycl::range<3> r3d(params.n0, params.n1, params.n2);
     sycl::buffer<double, 3> buff_fdistrib(r3d);
     fill_buffer(Q, buff_fdistrib, params);
 
-    auto advector = sref::make_unique<AdvX::Exp1>();
+    auto advector = sref::make_unique<AdvX::Exp1>(params, Q);
 
     for (size_t i = 0; i < params.maxIter; ++i)
         advector(Q, buff_fdistrib, params).wait_and_throw();

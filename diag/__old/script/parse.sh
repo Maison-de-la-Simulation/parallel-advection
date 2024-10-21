@@ -15,7 +15,7 @@ CSV_OUT="${LOG_PATH}/${OUT_FILENAME}.csv"
 
 echo "Parsing outputs..."
 
-echo "duration;cellspersec;globalsize;nx;nvx;maxIter;error;throughput;gpu" > $CSV_OUT
+echo "duration;cellspersec;globalsize;n1;nvx;maxIter;error;throughput;gpu" > $CSV_OUT
 
 for f in $FILES
 do
@@ -23,7 +23,7 @@ do
   cellspersec=$(grep upd_cells_per_sec $f | cut -d ' ' -f2)
 
   globalsize=$(grep parsing $f | cut -d ';' -f2)
-  nx=$(grep parsing $f | cut -d ';' -f3)
+  n1=$(grep parsing $f | cut -d ';' -f3)
   nvx=$(grep parsing $f | cut -d ';' -f4)
   maxIter=$(grep maxIter $f | cut -d ':' -f2 | sed 's/^ *//g')
 
@@ -35,7 +35,7 @@ do
 ${duration};\
 ${cellspersec};\
 ${globalsize};\
-${nx};\
+${n1};\
 ${nvx};\
 ${maxIter};\
 ${error};\

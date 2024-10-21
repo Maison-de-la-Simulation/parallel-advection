@@ -12,7 +12,7 @@ with local memory, the rest will be allocated in global memory
     - Limitation: for now p is only calculated wrt Y size, should be Y*Y1?
     - Example: Y = 100, p=0.6
         - 60 kernels will run with local memory
-        - 40 kernels will run into global memory (3D buffer of size 40*nx*ny1
+        - 40 kernels will run into global memory (3D buffer of size 40*n1*n2
             is allocated)
 
 
@@ -29,30 +29,30 @@ AdvX::Exp2::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
                              const size_t &ny_batch_size,
                              const size_t &ny_offset) {
 
-    auto const nx = params.nx;
-    auto const ny = params.ny;
-    auto const ny1 = params.ny1;
+    auto const n1 = params.n1;
+    auto const n0 = params.n0;
+    auto const n2 = params.n2;
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    auto const wg_size_y = params.wg_size_y;
-    auto const wg_size_x = params.wg_size_x;
+    auto const wg_size_0 = params.wg_size_0;
+    auto const wg_size_1 = params.wg_size_1;
 
-    /* ny must be divisible by slice_size_dim_y */
-    if (ny_batch_size % wg_size_y != 0) {
+    /* n0 must be divisible by slice_size_dim_y */
+    if (ny_batch_size % wg_size_0 != 0) {
         throw std::invalid_argument(
-            "ny_batch_size must be divisible by wg_size_y");
+            "ny_batch_size must be divisible by wg_size_0");
     }
-    if (wg_size_y * nx > 6144) {
+    if (wg_size_0 * n1 > 6144) {
         throw std::invalid_argument(
-            "wg_size_y*nx must be < to 6144 (shared memory limit)");
+            "wg_size_0*n1 must be < to 6144 (shared memory limit)");
     }
 
-    const sycl::range nb_wg_local {k_local_  / wg_size_y, 1, ny1};
-    const sycl::range nb_wg_global{k_global_ / wg_size_y, 1, ny1};
+    const sycl::range nb_wg_local {k_local_  / wg_size_0, 1, n2};
+    const sycl::range nb_wg_global{k_global_ / wg_size_0, 1, n2};
 
-    const sycl::range wg_size{wg_size_y, wg_size_x, 1};
+    const sycl::range wg_size{wg_size_0, wg_size_1, 1};
     
     const size_t global_offset = k_local_;
     const auto k_global = k_global_;
@@ -67,19 +67,19 @@ AdvX::Exp2::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
         cgh.parallel_for_work_group(nb_wg_global, wg_size, [=](auto g){
             /* Solve kernel */
             g.parallel_for_work_item(
-                sycl::range{wg_size_y, nx, 1}, [&](sycl::h_item<3> it){
-                    mdspan3d_t fdist_view(fdist.get_pointer(), ny, nx, ny1);
-                    mdspan3d_t scratch_view(ptr_global, k_global, nx, ny1);
+                sycl::range{wg_size_0, n1, 1}, [&](sycl::h_item<3> it){
+                    mdspan3d_t fdist_view(fdist.get_pointer(), n0, n1, n2);
+                    mdspan3d_t scratch_view(ptr_global, k_global, n1, n2);
 
-                    const int ix = it.get_local_id(1);
-                    const int iy1 = g.get_group_id(2);
+                    const int i1 = it.get_local_id(1);
+                    const int i2 = g.get_group_id(2);
 
                     const size_t k_ny = g.get_group_id(0);
                     const int local_ny = it.get_local_id(0);
-                    const int iy = wg_size_y * k_ny + ny_offset +
+                    const int i0 = wg_size_0 * k_ny + ny_offset +
                                    local_ny + global_offset;
 
-                    double const xFootCoord = displ(ix, iy, params);
+                    double const xFootCoord = displ(i1, i0, params);
                     const int leftNode =
                         sycl::floor((xFootCoord - minRealX) * inv_dx);
                     const double d_prev1 =
@@ -89,30 +89,30 @@ AdvX::Exp2::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
 
                     const int ipos1 = leftNode - LAG_OFFSET;
                     
-                    scratch_view(k_ny, ix, iy1) = 0;
+                    scratch_view(k_ny, i1, i2) = 0;
                     for (int k = 0; k <= LAG_ORDER; k++) {
-                        int idx_ipos1 = (nx + ipos1 + k) % nx;
+                        int id1_ipos = (n1 + ipos1 + k) % n1;
 
-                        scratch_view(k_ny, ix, iy1) +=
-                            coef[k] * fdist_view(iy, idx_ipos1, iy1);
+                        scratch_view(k_ny, i1, i2) +=
+                            coef[k] * fdist_view(i0, id1_ipos, i2);
                     }
             }); //end parallel_for_work_item
 
             /* Copy kernel */
             g.parallel_for_work_item(
-                sycl::range{wg_size_y, nx, 1}, [&](sycl::h_item<3> it){
-                    mdspan3d_t fdist_view(fdist.get_pointer(), ny, nx, ny1);
-                    mdspan3d_t scratch_view(ptr_global, k_global, nx, ny1);
+                sycl::range{wg_size_0, n1, 1}, [&](sycl::h_item<3> it){
+                    mdspan3d_t fdist_view(fdist.get_pointer(), n0, n1, n2);
+                    mdspan3d_t scratch_view(ptr_global, k_global, n1, n2);
 
-                    const int ix = it.get_local_id(1);
-                    const int iy1 = g.get_group_id(2);
+                    const int i1 = it.get_local_id(1);
+                    const int i2 = g.get_group_id(2);
 
                     const size_t k_ny = g.get_group_id(0);
                     const int local_ny = it.get_local_id(0);
-                    const int iy = wg_size_y * k_ny + ny_offset +
+                    const int i0 = wg_size_0 * k_ny + ny_offset +
                                    local_ny + global_offset;
 
-                     fdist_view(iy, ix, iy1) = scratch_view(k_ny, ix, iy1);
+                     fdist_view(i0, i1, i2) = scratch_view(k_ny, i1, i2);
 
             }); //end parallel_for_work_item
         }); // end parallel_for_work_group
@@ -123,25 +123,25 @@ AdvX::Exp2::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
             buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
 
         sycl::local_accessor<double, 2> slice_ftmp(
-            sycl::range<2>(wg_size_y, nx), cgh, sycl::no_init);
+            sycl::range<2>(wg_size_0, n1), cgh, sycl::no_init);
 
         cgh.parallel_for_work_group(nb_wg_local, wg_size, [=](sycl::group<3> g) {
             /* Solve kernel */
             g.parallel_for_work_item(
-                sycl::range{wg_size_y, nx, 1}, [&](sycl::h_item<3> it) {
-                    mdspan3d_t fdist_view(fdist.get_pointer(), ny, nx, ny1);
+                sycl::range{wg_size_0, n1, 1}, [&](sycl::h_item<3> it) {
+                    mdspan3d_t fdist_view(fdist.get_pointer(), n0, n1, n2);
                     mdspan2d_t localAcc_view(slice_ftmp.get_pointer(),
                                              slice_ftmp.get_range().get(0),
                                              slice_ftmp.get_range().get(1));
 
-                    const int ix = it.get_local_id(1);
-                    const int iy1 = g.get_group_id(2);
+                    const int i1 = it.get_local_id(1);
+                    const int i2 = g.get_group_id(2);
 
                     const int local_ny = it.get_local_id(0);
-                    const int iy =
-                        wg_size_y * g.get_group_id(0) + ny_offset + local_ny;
+                    const int i0 =
+                        wg_size_0 * g.get_group_id(0) + ny_offset + local_ny;
 
-                    double const xFootCoord = displ(ix, iy, params);
+                    double const xFootCoord = displ(i1, i0, params);
 
                     // index of the cell to the left of footCoord
                     const int leftNode =
@@ -155,31 +155,31 @@ AdvX::Exp2::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
 
                     const int ipos1 = leftNode - LAG_OFFSET;
 
-                    localAcc_view(local_ny, ix) = 0;
+                    localAcc_view(local_ny, i1) = 0;
                     for (int k = 0; k <= LAG_ORDER; k++) {
-                        int idx_ipos1 = (nx + ipos1 + k) % nx;
+                        int id1_ipos = (n1 + ipos1 + k) % n1;
 
-                        localAcc_view(local_ny, ix) +=
-                            coef[k] * fdist_view(iy, idx_ipos1, iy1);
+                        localAcc_view(local_ny, i1) +=
+                            coef[k] * fdist_view(i0, id1_ipos, i2);
                     }
                 });   // end parallel_for_work_item --> Implicit barrier
 
             /* Copy kernel*/
             g.parallel_for_work_item(
-                sycl::range{wg_size_y, nx, 1}, [&](sycl::h_item<3> it) {
-                    mdspan3d_t fdist_view(fdist.get_pointer(), ny, nx, ny1);
+                sycl::range{wg_size_0, n1, 1}, [&](sycl::h_item<3> it) {
+                    mdspan3d_t fdist_view(fdist.get_pointer(), n0, n1, n2);
                     mdspan2d_t localAcc_view(slice_ftmp.get_pointer(),
                                              slice_ftmp.get_range().get(0),
                                              slice_ftmp.get_range().get(1));
 
-                    const int ix = it.get_local_id(1);
-                    const int iy1 = g.get_group_id(2);
+                    const int i1 = it.get_local_id(1);
+                    const int i2 = g.get_group_id(2);
 
                     const int local_ny = it.get_local_id(0);
-                    const int iy =
-                        wg_size_y * g.get_group_id(0) + ny_offset + local_ny;
+                    const int i0 =
+                        wg_size_0 * g.get_group_id(0) + ny_offset + local_ny;
 
-                     fdist_view(iy, ix, iy1) = localAcc_view(local_ny, ix);
+                     fdist_view(i0, i1, i2) = localAcc_view(local_ny, i1);
                 });   // barrier
         });           // end parallel_for_work_group
     });               // end Q.submit

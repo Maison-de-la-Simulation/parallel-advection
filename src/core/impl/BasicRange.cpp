@@ -4,7 +4,7 @@ sycl::event
 AdvX::BasicRange::operator()(sycl::queue &Q,
                                sycl::buffer<double, 3> &buff_fdistrib,
                                const ADVParams &params) {
-    auto const nx = params.nx;
+    auto const n1 = params.n1;
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
@@ -17,11 +17,11 @@ AdvX::BasicRange::operator()(sycl::queue &Q,
                             sycl::no_init);
 
         cgh.parallel_for(buff_fdistrib.get_range(), [=](sycl::id<3> itm) {
-            const int ix = itm[1];
-            const int iy = itm[0];
-            const int iy1 = itm[2];
+            const int i1 = itm[1];
+            const int i0 = itm[0];
+            const int i2 = itm[2];
 
-            double const xFootCoord = displ(ix, iy, params);
+            double const xFootCoord = displ(i1, i0, params);
 
             // Corresponds to the index of the cell to the left of footCoord
             const int leftNode =
@@ -35,11 +35,11 @@ AdvX::BasicRange::operator()(sycl::queue &Q,
 
             const int ipos1 = leftNode - LAG_OFFSET;
 
-            ftmp[iy][ix][iy1] = 0;   // initializing slice for each work item
+            ftmp[i0][i1][i2] = 0;   // initializing slice for each work item
             for (int k = 0; k <= LAG_ORDER; k++) {
-                int idx_ipos1 = (nx + ipos1 + k) % nx;
+                int id1_ipos = (n1 + ipos1 + k) % n1;
 
-                ftmp[iy][ix][iy1] += coef[k] * fdist[iy][idx_ipos1][iy1];
+                ftmp[i0][i1][i2] += coef[k] * fdist[i0][id1_ipos][i2];
             }
 
             // barrier

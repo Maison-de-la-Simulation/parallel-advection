@@ -2,16 +2,16 @@
 #include <iostream>
 
 ADVParams::ADVParams(ADVParamsNonCopyable &other){
-  nx = other.nx;
-  ny = other.ny;
-  ny1 = other.ny1;
+  n1 = other.n1;
+  n0 = other.n0;
+  n2 = other.n2;
 
   maxIter = other.maxIter;
   gpu = other.gpu;
   outputSolution = other.outputSolution;
 
-  wg_size_x = other.wg_size_x;
-  wg_size_y = other.wg_size_y;
+  wg_size_1 = other.wg_size_1;
+  wg_size_0 = other.wg_size_0;
 
   dt = other.dt;
 
@@ -28,16 +28,16 @@ ADVParams::ADVParams(ADVParamsNonCopyable &other){
 };
 
 ADVParamsNonCopyable::ADVParamsNonCopyable(ADVParams &other){
-  nx = other.nx;
-  ny = other.ny;
-  ny1 = other.ny1;
+  n1 = other.n1;
+  n0 = other.n0;
+  n2 = other.n2;
 
   maxIter = other.maxIter;
   gpu = other.gpu;
   outputSolution = other.outputSolution;
 
-  wg_size_x = other.wg_size_x;
-  wg_size_y = other.wg_size_y;
+  wg_size_1 = other.wg_size_1;
+  wg_size_0 = other.wg_size_0;
 
   dt = other.dt;
 
@@ -58,9 +58,9 @@ ADVParamsNonCopyable::ADVParamsNonCopyable(ADVParams &other){
 void ADVParamsNonCopyable::setup(const ConfigMap& configMap)
 {
   // geometry
-  nx  = configMap.getInteger("geometry", "nx",  1024);
-  ny = configMap.getInteger("geometry", "ny", 64);
-  ny1 = configMap.getInteger("geometry", "ny1", 32);
+  n1  = configMap.getInteger("geometry", "n1",  1024);
+  n0 = configMap.getInteger("geometry", "n0", 64);
+  n2 = configMap.getInteger("geometry", "n2", 32);
 
   // run parameters
   maxIter = configMap.getInteger("run", "maxIter", 1000);
@@ -69,8 +69,8 @@ void ADVParamsNonCopyable::setup(const ConfigMap& configMap)
   percent_loc = configMap.getFloat("run", "percent_loc", 1.0);
 
   kernelImpl = configMap.getString("run", "kernelImpl", "BasicRange");
-  wg_size_x = configMap.getInteger("run", "workGroupSizeX", 128);
-  wg_size_y = configMap.getInteger("run", "workGroupSizeY", 1);
+  wg_size_1 = configMap.getInteger("run", "workGroupSizeX", 128);
+  wg_size_0 = configMap.getInteger("run", "workGroupSizeY", 1);
 
   // discretization parameters
   dt  = configMap.getFloat("discretization", "dt" , 0.0001);
@@ -88,8 +88,8 @@ void ADVParamsNonCopyable::setup(const ConfigMap& configMap)
 void ADVParams::update_deltas()
 {
   realWidthX = maxRealX - minRealX;
-  dx = realWidthX / nx;
-  dvx = (maxRealVx - minRealVx) / ny;
+  dx = realWidthX / n1;
+  dvx = (maxRealVx - minRealVx) / n0;
 
   inv_dx     = 1/dx;
 } // ADVParams::setup
@@ -102,13 +102,13 @@ void ADVParamsNonCopyable::print()
   std::cout << "Runtime parameters:" << std::endl;
   std::cout << "##########################" << std::endl;
   std::cout << "kernelImpl : " << kernelImpl << std::endl;
-  std::cout << "wgSizeX    : " << wg_size_x    << std::endl;
-  std::cout << "wgSizeY    : " << wg_size_y    << std::endl;
+  std::cout << "wgSizeX    : " << wg_size_1    << std::endl;
+  std::cout << "wgSizeY    : " << wg_size_0    << std::endl;
   std::cout << "gpu        : " << gpu    << std::endl;
   std::cout << "maxIter    : " << maxIter    << std::endl;
-  std::cout << "ny (nvx)   : " << ny    << std::endl;
-  std::cout << "nx         : " << nx    << std::endl;
-  std::cout << "ny1        : " << ny1    << std::endl;
+  std::cout << "n0 (nvx)   : " << n0    << std::endl;
+  std::cout << "n1         : " << n1    << std::endl;
+  std::cout << "n2        : " << n2    << std::endl;
   std::cout << "percent_loc: " << percent_loc << std::endl;
   std::cout << "dt         : " << dt    << std::endl;
   std::cout << "dx         : " << dx    << std::endl;

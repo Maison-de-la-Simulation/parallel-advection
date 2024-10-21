@@ -23,10 +23,10 @@ kernel_impl_factory(const sycl::queue &q, const ADVParamsNonCopyable &params) {
     case str2int("Sequential"):
         return sref::make_unique<AdvX::Sequential>();
     case str2int("BasicRange"):
-        return sref::make_unique<AdvX::BasicRange>(params.nx, params.ny,
-                                                   params.ny1);
+        return sref::make_unique<AdvX::BasicRange>(params.n1, params.n0,
+                                                   params.n2);
     // case str2int("BasicRange1D"):
-    // return sref::make_unique<AdvX::BasicRange1D>(params.nx, params.ny);
+    // return sref::make_unique<AdvX::BasicRange1D>(params.n1, params.n0);
     case str2int("Hierarchical"):
         return sref::make_unique<AdvX::Hierarchical>();
     // case str2int("HierarchicalAlloca"):
@@ -57,6 +57,8 @@ kernel_impl_factory(const sycl::queue &q, const ADVParamsNonCopyable &params) {
         return sref::make_unique<AdvX::Exp3>(params, q);
     case str2int("Exp4"):
         return sref::make_unique<AdvX::Exp4>(params);
+    case str2int("Exp5"):
+        return sref::make_unique<AdvX::Exp5>(params);
     case str2int("CudaLDG"):
         return sref::make_unique<AdvX::CudaLDG>();
     default:
@@ -75,9 +77,9 @@ fill_buffer(sycl::queue &q, sycl::buffer<double, 3> &buff_fdist,
         sycl::accessor fdist(buff_fdist, cgh, sycl::write_only, sycl::no_init);
 
         cgh.parallel_for(buff_fdist.get_range(), [=](sycl::id<3> itm) {
-            const int ix = itm[1];
+            const int i1 = itm[1];
 
-            double x = params.minRealX + ix * params.dx;
+            double x = params.minRealX + i1 * params.dx;
             fdist[itm] = sycl::sin(4 * x * M_PI);
         });   // end parallel_for
     }).wait();       // end q.submit

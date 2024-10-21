@@ -64,14 +64,14 @@ main(int argc, char **argv) {
     std::cout << "Using device: "
               << Q.get_device().get_info<sycl::info::device::name>() << "\n";
 
-    const auto nx = params.nx;
-    const auto ny = params.ny;
-    const auto ny1 = params.ny1;
+    const auto n1 = params.n1;
+    const auto n0 = params.n0;
+    const auto n2 = params.n2;
     const auto maxIter = params.maxIter;
     
     /* Buffer for the distribution function containing the probabilities of
     having a particle at a particular speed and position, plus a fictive dim */
-    sycl::buffer<double, 3> buff_fdistrib(sycl::range<3>(ny, nx, ny1));
+    sycl::buffer<double, 3> buff_fdistrib(sycl::range<3>(n0, n1, n2));
     fill_buffer(Q, buff_fdistrib, params);
 
     auto advector = kernel_impl_factory(Q, strParams);
@@ -89,7 +89,7 @@ main(int argc, char **argv) {
     std::cout << "PERF_DIAGS:" << std::endl;
     std::cout << "elapsed_time: " << elapsed_seconds.count() << " s\n";
 
-    auto gcells = ((ny*nx*ny1*(maxIter)) / elapsed_seconds.count()) / 1e9;
+    auto gcells = ((n0*n1*n2*(maxIter)) / elapsed_seconds.count()) / 1e9;
     std::cout << "upd_cells_per_sec: " << gcells << " Gcell/sec\n";
     std::cout << "estimated_throughput: " << gcells * sizeof(double) * 2
               << " GB/s" << std::endl;

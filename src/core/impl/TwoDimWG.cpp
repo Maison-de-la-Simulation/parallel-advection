@@ -5,27 +5,27 @@ AdvX::TwoDimWG::operator()(sycl::queue &Q,
                                sycl::buffer<double, 3> &buff_fdistrib,
                                const ADVParams &params) {
 
-    auto const nx = params.nx;
-    auto const ny = params.ny;
-    auto const ny1 = params.ny1;
+    auto const n1 = params.n1;
+    auto const n0 = params.n0;
+    auto const n2 = params.n2;
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    auto const wg_size_y = params.wg_size_y;
-    auto const wg_size_x = params.wg_size_x;
+    auto const wg_size_0 = params.wg_size_0;
+    auto const wg_size_1 = params.wg_size_1;
 
-    /* ny must be divisible by slice_size_dim_y */
-    if(ny%wg_size_y != 0){
-        throw std::invalid_argument("ny must be divisible by wg_size_y");
+    /* n0 must be divisible by slice_size_dim_y */
+    if(n0%wg_size_0 != 0){
+        throw std::invalid_argument("n0 must be divisible by wg_size_0");
     }
-    if(wg_size_y * nx > 6144){
+    if(wg_size_0 * n1 > 6144){
         /* TODO: try with a unique allocation in shared memory and sequential iteration */
-        throw std::invalid_argument("wg_size_y*nx must be < to 6144 (shared memory limit)");
+        throw std::invalid_argument("wg_size_0*n1 must be < to 6144 (shared memory limit)");
     }
 
-    const sycl::range nb_wg{ny/wg_size_y, 1, ny1};
-    const sycl::range wg_size{wg_size_y, wg_size_x, 1};
+    const sycl::range nb_wg{n0/wg_size_0, 1, n2};
+    const sycl::range wg_size{wg_size_0, wg_size_1, 1};
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
@@ -33,18 +33,18 @@ AdvX::TwoDimWG::operator()(sycl::queue &Q,
 
         /* We use a 2D local accessor here */
         sycl::local_accessor<double, 2> slice_ftmp(
-            sycl::range<2>(wg_size_y, nx), cgh);
+            sycl::range<2>(wg_size_0, n1), cgh);
 
         cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<3> g) {
             g.parallel_for_work_item(
-                sycl::range{wg_size_y, nx, 1}, [&](sycl::h_item<3> it) {
-                    const int ix = it.get_local_id(1);
-                    const int iy1 = g.get_group_id(2);
+                sycl::range{wg_size_0, n1, 1}, [&](sycl::h_item<3> it) {
+                    const int i1 = it.get_local_id(1);
+                    const int i2 = g.get_group_id(2);
 
                     const int local_ny = it.get_local_id(0);
-                    const int iy = wg_size_y * g.get_group_id(0) + local_ny;
+                    const int i0 = wg_size_0 * g.get_group_id(0) + local_ny;
 
-                    double const xFootCoord = displ(ix, iy, params);
+                    double const xFootCoord = displ(i1, i0, params);
 
                     // index of the cell to the left of footCoord
                     const int leftNode =
@@ -59,31 +59,31 @@ AdvX::TwoDimWG::operator()(sycl::queue &Q,
 
                     const int ipos1 = leftNode - LAG_OFFSET;
 
-                    slice_ftmp[local_ny][ix] = 0.;
+                    slice_ftmp[local_ny][i1] = 0.;
                     for (int k = 0; k <= LAG_ORDER; k++) {
-                        int idx_ipos1 = (nx + ipos1 + k) % nx;
+                        int id1_ipos = (n1 + ipos1 + k) % n1;
 
-                        slice_ftmp[local_ny][ix] += coef[k] * fdist[iy][idx_ipos1][iy1];
+                        slice_ftmp[local_ny][i1] += coef[k] * fdist[i0][id1_ipos][i2];
                     }
                 });   // end parallel_for_work_item --> Implicit barrier
 
-            g.parallel_for_work_item(sycl::range{wg_size_y, nx, 1},
+            g.parallel_for_work_item(sycl::range{wg_size_0, n1, 1},
                                      [&](sycl::h_item<3> it) {
-                                         const int ix = it.get_local_id(1);
-                                         const int iy1 = g.get_group_id(2);
+                                         const int i1 = it.get_local_id(1);
+                                         const int i2 = g.get_group_id(2);
 
                                          const int local_ny = it.get_local_id(0);
-                                         const int iy = wg_size_y * g.get_group_id(0) + local_ny;
+                                         const int i0 = wg_size_0 * g.get_group_id(0) + local_ny;
 
-                                         fdist[iy][ix][iy1] = slice_ftmp[local_ny][ix];
+                                         fdist[i0][i1][i2] = slice_ftmp[local_ny][i1];
                                      });
 
             // g.async_work_group_copy(fdist.get_pointer()
             //                             + g.get_group_id(2)
-            //                             + g.get_group_id(0) *ny1*nx, /* dest */
+            //                             + g.get_group_id(0) *n2*n1, /* dest */
             //                         slice_ftmp.get_pointer(), /* source */
-            //                         nx*slice_size_dim_y, /* n elems */
-            //                         ny1  /* stride */
+            //                         n1*slice_size_dim_y, /* n elems */
+            //                         n2  /* stride */
             // );
         });   // end parallel_for_work_group
     });       // end Q.submit

@@ -33,7 +33,7 @@ with open("LOGS/A100/a100_acpp_with_wgsize.json", "r") as f:
     # df = df.drop(df[df.error_occurred == True].index)
 
     #TODO: HERE ONLY ONE SIZE, COULD DRAW DIFFERENT SIZES WITH DIFFERENT COLORS
-    df = df.drop(df[df["ny"] != 16384].index)
+    df = df.drop(df[df["n0"] != 16384].index)
     
     df = df[df["gpu"] == 1]
     # df = df[df["gpu"] == 0]

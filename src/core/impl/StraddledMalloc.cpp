@@ -4,7 +4,7 @@
 constexpr size_t MAX_NX_ALLOC = 6144; //A100
 
 // AdvX::StraddledMalloc::StraddledMalloc(const ADVParams &params){
-//     auto n_batch = std::ceil(params.ny / MAX_NY); //should be in
+//     auto n_batch = std::ceil(params.n0 / MAX_NY); //should be in
 //     constructor
 
 // }
@@ -16,18 +16,18 @@ AdvX::StraddledMalloc::adv_opt3(sycl::queue &Q,
                             sycl::buffer<double, 3> &buff_fdistrib,
                             const ADVParams &params,
                             const size_t &nx_rest_to_malloc) {
-    auto const nx = params.nx;
-    auto const ny = params.ny;
-    auto const ny1 = params.ny1;
+    auto const n1 = params.n1;
+    auto const n0 = params.n0;
+    auto const n2 = params.n2;
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    const sycl::range nb_wg{ny, 1, ny1};
-    const sycl::range wg_size{1, params.wg_size_x, 1};
+    const sycl::range nb_wg{n0, 1, n2};
+    const sycl::range wg_size{1, params.wg_size_1, 1};
 
-    //TODO we don't want this, we want to allocate a 1D slice for each problem in parallel, containing only the rest of NX slice in 1D
-    sycl::buffer<double, 3> buff_rest_nx(sycl::range<3>{ny, nx_rest_to_malloc, ny1}, sycl::no_init);
+    //TODO we don't want this, we want to allocate a 1D slice for each problem in parallel, containing only the rest of n1 slice in 1D
+    sycl::buffer<double, 3> buff_rest_nx(sycl::range<3>{n0, nx_rest_to_malloc, n2}, sycl::no_init);
 
     return Q.submit([&](sycl::handler &cgh) {
 
@@ -39,15 +39,15 @@ AdvX::StraddledMalloc::adv_opt3(sycl::queue &Q,
 
         cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<3> g) {
             g.parallel_for_work_item(
-                sycl::range{1, nx, 1}, [&](sycl::h_item<3> it) {
-                    const size_t ix = it.get_local_id(1);
-                    const size_t iy = g.get_group_id(0);
-                    const size_t iy1 = g.get_group_id(2);
+                sycl::range{1, n1, 1}, [&](sycl::h_item<3> it) {
+                    const size_t i1 = it.get_local_id(1);
+                    const size_t i0 = g.get_group_id(0);
+                    const size_t i2 = g.get_group_id(2);
 
-                    //if ix > 6144; we use overslice_ftmp with index ix-MAX_NX_ALLOC
+                    //if i1 > 6144; we use overslice_ftmp with index i1-MAX_NX_ALLOC
                     //else we use slice_ftmp
 
-                    double const xFootCoord = displ(ix, iy, params);
+                    double const xFootCoord = displ(i1, i0, params);
 
                     // index of the cell to the left of footCoord
                     const int leftNode =
@@ -62,35 +62,35 @@ AdvX::StraddledMalloc::adv_opt3(sycl::queue &Q,
 
                     const int ipos1 = leftNode - LAG_OFFSET;
 
-                    if(ix < MAX_NX_ALLOC){
-                        slice_ftmp[ix] = 0.;
+                    if(i1 < MAX_NX_ALLOC){
+                        slice_ftmp[i1] = 0.;
                         for (int k = 0; k <= LAG_ORDER; k++) {
-                            int idx_ipos1 = (nx + ipos1 + k) % nx;
+                            int id1_ipos = (n1 + ipos1 + k) % n1;
 
-                            slice_ftmp[ix] += coef[k] * fdist[iy][idx_ipos1][iy1];
+                            slice_ftmp[i1] += coef[k] * fdist[i0][id1_ipos][i2];
                         }
                     }
                     else{
-                        overslice_ftmp[iy][ix-MAX_NX_ALLOC][iy1] = 0.;
+                        overslice_ftmp[i0][i1-MAX_NX_ALLOC][i2] = 0.;
                         for (int k = 0; k <= LAG_ORDER; k++) {
-                            int idx_ipos1 = (nx + ipos1 + k) % nx;
+                            int id1_ipos = (n1 + ipos1 + k) % n1;
 
-                            overslice_ftmp[iy][ix-MAX_NX_ALLOC][iy1] += coef[k] * fdist[iy][idx_ipos1][iy1];
+                            overslice_ftmp[i0][i1-MAX_NX_ALLOC][i2] += coef[k] * fdist[i0][id1_ipos][i2];
                         }
 
                     }
                 });   // end parallel_for_work_item --> Implicit barrier
 
-            g.parallel_for_work_item(sycl::range{1, nx, 1},
+            g.parallel_for_work_item(sycl::range{1, n1, 1},
                                      [&](sycl::h_item<3> it) {
-                                         const size_t ix = it.get_local_id(1);
-                                         const size_t iy = g.get_group_id(0);
-                                         const size_t iy1 = g.get_group_id(2);
+                                         const size_t i1 = it.get_local_id(1);
+                                         const size_t i0 = g.get_group_id(0);
+                                         const size_t i2 = g.get_group_id(2);
 
-                                        if(ix < MAX_NX_ALLOC)                                         
-                                            fdist[iy][ix][iy1] = slice_ftmp[ix];
+                                        if(i1 < MAX_NX_ALLOC)                                         
+                                            fdist[i0][i1][i2] = slice_ftmp[i1];
                                         else
-                                            fdist[iy][ix][iy1] = overslice_ftmp[iy][ix-MAX_NX_ALLOC][iy1];
+                                            fdist[i0][i1][i2] = overslice_ftmp[i0][i1-MAX_NX_ALLOC][i2];
                                      });
         });   // end parallel_for_work_group
     });       // end Q.submit
@@ -103,13 +103,13 @@ sycl::event
 AdvX::StraddledMalloc::operator()(sycl::queue &Q,
                             sycl::buffer<double, 3> &buff_fdistrib,
                             const ADVParams &params) {
-    auto const nx = params.nx;
-    // auto const ny = params.ny;
-    // auto const ny1 = params.ny1;
+    auto const n1 = params.n1;
+    // auto const n0 = params.n0;
+    // auto const n2 = params.n2;
 
     //On A100 it breaks if we allocate more than 48 KiB per block, which is 6144 double
     //On MI250x it breaks if we allocate more than 64KiB per wg, which is 8192 double
-    if (nx <= MAX_NX_ALLOC) {
+    if (n1 <= MAX_NX_ALLOC) {
         // return adv_opt3(Q, buff_fdistrib, params, 0);
         AdvX::Hierarchical adv{};
         return adv(Q, buff_fdistrib, params);
@@ -127,7 +127,7 @@ AdvX::StraddledMalloc::operator()(sycl::queue &Q,
         //=================================
         // Option 3
         // we could launch two kernels in parallel, one using shared mem and one using the rest in global mem
-        auto rest_malloc = nx - MAX_NX_ALLOC;
+        auto rest_malloc = n1 - MAX_NX_ALLOC;
         return adv_opt3(Q, buff_fdistrib, params, rest_malloc);
     }
 }
