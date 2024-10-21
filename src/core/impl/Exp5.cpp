@@ -11,47 +11,56 @@ AdvX::Exp5::operator()(sycl::queue &Q,
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    const sycl::range global_size{n0, 1         , wg_size_2_/n2};
+    // const sycl::range global_size{n0, 1         , 1};
+    const sycl::range global_size{n0, wg_size_1_, n2};
     const sycl::range local_size {1 , wg_size_1_, wg_size_2_};
+
+    auto const wg2 = wg_size_2_;
+    auto const wg1 = wg_size_1_;
 
     return Q.submit([&](sycl::handler &cgh) {
         auto fdist =
             buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
 
-        sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>(n1), cgh);
+        sycl::local_accessor<double, 2> slice_ftmp(
+            sycl::range<2>(wg2, n1), cgh);
 
         cgh.parallel_for(
             sycl::nd_range<3>{global_size, local_size},
             [=](auto itm) {
-                const int i1 = itm.get_local_id(1);
                 const int i0 = itm.get_global_id(0);
+                const int i1 = itm.get_local_id(1);
                 const int i2 = itm.get_global_id(2);
 
-                //for ii2 += wg_size_2_
-                    //for ii1 += wg_size_1_
+                // for(int ii2 = i2; ii2 < n2; ii2 += wg2){
+                for(int ii1 = i1; ii1 < n1; ii1 += wg1){
+                    double const xFootCoord = displ(ii1, i0, params);
 
-                double const xFootCoord = displ(i1, i0, params);
+                    const int leftNode =
+                        sycl::floor((xFootCoord - minRealX) * inv_dx);
 
-                const int leftNode =
-                    sycl::floor((xFootCoord - minRealX) * inv_dx);
+                    const double d_prev1 =
+                        LAG_OFFSET + inv_dx * (xFootCoord - coord(leftNode,
+                                                                minRealX, dx));
 
-                const double d_prev1 =
-                    LAG_OFFSET + inv_dx * (xFootCoord - coord(leftNode,
-                                                              minRealX, dx));
+                    auto coef = lag_basis(d_prev1);
 
-                auto coef = lag_basis(d_prev1);
+                    const int ipos1 = leftNode - LAG_OFFSET;
 
-                const int ipos1 = leftNode - LAG_OFFSET;
+                    slice_ftmp[i2][ii1] = 0;   // initializing slice for each work item
+                    for (int k = 0; k <= LAG_ORDER; k++) {
+                        int id1_ipos = (n1 + ipos1 + k) % n1;
 
-                slice_ftmp[i1] = 0;   // initializing slice for each work item
-                for (int k = 0; k <= LAG_ORDER; k++) {
-                    int id1_ipos = (n1 + ipos1 + k) % n1;
-
-                    slice_ftmp[i1] += coef[k] * fdist[i0][id1_ipos][i2];
+                        slice_ftmp[i2][ii1] += coef[k] * fdist[i0][id1_ipos][i2];
+                    }
                 }
+                // }
 
                 sycl::group_barrier(itm.get_group());
-                fdist[i0][i1][i2] = slice_ftmp[i1];
+
+                for(int ii1 = i1; ii1 < n1; ii1 += wg1){
+                    fdist[i0][ii1][i2] = slice_ftmp[i2][ii1];
+                }
             }   // end lambda in parallel_for
         );      // end parallel_for nd_range
     });         // end Q.submit
