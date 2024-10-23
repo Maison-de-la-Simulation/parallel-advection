@@ -10,7 +10,7 @@
 // ==========================================
 // returns duration for maxIter-1 iterations
 std::chrono::duration<double>
-advection(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
+advection(sycl::queue &Q, double* fidst_dev,
           sref::unique_ref<IAdvectorX> &advector, const ADVParams &params) {
 
     auto static const maxIter = params.maxIter;
@@ -18,7 +18,7 @@ advection(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
     auto start = std::chrono::high_resolution_clock::now();
     // Time loop
     for (size_t t = 0; t < maxIter; ++t) {
-        advector(Q, buff_fdistrib, params).wait();
+        advector(Q, fidst_dev, params).wait();
     }   // end for t < T
     Q.wait_and_throw();
     auto end = std::chrono::high_resolution_clock::now();
@@ -71,15 +71,16 @@ main(int argc, char **argv) {
     
     /* Buffer for the distribution function containing the probabilities of
     having a particle at a particular speed and position, plus a fictive dim */
-    sycl::buffer<double, 3> buff_fdistrib(sycl::range<3>(n0, n1, n2));
-    fill_buffer(Q, buff_fdistrib, params);
+    // sycl::buffer<double, 3> buff_fdistrib(sycl::range<3>(n0, n1, n2));
+    double* fdist = sycl::malloc_device<double>(n0*n1*n2, Q);
+    fill_buffer(Q, fdist, params);
 
     auto advector = kernel_impl_factory(Q, strParams);
 
-    auto elapsed_seconds = advection(Q, buff_fdistrib, advector, params);
+    auto elapsed_seconds = advection(Q, fdist, advector, params);
 
     std::cout << "\nRESULTS_VALIDATION:" << std::endl;
-    validate_result(Q, buff_fdistrib, params);
+    validate_result(Q, fdist, params);
 
     // if(params.outputSolution){
     //     export_result_to_file(buff_fdistrib, params);

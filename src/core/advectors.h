@@ -3,7 +3,6 @@
 #include "IAdvectorX.h"
 #include <cmath>
 #include <cstddef>
-#include <hipSYCL/sycl/usm.hpp>
 #include <stdexcept>
 #include <experimental/mdspan>
 
@@ -24,7 +23,7 @@ class Sequential : public IAdvectorX {
     using IAdvectorX::IAdvectorX;   // Inheriting constructor
 
   public:
-    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, double* fdist_dev,
                            const ADVParams &params) override;
 };
 
@@ -38,14 +37,14 @@ class BasicRange : public IAdvectorX {
     BasicRange(const size_t n1, const size_t nvx, const size_t n2)
         : m_global_buff_ftmp{sycl::range<3>(nvx, n1, n2)} {}
 
-    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, double* fdist_dev,
                            const ADVParams &params) override;
 };
 
 // class BasicRange2D : public BasicRange {
 //   public:
 //     sycl::event operator()(sycl::queue &Q,
-//                            buff3d &buff_fdistrib,
+//                            double* fdist_dev,
 //                            const ADVParams &params) override;
 
 //     explicit BasicRange2D(const size_t n1, const size_t nvx, const size_t
@@ -56,7 +55,7 @@ class BasicRange : public IAdvectorX {
 // class BasicRange1D : public BasicRange {
 //   public:
 //     sycl::event operator()(sycl::queue &Q,
-//                            buff3d &buff_fdistrib,
+//                            double* fdist_dev,
 //                            const ADVParams &params) override;
 
 //     explicit BasicRange1D(const size_t n1, const size_t nvx, const size_t
@@ -68,7 +67,7 @@ class Hierarchical : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
 
   public:
-    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, double* fdist_dev,
                            const ADVParams &params) override;
 };
 
@@ -76,7 +75,7 @@ class NDRange : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
 
   public:
-    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, double* fdist_dev,
                            const ADVParams &params) override;
 };
 
@@ -84,7 +83,7 @@ class Scoped : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
 
   public:
-    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, double* fdist_dev,
                            const ADVParams &params) override;
 };
 
@@ -93,7 +92,7 @@ class Scoped : public IAdvectorX {
 
 //   public:
 //     sycl::event operator()(sycl::queue &Q,
-//                            buff3d &buff_fdistrib,
+//                            double* fdist_dev,
 //                            const ADVParams &params) override;
 
 //     sycl::event stream_bench(sycl::queue &Q,
@@ -105,7 +104,7 @@ class Scoped : public IAdvectorX {
 
 //   public:
 //     sycl::event operator()(sycl::queue &Q,
-//                            buff3d &buff_fdistrib,
+//                            double* fdist_dev,
 //                            const ADVParams &params) override;
 // };
 
@@ -115,7 +114,7 @@ class Scoped : public IAdvectorX {
 
 //   public:
 //     sycl::event operator()(sycl::queue &Q,
-//                            buff3d &buff_fdistrib,
+//                            double* fdist_dev,
 //                            const ADVParams &params) override;
 // };
 
@@ -124,14 +123,14 @@ class Scoped : public IAdvectorX {
 // =============================================================================
 class StreamY : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
-    sycl::event actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
+    sycl::event actual_advection(sycl::queue &Q, double* fdist_dev,
                                  const ADVParams &params, const size_t &n_nvx,
                                  const size_t &ny_offset);
 
   public:
     // StreamY(const ADVParams &params);
 
-    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, double* fdist_dev,
                            const ADVParams &params) override;
 };
 
@@ -140,21 +139,21 @@ class ReducedPrecision : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
 
   public:
-    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, double* fdist_dev,
                            const ADVParams &params) override;
 };
 
 // =============================================================================
 class StraddledMalloc : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
-    sycl::event adv_opt3(sycl::queue &Q, buff3d &buff_fdistrib,
+    sycl::event adv_opt3(sycl::queue &Q, double* fdist_dev,
                          const ADVParams &params,
                          const size_t &nx_rest_to_malloc);
 
   public:
     // StraddledMalloc(const ADVParams &params);
 
-    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, double* fdist_dev,
                            const ADVParams &params) override;
 };
 
@@ -163,7 +162,7 @@ class ReverseIndexes : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
 
   public:
-    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, double* fdist_dev,
                            const ADVParams &params) override;
 };
 
@@ -172,7 +171,7 @@ class TwoDimWG : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
 
   public:
-    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, double* fdist_dev,
                            const ADVParams &params) override;
 };
 
@@ -181,14 +180,14 @@ class SeqTwoDimWG : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
 
   public:
-    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, double* fdist_dev,
                            const ADVParams &params) override;
 };
 
 // =============================================================================
 class Exp1 : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
-    sycl::event actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
+    sycl::event actual_advection(sycl::queue &Q, double* fdist_dev,
                                  const ADVParams &params,
                                  const size_t &ny_batch_size,
                                  const size_t &ny_offset);
@@ -218,7 +217,7 @@ class Exp1 : public IAdvectorX {
     }
 
   public:
-    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, double* fdist_dev,
                            const ADVParams &params) override;
 
     Exp1() = delete;
@@ -246,7 +245,7 @@ class Exp1 : public IAdvectorX {
 // =============================================================================
 class Exp2 : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
-    sycl::event actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
+    sycl::event actual_advection(sycl::queue &Q, double* fdist_dev,
                                  const ADVParams &params,
                                  const size_t &ny_batch_size,
                                  const size_t &ny_offset);
@@ -279,7 +278,7 @@ class Exp2 : public IAdvectorX {
     double *global_buffer_;
 
   public:
-    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, double* fdist_dev,
                            const ADVParams &params) override;
 
     Exp2() = delete;
@@ -318,7 +317,7 @@ class Exp2 : public IAdvectorX {
 // =============================================================================
 class Exp3 : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
-    sycl::event actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
+    sycl::event actual_advection(sycl::queue &Q, double* fdist_dev,
                                  const ADVParams &params,
                                  const size_t &ny_batch_size,
                                  const size_t &ny_offset);
@@ -346,7 +345,7 @@ class Exp3 : public IAdvectorX {
     }
 
   public:
-    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, double* fdist_dev,
                            const ADVParams &params) override;
 
     Exp3() = delete;
@@ -374,7 +373,7 @@ class Exp3 : public IAdvectorX {
 // =============================================================================
 class Exp4 : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
-    sycl::event actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
+    sycl::event actual_advection(sycl::queue &Q, double* fdist_dev,
                                  const ADVParams &params,
                                  const size_t &ny_batch_size,
                                  const size_t &ny_offset);
@@ -382,7 +381,7 @@ class Exp4 : public IAdvectorX {
     static constexpr size_t MAX_ALLOC_SIZE_ = 6144; //TODO this is for A100
 
   public:
-    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, double* fdist_dev,
                            const ADVParams &params) override;
 
     Exp4() = delete;
@@ -399,7 +398,7 @@ class Exp4 : public IAdvectorX {
 // =============================================================================
 class Exp5 : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
-    sycl::event actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
+    sycl::event actual_advection(sycl::queue &Q, double* fdist_dev,
                                  const ADVParams &params,
                                  const size_t &ny_batch_size,
                                  const size_t &ny_offset);
@@ -412,7 +411,7 @@ class Exp5 : public IAdvectorX {
     size_t wg_size_2_;
 
   public:
-    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, double* fdist_dev,
                            const ADVParams &params) override;
 
     Exp5() = delete;
@@ -439,7 +438,7 @@ class Exp5 : public IAdvectorX {
 // =============================================================================
 class Exp6 : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
-    sycl::event actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
+    sycl::event actual_advection(sycl::queue &Q, double* fdist_dev,
                                  const ADVParams &params,
                                  const size_t &ny_batch_size,
                                  const size_t &ny_offset);
@@ -455,7 +454,7 @@ class Exp6 : public IAdvectorX {
     double* scratch_;
 
   public:
-    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, double* fdist_dev,
                            const ADVParams &params) override;
 
     Exp6() = delete;
@@ -481,7 +480,7 @@ class CudaLDG : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
 
   public:
-    sycl::event operator()(sycl::queue &Q, buff3d &buff_fdistrib,
+    sycl::event operator()(sycl::queue &Q, double* fdist_dev,
                            const ADVParams &params) override;
 };
 

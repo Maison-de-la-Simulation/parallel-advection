@@ -72,17 +72,17 @@ kernel_impl_factory(const sycl::queue &q, const ADVParamsNonCopyable &params) {
 // ==========================================
 // ==========================================
 void
-fill_buffer(sycl::queue &q, sycl::buffer<double, 3> &buff_fdist,
+fill_buffer(sycl::queue &q, double* fdist_dev,
             const ADVParams &params) {
 
+    sycl::range r3d(params.n0, params.n1, params.n2);
     q.submit([&](sycl::handler &cgh) {
-        sycl::accessor fdist(buff_fdist, cgh, sycl::write_only, sycl::no_init);
+         cgh.parallel_for(r3d, [=](sycl::id<3> itm) {
+             mdspan3d_t fdist(fdist_dev, r3d.get(0), r3d.get(1), r3d.get(2));
+             const int i1 = itm[1];
 
-        cgh.parallel_for(buff_fdist.get_range(), [=](sycl::id<3> itm) {
-            const int i1 = itm[1];
-
-            double x = params.minRealX + i1 * params.dx;
-            fdist[itm] = sycl::sin(4 * x * M_PI);
-        });   // end parallel_for
-    }).wait();       // end q.submit
+             double x = params.minRealX + i1 * params.dx;
+             fdist(itm[0], itm[1], itm[2]) = sycl::sin(4 * x * M_PI);
+         });      // end parallel_for
+     }).wait();   // end q.submit
 }

@@ -4,5 +4,5 @@
 
 // ==========================================
 // ==========================================
-double validate_result(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
+double validate_result(sycl::queue &Q, double* fdist_dev,
                        const ADVParams &params, bool do_print=true);

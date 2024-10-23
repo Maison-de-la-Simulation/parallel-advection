@@ -2,7 +2,7 @@
 
 // sycl::event
 // AdvX::FakeAdvector::operator()(sycl::queue &Q,
-//                                sycl::buffer<double, 3> &buff_fdistrib,
+//                                double* fdist_dev,
 //                                const ADVParams &params) {
 //     auto const n1 = params.n1;
 //     auto const minRealX = params.minRealX;

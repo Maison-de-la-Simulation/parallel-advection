@@ -19,13 +19,13 @@ TEST(Validation, ValidateNoIteration){
     params.maxIter = 0;
     params.update_deltas();
 
-    const sycl::range<3> r3d(params.n0, params.n1, params.n2);
-    sycl::buffer<double, 3> buff_fdistrib(r3d);
-
     sycl::queue Q;
-    fill_buffer(Q, buff_fdistrib, params);
+    double *fdist =
+        sycl::malloc_device<double>(params.n0 * params.n1 * params.n2, Q);
 
-    auto res = validate_result(Q, buff_fdistrib, params, false);
+    fill_buffer(Q, fdist, params);
+
+    auto res = validate_result(Q, fdist, params, false);
 
     EXPECT_EQ(res, 0);
 }
@@ -38,11 +38,10 @@ TEST(Validation, ValidateEachIterFor10Iterations){
     params.n2  = 1 + std::rand() % 30;
     params.update_deltas();
 
-    const sycl::range<3> r3d(params.n0, params.n1, params.n2);
-    sycl::buffer<double, 3> buff_fdistrib(r3d);
-
     sycl::queue Q;
-    fill_buffer(Q, buff_fdistrib, params);
+    double *fdist =
+        sycl::malloc_device<double>(params.n0 * params.n1 * params.n2, Q);
+    fill_buffer(Q, fdist, params);
 
     /* Creating a BasicRange advector */
     auto advector = sref::make_unique<AdvX::BasicRange>(params.n1, params.n0, params.n2);
@@ -52,14 +51,14 @@ TEST(Validation, ValidateEachIterFor10Iterations){
     for(size_t it=0; it < 10; ++it){
         params.maxIter++;
 
-        advector(Q, buff_fdistrib, params).wait_and_throw();
+        advector(Q, fdist, params).wait_and_throw();
 
-        err = validate_result(Q, buff_fdistrib, params, false);
+        err = validate_result(Q, fdist, params, false);
         Q.wait();
         EXPECT_NEAR(err, 0, EPS);
     }
 
-    err = validate_result(Q, buff_fdistrib, params, false);
+    err = validate_result(Q, fdist, params, false);
     EXPECT_NEAR(err, 0, EPS);
 }
 
@@ -73,18 +72,18 @@ TEST(Validation, ValidateNIterations){
     params.maxIter = 1 + std::rand() % 100;
     params.update_deltas();
 
-    const sycl::range<3> r3d(params.n0, params.n1, params.n2);
-    sycl::buffer<double, 3> buff_fdistrib(r3d);
-
     sycl::queue Q;
-    fill_buffer(Q, buff_fdistrib, params);
+    double *fdist =
+        sycl::malloc_device<double>(params.n0 * params.n1 * params.n2, Q);
+
+    fill_buffer(Q, fdist, params);
 
     auto advector = sref::make_unique<AdvX::BasicRange>(params.n1, params.n0, params.n2);
 
     for(size_t it=0; it<params.maxIter; ++it)
-        advector(Q, buff_fdistrib, params).wait_and_throw();
+        advector(Q, fdist, params).wait_and_throw();
 
-    auto err = validate_result(Q, buff_fdistrib, params, false);
+    auto err = validate_result(Q, fdist, params, false);
     Q.wait();
 
     EXPECT_NEAR(err, 0, EPS);

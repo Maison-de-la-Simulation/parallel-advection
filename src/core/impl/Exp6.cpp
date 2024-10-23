@@ -1,9 +1,8 @@
 #include "advectors.h"
 
 sycl::event
-AdvX::Exp6::operator()(sycl::queue &Q,
-                          sycl::buffer<double, 3> &buff_fdistrib,
-                          const ADVParams &params) {
+AdvX::Exp6::operator()(sycl::queue &Q, double *fdist_dev,
+                       const ADVParams &params) {
     auto const n1 = params.n1;
     auto const n0 = params.n0;
     auto const n2 = params.n2;
@@ -13,7 +12,7 @@ AdvX::Exp6::operator()(sycl::queue &Q,
 
     // const sycl::range global_size{n0, 1         , 1};
     const sycl::range global_size{n0, wg_size_1_, n2};
-    const sycl::range local_size {1 , wg_size_1_, wg_size_2_};
+    const sycl::range local_size{1, wg_size_1_, wg_size_2_};
 
     auto const wg2 = wg_size_2_;
     auto const wg1 = wg_size_1_;
@@ -21,12 +20,10 @@ AdvX::Exp6::operator()(sycl::queue &Q,
     auto scratch = scratch_;
 
     return Q.submit([&](sycl::handler &cgh) {
-        auto fdist =
-            buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
-
         cgh.parallel_for(
             sycl::nd_range<3>{global_size, local_size},
             [=](auto itm) {
+                mdspan3d_t fdist(fdist_dev, n0, n1, n2);
                 mdspan3d_t scr(scratch, n0, n1, n2);
 
                 const int i0 = itm.get_global_id(0);
@@ -34,35 +31,36 @@ AdvX::Exp6::operator()(sycl::queue &Q,
                 const int i2 = itm.get_global_id(2);
 
                 // for(int ii2 = i2; ii2 < n2; ii2 += wg2){
-                for(int ii1 = i1; ii1 < n1; ii1 += wg1){
+                for (int ii1 = i1; ii1 < n1; ii1 += wg1) {
                     double const xFootCoord = displ(ii1, i0, params);
 
                     const int leftNode =
                         sycl::floor((xFootCoord - minRealX) * inv_dx);
 
                     const double d_prev1 =
-                        LAG_OFFSET + inv_dx * (xFootCoord - coord(leftNode,
-                                                                minRealX, dx));
+                        LAG_OFFSET +
+                        inv_dx * (xFootCoord - coord(leftNode, minRealX, dx));
 
                     auto coef = lag_basis(d_prev1);
 
                     const int ipos1 = leftNode - LAG_OFFSET;
 
-                    scr(i0, ii1, i2) = 0;   // initializing slice for each work item
+                    scr(i0, ii1, i2) =
+                        0;   // initializing slice for each work item
                     for (int k = 0; k <= LAG_ORDER; k++) {
                         int id1_ipos = (n1 + ipos1 + k) % n1;
 
-                        scr(i0, ii1, i2) += coef[k] * fdist[i0][id1_ipos][i2];
+                        scr(i0, ii1, i2) += coef[k] * fdist(i0, id1_ipos, i2);
                     }
                 }
                 // }
 
                 sycl::group_barrier(itm.get_group());
 
-                for(int ii1 = i1; ii1 < n1; ii1 += wg1){
-                    fdist[i0][ii1][i2] = scr(i0, ii1, i2);
+                for (int ii1 = i1; ii1 < n1; ii1 += wg1) {
+                    fdist(i0, ii1, i2) = scr(i0, ii1, i2);
                 }
             }   // end lambda in parallel_for
-        );      // end parallel_for nd_range
-    });         // end Q.submit
+        );   // end parallel_for nd_range
+    });      // end Q.submit
 }

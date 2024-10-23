@@ -53,7 +53,7 @@ template <typename RealType> struct StraddledBuffer {
 // ==========================================
 sycl::event
 AdvX::Exp1::actual_advection(sycl::queue &Q,
-                             sycl::buffer<double, 3> &buff_fdistrib,
+                             double* fdist_dev,
                              const ADVParams &params,
                              const size_t &ny_batch_size,
                              const size_t &ny_offset) {
@@ -81,12 +81,6 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
     //                                      sycl::no_init);
 
     return Q.submit([&](sycl::handler &cgh) {
-        auto fdist =
-            buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
-
-        // globAcc2D overslice_ftmp =
-        //     buff_rest_nx.get_access<sycl::access::mode::discard_read_write>(
-        //         cgh);
 
         /* We use a 2D local accessor here */
         auto local_malloc_size = n1 > MAX_NX_ALLOC ? MAX_NX_ALLOC : n1;
@@ -103,7 +97,7 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
                 /* Copy kernel*/
                 g.parallel_for_work_item(
                     sycl::range{wg_size_0, n1, 1}, [&](sycl::h_item<3> it) {
-                        mdspan3d_t fdist_view(fdist.get_pointer(), n0, n1, n2);
+                        mdspan3d_t fdist_view(fdist_dev, n0, n1, n2);
                         StraddledBuffer<double> BUFF(
                             ptr_global, n0, nx_rest_malloc, n2, slice_ftmp);
 
@@ -120,7 +114,7 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
                 /* Solve kernel */
                 g.parallel_for_work_item(
                     sycl::range{wg_size_0, n1, 1}, [&](sycl::h_item<3> it) {
-                        mdspan3d_t fdist_view(fdist.get_pointer(), n0, n1, n2);
+                        mdspan3d_t fdist_view(fdist_dev, n0, n1, n2);
                         StraddledBuffer<double> BUFF(
                             ptr_global, n0, nx_rest_malloc, n2, slice_ftmp);
 
@@ -161,17 +155,17 @@ AdvX::Exp1::actual_advection(sycl::queue &Q,
 // ==========================================
 // ==========================================
 sycl::event
-AdvX::Exp1::operator()(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
+AdvX::Exp1::operator()(sycl::queue &Q, double* fdist_dev,
                        const ADVParams &params) {
 
     // can be parallel on multiple queues ? or other CUDA streams?
     for (size_t i_batch = 0; i_batch < n_batch_ - 1; ++i_batch) {
         size_t ny_offset = (i_batch * MAX_NY_BATCHS);
-        actual_advection(Q, buff_fdistrib, params, MAX_NY_BATCHS, ny_offset)
+        actual_advection(Q, fdist_dev, params, MAX_NY_BATCHS, ny_offset)
             .wait();
     }
 
     // return the last advection with the rest
-    return actual_advection(Q, buff_fdistrib, params, last_ny_size_,
+    return actual_advection(Q, fdist_dev, params, last_ny_size_,
                             last_ny_offset_);
 }

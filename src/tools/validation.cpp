@@ -1,10 +1,11 @@
 #include "validation.h"
+#include "advectors.h"
 #include <iostream>
 
 // ==========================================
 // ==========================================
 double
-validate_result(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
+validate_result(sycl::queue &Q, double* fdist_dev,
                 const ADVParams &params, bool do_print) {
 
     auto const dx = params.dx;
@@ -28,8 +29,8 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
 
             Q.submit([&](sycl::handler &cgh) {
                  // Input values to reductions are standard accessors
-                 auto fdist =
-                     buff_fdistrib.get_access<sycl::access_mode::read>(cgh);
+                //  auto fdist =
+                //      buff_fdistrib.get_access<sycl::access_mode::read>(cgh);
 
 #ifdef SYCL_IMPLEMENTATION_ONEAPI   // for DPCPP
                  auto errorl1_reduc =
@@ -41,22 +42,23 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
                      sycl::reduction(errorl1_acc, sycl::plus<double>());
 #endif
 
-                 cgh.parallel_for(r2d, errorl1_reduc,
-                                  [=](auto itm, auto &errorl1_reduc) {
-                                      auto i1 = itm[1];
-                                      auto i0 = itm[0];
-                                      auto f = fdist[i0][i1][i2];
+                 cgh.parallel_for(
+                     r2d, errorl1_reduc, [=](auto itm, auto &errorl1_reduc) {
+                         mdspan3d_t fdist(fdist_dev, params.n0, params.n1,
+                                          params.n2);
+                         auto i1 = itm[1];
+                         auto i0 = itm[0];
+                         auto f = fdist(i0, i1, i2);
 
-                                      double const x = minRealX + i1 * dx;
-                                      double const v = minRealVx + i0 * dvx;
-                                      double const t = maxIter * dt;
+                         double const x = minRealX + i1 * dx;
+                         double const v = minRealVx + i0 * dvx;
+                         double const t = maxIter * dt;
 
-                                      auto value =
-                                          sycl::sin(4 * M_PI * (x - v * t));
+                         auto value = sycl::sin(4 * M_PI * (x - v * t));
 
-                                      auto err = sycl::fabs(f - value);
-                                      errorl1_reduc += err;
-                                  });
+                         auto err = sycl::fabs(f - value);
+                         errorl1_reduc += err;
+                     });
              }).wait();
         }
 
@@ -81,7 +83,7 @@ validate_result(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
 // ==========================================
 // ==========================================
 // double
-// validate_result(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
+// validate_result(sycl::queue &Q, double* fdist_dev,
 //                 const ADVParams &params, bool do_print) {
 
 //     auto const dx = params.dx;

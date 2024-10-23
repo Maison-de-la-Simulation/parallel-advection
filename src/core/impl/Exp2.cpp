@@ -24,7 +24,7 @@ with local memory, the rest will be allocated in global memory
 // ==========================================
 // ==========================================
 sycl::event
-AdvX::Exp2::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
+AdvX::Exp2::actual_advection(sycl::queue &Q, double* fdist_dev,
                              const ADVParams &params,
                              const size_t &ny_batch_size,
                              const size_t &ny_offset) {
@@ -61,14 +61,12 @@ AdvX::Exp2::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
     /* k_global: kernels running in the global memory */
     // if(k_global > 0)
     Q.submit([&](sycl::handler &cgh) {
-        auto fdist =
-            buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
 
         cgh.parallel_for_work_group(nb_wg_global, wg_size, [=](auto g){
             /* Solve kernel */
             g.parallel_for_work_item(
                 sycl::range{wg_size_0, n1, 1}, [&](sycl::h_item<3> it){
-                    mdspan3d_t fdist_view(fdist.get_pointer(), n0, n1, n2);
+                    mdspan3d_t fdist_view(fdist_dev, n0, n1, n2);
                     mdspan3d_t scratch_view(ptr_global, k_global, n1, n2);
 
                     const int i1 = it.get_local_id(1);
@@ -101,7 +99,7 @@ AdvX::Exp2::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
             /* Copy kernel */
             g.parallel_for_work_item(
                 sycl::range{wg_size_0, n1, 1}, [&](sycl::h_item<3> it){
-                    mdspan3d_t fdist_view(fdist.get_pointer(), n0, n1, n2);
+                    mdspan3d_t fdist_view(fdist_dev, n0, n1, n2);
                     mdspan3d_t scratch_view(ptr_global, k_global, n1, n2);
 
                     const int i1 = it.get_local_id(1);
@@ -119,9 +117,6 @@ AdvX::Exp2::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
     }); //end Q.submit
 
     return Q.submit([&](sycl::handler &cgh) {
-        auto fdist =
-            buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
-
         sycl::local_accessor<double, 2> slice_ftmp(
             sycl::range<2>(wg_size_0, n1), cgh, sycl::no_init);
 
@@ -129,7 +124,7 @@ AdvX::Exp2::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
             /* Solve kernel */
             g.parallel_for_work_item(
                 sycl::range{wg_size_0, n1, 1}, [&](sycl::h_item<3> it) {
-                    mdspan3d_t fdist_view(fdist.get_pointer(), n0, n1, n2);
+                    mdspan3d_t fdist_view(fdist_dev, n0, n1, n2);
                     mdspan2d_t localAcc_view(slice_ftmp.get_pointer(),
                                              slice_ftmp.get_range().get(0),
                                              slice_ftmp.get_range().get(1));
@@ -167,7 +162,7 @@ AdvX::Exp2::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
             /* Copy kernel*/
             g.parallel_for_work_item(
                 sycl::range{wg_size_0, n1, 1}, [&](sycl::h_item<3> it) {
-                    mdspan3d_t fdist_view(fdist.get_pointer(), n0, n1, n2);
+                    mdspan3d_t fdist_view(fdist_dev, n0, n1, n2);
                     mdspan2d_t localAcc_view(slice_ftmp.get_pointer(),
                                              slice_ftmp.get_range().get(0),
                                              slice_ftmp.get_range().get(1));
@@ -188,7 +183,7 @@ AdvX::Exp2::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
 // ==========================================
 // ==========================================
 sycl::event
-AdvX::Exp2::operator()(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
+AdvX::Exp2::operator()(sycl::queue &Q, double* fdist_dev,
                        const ADVParams &params) {
 
     // can be parallel on multiple streams?
@@ -196,12 +191,12 @@ AdvX::Exp2::operator()(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
 
         size_t ny_offset = (i_batch * MAX_NY_BATCHS);
 
-        actual_advection(Q, buff_fdistrib, params, MAX_NY_BATCHS, ny_offset)
+        actual_advection(Q, fdist_dev, params, MAX_NY_BATCHS, ny_offset)
             .wait();
     }
 
     // return the last advection with the rest
-    return actual_advection(Q, buff_fdistrib, params, last_ny_size_,
+    return actual_advection(Q, fdist_dev, params, last_ny_size_,
                             last_ny_offset_);
     // }
 }

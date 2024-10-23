@@ -10,5 +10,5 @@ kernel_impl_factory(const sycl::queue &q, const ADVParamsNonCopyable &params);
 
 // ==========================================
 // ==========================================
-void fill_buffer(sycl::queue &q, sycl::buffer<double, 3> &buff_fdist,
+void fill_buffer(sycl::queue &q, double* fidst_dev,
                         const ADVParams &params);

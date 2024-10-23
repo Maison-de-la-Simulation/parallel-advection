@@ -1,9 +1,8 @@
 #include "advectors.h"
-#include <cstddef>
 
 sycl::event
 AdvX::Sequential::operator()([[maybe_unused]] sycl::queue &Q,
-                             sycl::buffer<double, 3> &buff_fdistrib,
+                             double* fdist_dev,
                              const ADVParams &params) {
     auto const n1 = params.n1;
     auto const n0 = params.n0;
@@ -12,47 +11,47 @@ AdvX::Sequential::operator()([[maybe_unused]] sycl::queue &Q,
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
-    std::vector<double> slice_ftmp(n1);
-    sycl::host_accessor fdist(buff_fdistrib, sycl::read_write);
+    // std::vector<double> slice_ftmp(n1);
+    // sycl::host_accessor fdist(fdist_dev, sycl::read_write);
 
-    for (size_t i2 = 0; i2 < n2; ++i2) {
-        for (size_t iv = 0; iv < n0; ++iv) {
-            for (size_t iix = 0; iix < n1; ++iix) {
-                // slice_x[iix] = fdist[iix][iv];
-                slice_ftmp[iix] = 0;
-            }
+    // for (size_t i2 = 0; i2 < n2; ++i2) {
+    //     for (size_t iv = 0; iv < n0; ++iv) {
+    //         for (size_t iix = 0; iix < n1; ++iix) {
+    //             // slice_x[iix] = fdist[iix][iv];
+    //             slice_ftmp[iix] = 0;
+    //         }
 
-            // For each x with regards to current
-            for (size_t i1 = 0; i1 < n1; ++i1) {
+    //         // For each x with regards to current
+    //         for (size_t i1 = 0; i1 < n1; ++i1) {
 
-                double const xFootCoord = displ(i1, iv, params);
+    //             double const xFootCoord = displ(i1, iv, params);
 
-                const int leftNode =
-                    sycl::floor((xFootCoord - minRealX) * inv_dx);
+    //             const int leftNode =
+    //                 sycl::floor((xFootCoord - minRealX) * inv_dx);
 
-                const double d_prev1 =
-                    LAG_OFFSET + inv_dx * (xFootCoord - coord(leftNode,
-                                                              minRealX, dx));
+    //             const double d_prev1 =
+    //                 LAG_OFFSET + inv_dx * (xFootCoord - coord(leftNode,
+    //                                                           minRealX, dx));
 
-                auto coef = lag_basis(d_prev1);
+    //             auto coef = lag_basis(d_prev1);
 
-                const int ipos1 = leftNode - LAG_OFFSET;
-                // double ftmp = 0.;
-                for (auto k = 0; k <= LAG_ORDER; k++) {
-                    int id1_ipos = (n1 + ipos1 + k) % n1;
-                    // ftmp += coef[k] * slice_x[id1_ipos];
-                    slice_ftmp[i1] += coef[k] * fdist[id1_ipos][iv][n2];
-                }
+    //             const int ipos1 = leftNode - LAG_OFFSET;
+    //             // double ftmp = 0.;
+    //             for (auto k = 0; k <= LAG_ORDER; k++) {
+    //                 int id1_ipos = (n1 + ipos1 + k) % n1;
+    //                 // ftmp += coef[k] * slice_x[id1_ipos];
+    //                 slice_ftmp[i1] += coef[k] * fdist[id1_ipos][iv][n2];
+    //             }
 
-                // fdist[i1][iv] = ftmp;
-            }   // end for X
+    //             // fdist[i1][iv] = ftmp;
+    //         }   // end for X
 
-            for (size_t iix = 0; iix < n1; ++iix) {
-                fdist[iix][iv][n2] = slice_ftmp[iix];
-            }
+    //         for (size_t iix = 0; iix < n1; ++iix) {
+    //             fdist[iix][iv][n2] = slice_ftmp[iix];
+    //         }
 
-        }   // end for Vx
-    }       // end for z
+    //     }   // end for Vx
+    // }       // end for z
 
     // returning empty submit to avoid warning and undefined behavior
     return Q.submit([&](sycl::handler &cgh) {

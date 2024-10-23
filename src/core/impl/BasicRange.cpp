@@ -1,22 +1,24 @@
 #include "advectors.h"
 
 sycl::event
-AdvX::BasicRange::operator()(sycl::queue &Q,
-                               sycl::buffer<double, 3> &buff_fdistrib,
-                               const ADVParams &params) {
+AdvX::BasicRange::operator()(sycl::queue &Q, double *fdist_dev,
+                             const ADVParams &params) {
     auto const n1 = params.n1;
     auto const minRealX = params.minRealX;
     auto const dx = params.dx;
     auto const inv_dx = params.inv_dx;
 
+    sycl::range r3d(params.n0, params.n1, params.n2);
+
     Q.submit([&](sycl::handler &cgh) {
-        auto fdist = buff_fdistrib.get_access<sycl::access::mode::read>(cgh);
+        // auto fdist = buff_fdistrib.get_access<sycl::access::mode::read>(cgh);
 
         /* Using the preallocated global buffer */
         sycl::accessor ftmp(m_global_buff_ftmp, cgh, sycl::write_only,
                             sycl::no_init);
 
-        cgh.parallel_for(buff_fdistrib.get_range(), [=](sycl::id<3> itm) {
+        cgh.parallel_for(r3d, [=](sycl::id<3> itm) {
+            mdspan3d_t fdist(fdist_dev, r3d.get(0), r3d.get(1), r3d.get(2));
             const int i1 = itm[1];
             const int i0 = itm[0];
             const int i2 = itm[2];
@@ -24,8 +26,7 @@ AdvX::BasicRange::operator()(sycl::queue &Q,
             double const xFootCoord = displ(i1, i0, params);
 
             // Corresponds to the index of the cell to the left of footCoord
-            const int leftNode =
-                sycl::floor((xFootCoord - minRealX) * inv_dx);
+            const int leftNode = sycl::floor((xFootCoord - minRealX) * inv_dx);
 
             const double d_prev1 =
                 LAG_OFFSET +
@@ -39,7 +40,7 @@ AdvX::BasicRange::operator()(sycl::queue &Q,
             for (int k = 0; k <= LAG_ORDER; k++) {
                 int id1_ipos = (n1 + ipos1 + k) % n1;
 
-                ftmp[i0][i1][i2] += coef[k] * fdist[i0][id1_ipos][i2];
+                ftmp[i0][i1][i2] += coef[k] * fdist(i0, id1_ipos, i2);
             }
 
             // barrier
@@ -47,9 +48,8 @@ AdvX::BasicRange::operator()(sycl::queue &Q,
     });       // end Q.submit
 
     return Q.submit([&](sycl::handler &cgh) {
-        auto fdist = buff_fdistrib.get_access<sycl::access::mode::write>(cgh);
         auto ftmp =
             m_global_buff_ftmp.get_access<sycl::access::mode::read>(cgh);
-        cgh.copy(ftmp, fdist);
+        cgh.copy(ftmp, fdist_dev);
     });   // end Q.submit
 }

@@ -14,7 +14,7 @@ Scratch is fully in global memory, parallelizing on Y1 rather than Y
 // ==========================================
 // ==========================================
 sycl::event
-AdvX::Exp3::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
+AdvX::Exp3::actual_advection(sycl::queue &Q, double* fdist_dev,
                              const ADVParams &params,
                              const size_t &ny_batch_size,
                              const size_t &ny_offset) {
@@ -42,9 +42,6 @@ AdvX::Exp3::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
     const auto concurrent_ny_slice = concurrent_ny_slices_;
 
     return Q.submit([&](sycl::handler &cgh) {
-        auto fdist =
-            buff_fdistrib.get_access<sycl::access::mode::read_write>(cgh);
-
         /*TODO: use the local accessor if it's possible (i.e. if n1*n2 <
          * MAX_ALLOC) that's Exp4 */
         // sycl::local_accessor<double, 2> slice_ftmp(sycl::range<2>(wg_size_0,
@@ -53,7 +50,7 @@ AdvX::Exp3::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
         cgh.parallel_for_work_group(nb_wg, physical_wg, [=](sycl::group<3> g) {
             /* Solve kernel */
             g.parallel_for_work_item(logical_wg, [&](sycl::h_item<3> it) {
-                mdspan3d_t fdist_view(fdist.get_pointer(), n0, n1, n2);
+                mdspan3d_t fdist_view(fdist_dev, n0, n1, n2);
                 mdspan3d_t scr_view(scratch, concurrent_ny_slice, n1, n2);
 
                 const int i1 = it.get_local_id(1);
@@ -88,7 +85,7 @@ AdvX::Exp3::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
             /* Copy kernel*/
             // TODO: probably can use contiguous copy or something?
             g.parallel_for_work_item(logical_wg, [&](sycl::h_item<3> it) {
-                mdspan3d_t fdist_view(fdist.get_pointer(), n0, n1, n2);
+                mdspan3d_t fdist_view(fdist_dev, n0, n1, n2);
                 mdspan3d_t scr_view(scratch, concurrent_ny_slice, n1, n2);
 
                 const int i1 = it.get_local_id(1);
@@ -106,7 +103,7 @@ AdvX::Exp3::actual_advection(sycl::queue &Q, buff3d &buff_fdistrib,
 // ==========================================
 // ==========================================
 sycl::event
-AdvX::Exp3::operator()(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
+AdvX::Exp3::operator()(sycl::queue &Q, double* fdist_dev,
                        const ADVParams &params) {
 
     // can be parallel on multiple streams?
@@ -114,7 +111,7 @@ AdvX::Exp3::operator()(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
 
         size_t ny_offset = (i_batch * concurrent_ny_slices_);
 
-        actual_advection(Q, buff_fdistrib, params, concurrent_ny_slices_,
+        actual_advection(Q, fdist_dev, params, concurrent_ny_slices_,
                          ny_offset)
             .wait();
         /* on est obligé de wait à moins d'utiliser plein de petits buffers et
@@ -124,7 +121,7 @@ AdvX::Exp3::operator()(sycl::queue &Q, sycl::buffer<double, 3> &buff_fdistrib,
     }
 
     // return the last advection with the rest
-    return actual_advection(Q, buff_fdistrib, params, last_ny_size_,
+    return actual_advection(Q, fdist_dev, params, last_ny_size_,
                             last_ny_offset_);
     // }
 }
