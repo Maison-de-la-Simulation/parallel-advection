@@ -14,11 +14,12 @@ advection(sycl::queue &Q, double* fidst_dev,
           sref::unique_ref<IAdvectorX> &advector, const ADVParams &params) {
 
     auto static const maxIter = params.maxIter;
+    Solver solver(params);
 
     auto start = std::chrono::high_resolution_clock::now();
     // Time loop
     for (size_t t = 0; t < maxIter; ++t) {
-        advector(Q, fidst_dev, params).wait();
+        advector(Q, fidst_dev, solver).wait();
     }   // end for t < T
     Q.wait_and_throw();
     auto end = std::chrono::high_resolution_clock::now();

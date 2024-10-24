@@ -16,17 +16,13 @@ void optimized_codepaths(double* ptr, int ib, int n1, int n2, int id1_ipos, int 
 sycl::event
 AdvX::CudaLDG::operator()(sycl::queue &Q,
                           double* fdist_dev,
-                          const ADVParams &params) {
-    auto const n1 = params.n1;
-    auto const n0 = params.n0;
-    auto const n2 = params.n2;
-    auto const minRealX = params.minRealX;
-    auto const dx = params.dx;
-    auto const inv_dx = params.inv_dx;
-
+                          const Solver &solver) {
+    auto const n0 = solver.p.n0;
+    auto const n1 = solver.p.n1;
+    auto const n2 = solver.p.n2;
+    
     const sycl::range nb_wg{n0, 1, n2};
-    const sycl::range wg_sise{1, params.wg_size_1, 1};
-    // const sycl::range wg_sise{1, n1, 1};
+    const sycl::range wg_sise{1, solver.p.wg_size_1, 1};
 
     return Q.submit([&](sycl::handler &cgh) {
 #ifdef SYCL_IMPLEMENTATION_ONEAPI   // for DPCPP
@@ -36,23 +32,17 @@ throw std::logic_error("CudaLDG kernel is not compatible with DPCPP");
         sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>(n1), cgh);
 
         cgh.parallel_for_work_group(nb_wg, wg_sise, [=](sycl::group<3> g) {
-            // g.parallel_for_work_item(sycl::range{1, n1, 1},
-            //                 [&](sycl::h_item<3> it) {
-            //                     const int i1 = it.get_local_id(1);
-            //                     const int ib = g.get_group_id(0);
-            //                     const int is = g.get_group_id(2);
-            //                     __ldg();
-            //                     fdist[ib][i1][is] = slice_ftmp[i1];
-            //                 });
 
             g.parallel_for_work_item(
                 sycl::range{1, n1, 1}, [&](sycl::h_item<3> it) {
                     mdspan3d_t fdist(fdist_dev, n0, n1, n2);
 
+                    const int i0 = g.get_group_id(0);
                     const int i1 = it.get_local_id(1);
-                    const int ib = g.get_group_id(0);
-                    const int is = g.get_group_id(2);
-
+                    const int i2 = g.get_group_id(2);
+                    
+                    auto slice = std::experimental::submdspan(
+                        fdist, i0, std::experimental::full_extent, i2);
 
                     double const xFootCoord = displ(i1, ib, params);
 

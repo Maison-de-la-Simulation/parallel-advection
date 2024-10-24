@@ -2,16 +2,13 @@
 
 sycl::event
 AdvX::Hierarchical::operator()(sycl::queue &Q, double *fdist_dev,
-                               const ADVParams &params) {
-    auto const n1 = params.n1;
-    auto const n0 = params.n0;
-    auto const n2 = params.n2;
-    auto const minRealX = params.minRealX;
-    auto const dx = params.dx;
-    auto const inv_dx = params.inv_dx;
+                               const Solver &solver) {
+    const auto n0 = solver.p.n0;
+    const auto n1 = solver.p.n1;
+    const auto n2 = solver.p.n2;
 
     const sycl::range nb_wg{n0, 1, n2};
-    const sycl::range wg_size{1, params.wg_size_1, 1};
+    const sycl::range wg_size{1, solver.p.wg_size_1, 1};
 
     return Q.submit([&](sycl::handler &cgh) {
         sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>(n1), cgh);
@@ -24,26 +21,10 @@ AdvX::Hierarchical::operator()(sycl::queue &Q, double *fdist_dev,
                     const int i0 = g.get_group_id(0);
                     const int i2 = g.get_group_id(2);
 
-                    double const xFootCoord = displ(i1, i0, params);
+                    auto slice = std::experimental::submdspan(
+                        fdist, i0, std::experimental::full_extent, i2);
 
-                    // index of the cell to the left of footCoord
-                    const int leftNode =
-                        sycl::floor((xFootCoord - minRealX) * inv_dx);
-
-                    const double d_prev1 =
-                        LAG_OFFSET +
-                        inv_dx * (xFootCoord - coord(leftNode, minRealX, dx));
-
-                    auto coef = lag_basis(d_prev1);
-
-                    const int ipos1 = leftNode - LAG_OFFSET;
-
-                    slice_ftmp[i1] = 0.;
-                    for (int k = 0; k <= LAG_ORDER; k++) {
-                        int id1_ipos = (n1 + ipos1 + k) % n1;
-
-                        slice_ftmp[i1] += coef[k] * fdist(i0, id1_ipos, i2);
-                    }
+                    slice_ftmp[i1] = solver(i0, i1, i2, slice);
                 });   // end parallel_for_work_item --> Implicit barrier
 #ifdef SYCL_IMPLEMENTATION_ONEAPI   // for DPCPP
             g.parallel_for_work_item(

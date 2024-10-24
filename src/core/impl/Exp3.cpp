@@ -14,17 +14,13 @@ Scratch is fully in global memory, parallelizing on Y1 rather than Y
 // ==========================================
 // ==========================================
 sycl::event
-AdvX::Exp3::actual_advection(sycl::queue &Q, double* fdist_dev,
-                             const ADVParams &params,
-                             const size_t &ny_batch_size,
+AdvX::Exp3::actual_advection(sycl::queue &Q, double *fdist_dev,
+                             const Solver &solver, const size_t &ny_batch_size,
                              const size_t &ny_offset) {
 
-    auto const n1 = params.n1;
-    auto const n0 = params.n0;
-    auto const n2 = params.n2;
-    auto const minRealX = params.minRealX;
-    auto const dx = params.dx;
-    auto const inv_dx = params.inv_dx;
+    auto const n0 = solver.p.n0;
+    auto const n1 = solver.p.n1;
+    auto const n2 = solver.p.n2;
 
     /*=====================
       =====================
@@ -59,27 +55,10 @@ AdvX::Exp3::actual_advection(sycl::queue &Q, double* fdist_dev,
                 const int scr_iy = g.get_group_id(0);
                 const int i0 = scr_iy + ny_offset;
 
-                double const xFootCoord = displ(i1, i0, params);
+                auto slice = std::experimental::submdspan(
+                    fdist_view, i0, std::experimental::full_extent, i2);
 
-                // index of the cell to the left of footCoord
-                const int leftNode =
-                    sycl::floor((xFootCoord - minRealX) * inv_dx);
-
-                const double d_prev1 =
-                    LAG_OFFSET +
-                    inv_dx * (xFootCoord - coord(leftNode, minRealX, dx));
-
-                auto coef = lag_basis(d_prev1);
-
-                const int ipos1 = leftNode - LAG_OFFSET;
-
-                scr_view(scr_iy, i1, i2) = 0.;
-                for (int k = 0; k <= LAG_ORDER; k++) {
-                    int id1_ipos = (n1 + ipos1 + k) % n1;
-
-                    scr_view(scr_iy, i1, i2) +=
-                        coef[k] * fdist_view(i0, id1_ipos, i2);
-                }
+                scr_view(scr_iy, i1, i2) = solver(i0, i1, i2, slice);
             });   // end parallel_for_work_item --> Implicit barrier
 
             /* Copy kernel*/
@@ -103,16 +82,15 @@ AdvX::Exp3::actual_advection(sycl::queue &Q, double* fdist_dev,
 // ==========================================
 // ==========================================
 sycl::event
-AdvX::Exp3::operator()(sycl::queue &Q, double* fdist_dev,
-                       const ADVParams &params) {
+AdvX::Exp3::operator()(sycl::queue &Q, double *fdist_dev,
+                       const Solver &solver) {
 
     // can be parallel on multiple streams?
     for (size_t i_batch = 0; i_batch < n_batch_ - 1; ++i_batch) {
 
         size_t ny_offset = (i_batch * concurrent_ny_slices_);
 
-        actual_advection(Q, fdist_dev, params, concurrent_ny_slices_,
-                         ny_offset)
+        actual_advection(Q, fdist_dev, solver, concurrent_ny_slices_, ny_offset)
             .wait();
         /* on est obligé de wait à moins d'utiliser plein de petits buffers et
         de soumettre plein de tout petit noyaux
@@ -121,7 +99,7 @@ AdvX::Exp3::operator()(sycl::queue &Q, double* fdist_dev,
     }
 
     // return the last advection with the rest
-    return actual_advection(Q, fdist_dev, params, last_ny_size_,
+    return actual_advection(Q, fdist_dev, solver, last_ny_size_,
                             last_ny_offset_);
     // }
 }

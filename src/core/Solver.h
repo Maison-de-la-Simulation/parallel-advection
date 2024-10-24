@@ -20,6 +20,9 @@ double static constexpr loc[] = {-1. / 24, 1. / 24.,  -1. / 12.,
 struct Solver {
     ADVParams p;
 
+    Solver() = delete;
+    Solver(const ADVParams &params) : p(params){};
+
     // ==========================================
     // ==========================================
     /* Computes the real position of x or speed of vx based on discretization */

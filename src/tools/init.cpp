@@ -20,8 +20,8 @@ kernel_impl_factory(const sycl::queue &q, const ADVParamsNonCopyable &params) {
     std::string kernel_name(params.kernelImpl.begin(), params.kernelImpl.end());
 
     switch (str2int(kernel_name.data())) {
-    case str2int("Sequential"):
-        return sref::make_unique<AdvX::Sequential>();
+    // case str2int("Sequential"):
+    //     return sref::make_unique<AdvX::Sequential>();
     case str2int("BasicRange"):
         return sref::make_unique<AdvX::BasicRange>(params.n1, params.n0,
                                                    params.n2);
@@ -37,20 +37,20 @@ kernel_impl_factory(const sycl::queue &q, const ADVParamsNonCopyable &params) {
         return sref::make_unique<AdvX::NDRange>();
     case str2int("Scoped"):
         return sref::make_unique<AdvX::Scoped>();
-    case str2int("StreamY"):
-        return sref::make_unique<AdvX::StreamY>();
-    case str2int("StraddledMalloc"):
-        return sref::make_unique<AdvX::StraddledMalloc>();
+    // case str2int("StreamY"):
+    //     return sref::make_unique<AdvX::StreamY>();
+    // case str2int("StraddledMalloc"):
+    //     return sref::make_unique<AdvX::StraddledMalloc>();
     // case str2int("ReducedPrecision"):
     //     return sref::make_unique<AdvX::ReducedPrecision>();
-    case str2int("ReverseIndexes"):
-        return sref::make_unique<AdvX::ReverseIndexes>();
-    case str2int("TwoDimWG"):
-        return sref::make_unique<AdvX::TwoDimWG>();
-    case str2int("SeqTwoDimWG"):
-        return sref::make_unique<AdvX::SeqTwoDimWG>();
-    case str2int("Exp1"):
-        return sref::make_unique<AdvX::Exp1>(params, q);
+    // case str2int("ReverseIndexes"):
+    //     return sref::make_unique<AdvX::ReverseIndexes>();
+    // case str2int("TwoDimWG"):
+    //     return sref::make_unique<AdvX::TwoDimWG>();
+    // case str2int("SeqTwoDimWG"):
+    //     return sref::make_unique<AdvX::SeqTwoDimWG>();
+    // case str2int("Exp1"):
+    //     return sref::make_unique<AdvX::Exp1>(params, q);
     case str2int("Exp2"):
         return sref::make_unique<AdvX::Exp2>(params, params.percent_loc, q);
     case str2int("Exp3"):
@@ -61,8 +61,8 @@ kernel_impl_factory(const sycl::queue &q, const ADVParamsNonCopyable &params) {
         return sref::make_unique<AdvX::Exp5>(params);
     case str2int("Exp6"):
         return sref::make_unique<AdvX::Exp6>(params, q);
-    case str2int("CudaLDG"):
-        return sref::make_unique<AdvX::CudaLDG>();
+    // case str2int("CudaLDG"):
+    //     return sref::make_unique<AdvX::CudaLDG>();
     default:
         auto str = kernel_name + " is not a valid kernel name.\n" + error_str;
         throw std::runtime_error(str);

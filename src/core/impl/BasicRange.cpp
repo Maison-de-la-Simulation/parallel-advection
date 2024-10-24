@@ -2,13 +2,12 @@
 
 sycl::event
 AdvX::BasicRange::operator()(sycl::queue &Q, double *fdist_dev,
-                             const ADVParams &params) {
-    auto const n1 = params.n1;
-    auto const minRealX = params.minRealX;
-    auto const dx = params.dx;
-    auto const inv_dx = params.inv_dx;
+                             const Solver &solver) {
+    auto const n0 = solver.p.n0;
+    auto const n1 = solver.p.n1;
+    auto const n2 = solver.p.n2;
 
-    sycl::range r3d(params.n0, params.n1, params.n2);
+    sycl::range r3d(n0, n1, n2);
 
     Q.submit([&](sycl::handler &cgh) {
         // auto fdist = buff_fdistrib.get_access<sycl::access::mode::read>(cgh);
@@ -23,26 +22,10 @@ AdvX::BasicRange::operator()(sycl::queue &Q, double *fdist_dev,
             const int i0 = itm[0];
             const int i2 = itm[2];
 
-            double const xFootCoord = displ(i1, i0, params);
-
-            // Corresponds to the index of the cell to the left of footCoord
-            const int leftNode = sycl::floor((xFootCoord - minRealX) * inv_dx);
-
-            const double d_prev1 =
-                LAG_OFFSET +
-                inv_dx * (xFootCoord - coord(leftNode, minRealX, dx));
-
-            auto coef = lag_basis(d_prev1);
-
-            const int ipos1 = leftNode - LAG_OFFSET;
-
-            ftmp[i0][i1][i2] = 0;   // initializing slice for each work item
-            for (int k = 0; k <= LAG_ORDER; k++) {
-                int id1_ipos = (n1 + ipos1 + k) % n1;
-
-                ftmp[i0][i1][i2] += coef[k] * fdist(i0, id1_ipos, i2);
-            }
-
+            ftmp[i0][i1][i2] =
+                solver(i0, i1, i2,
+                       std::experimental::submdspan(
+                           fdist, i0, std::experimental::full_extent, i2));
             // barrier
         });   // end parallel_for
     });       // end Q.submit

@@ -2,15 +2,11 @@
 
 sycl::event
 AdvX::Exp6::operator()(sycl::queue &Q, double *fdist_dev,
-                       const ADVParams &params) {
-    auto const n1 = params.n1;
-    auto const n0 = params.n0;
-    auto const n2 = params.n2;
-    auto const minRealX = params.minRealX;
-    auto const dx = params.dx;
-    auto const inv_dx = params.inv_dx;
+                       const Solver &solver) {
+    auto const n0 = solver.p.n0;
+    auto const n1 = solver.p.n1;
+    auto const n2 = solver.p.n2;
 
-    // const sycl::range global_size{n0, 1         , 1};
     const sycl::range global_size{n0, wg_size_1_, n2};
     const sycl::range local_size{1, wg_size_1_, wg_size_2_};
 
@@ -30,28 +26,12 @@ AdvX::Exp6::operator()(sycl::queue &Q, double *fdist_dev,
                 const int i1 = itm.get_local_id(1);
                 const int i2 = itm.get_global_id(2);
 
+                auto slice = std::experimental::submdspan(
+                    fdist, i0, std::experimental::full_extent, i2);
+
                 // for(int ii2 = i2; ii2 < n2; ii2 += wg2){
                 for (int ii1 = i1; ii1 < n1; ii1 += wg1) {
-                    double const xFootCoord = displ(ii1, i0, params);
-
-                    const int leftNode =
-                        sycl::floor((xFootCoord - minRealX) * inv_dx);
-
-                    const double d_prev1 =
-                        LAG_OFFSET +
-                        inv_dx * (xFootCoord - coord(leftNode, minRealX, dx));
-
-                    auto coef = lag_basis(d_prev1);
-
-                    const int ipos1 = leftNode - LAG_OFFSET;
-
-                    scr(i0, ii1, i2) =
-                        0;   // initializing slice for each work item
-                    for (int k = 0; k <= LAG_ORDER; k++) {
-                        int id1_ipos = (n1 + ipos1 + k) % n1;
-
-                        scr(i0, ii1, i2) += coef[k] * fdist(i0, id1_ipos, i2);
-                    }
+                    scr(i0, ii1, i2) = solver(i0, ii1, i2, slice);
                 }
                 // }
 

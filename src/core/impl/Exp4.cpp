@@ -1,4 +1,3 @@
-#include "IAdvectorX.h"
 #include "advectors.h"
 
 /* =================================================================
@@ -9,15 +8,12 @@ Same as Exp3 but buffer is allocated in local memory this time
 // ==========================================
 // ==========================================
 sycl::event
-AdvX::Exp4::operator()(sycl::queue &Q, double* fdist_dev,
-                       const ADVParams &params) {
+AdvX::Exp4::operator()(sycl::queue &Q, double *fdist_dev,
+                       const Solver &solver) {
 
-    auto const n1 = params.n1;
-    auto const n0 = params.n0;
-    auto const n2 = params.n2;
-    auto const minRealX = params.minRealX;
-    auto const dx = params.dx;
-    auto const inv_dx = params.inv_dx;
+    auto const n0 = solver.p.n0;
+    auto const n1 = solver.p.n1;
+    auto const n2 = solver.p.n2;
 
     /*=====================
       =====================
@@ -31,9 +27,8 @@ AdvX::Exp4::operator()(sycl::queue &Q, double* fdist_dev,
     const sycl::range nb_wg(n0, 1, 1);
 
     return Q.submit([&](sycl::handler &cgh) {
-
-        sycl::local_accessor<double, 2> slice_ftmp(
-            sycl::range<2>(n1, n2), cgh, sycl::no_init);
+        sycl::local_accessor<double, 2> slice_ftmp(sycl::range<2>(n1, n2), cgh,
+                                                   sycl::no_init);
 
         cgh.parallel_for_work_group(nb_wg, physical_wg, [=](sycl::group<3> g) {
             /* Solve kernel */
@@ -43,30 +38,13 @@ AdvX::Exp4::operator()(sycl::queue &Q, double* fdist_dev,
 
                 const int i1 = it.get_local_id(1);
                 const int i2 = it.get_local_id(2);
-
                 const int i0 = g.get_group_id(0);
 
-                double const xFootCoord = displ(i1, i0, params);
+                auto slice = std::experimental::submdspan(
+                    fdist_view, i0, std::experimental::full_extent, i2);
 
-                // index of the cell to the left of footCoord
-                const int leftNode =
-                    sycl::floor((xFootCoord - minRealX) * inv_dx);
+                scr_view(i1, i2) = solver(i0, i1, i2, slice);
 
-                const double d_prev1 =
-                    LAG_OFFSET +
-                    inv_dx * (xFootCoord - coord(leftNode, minRealX, dx));
-
-                auto coef = lag_basis(d_prev1);
-
-                const int ipos1 = leftNode - LAG_OFFSET;
-
-                scr_view(i1, i2) = 0.;
-                for (int k = 0; k <= LAG_ORDER; k++) {
-                    int id1_ipos = (n1 + ipos1 + k) % n1;
-
-                    scr_view(i1, i2) +=
-                        coef[k] * fdist_view(i0, id1_ipos, i2);
-                }
             });   // end parallel_for_work_item --> Implicit barrier
 
             /* Copy kernel*/

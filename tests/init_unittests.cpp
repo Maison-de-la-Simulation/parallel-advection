@@ -16,7 +16,7 @@ TEST(Init, FillBufferWithDefaultParams) {
     sycl::queue Q;
 
     double *fdist_host =
-        sycl::malloc_host<double>(params.n0 * params.n1 * params.n2, Q);
+        sycl::malloc_host<double>(n0 * n1 * n2, Q);
     mdspan3d_t fdist(fdist_host, n0, n1, n2);
 
     fill_buffer(Q, fdist_host, params);

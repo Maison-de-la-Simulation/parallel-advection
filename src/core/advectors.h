@@ -158,31 +158,31 @@ class StraddledMalloc : public IAdvectorX {
 };
 
 // =============================================================================
-class ReverseIndexes : public IAdvectorX {
-    using IAdvectorX::IAdvectorX;
+// class ReverseIndexes : public IAdvectorX {
+//     using IAdvectorX::IAdvectorX;
 
-  public:
-    sycl::event operator()(sycl::queue &Q, double* fdist_dev,
-                           const Solver &solver) override;
-};
-
-// =============================================================================
-class TwoDimWG : public IAdvectorX {
-    using IAdvectorX::IAdvectorX;
-
-  public:
-    sycl::event operator()(sycl::queue &Q, double* fdist_dev,
-                           const Solver &solver) override;
-};
+//   public:
+//     sycl::event operator()(sycl::queue &Q, double* fdist_dev,
+//                            const Solver &solver) override;
+// };
 
 // =============================================================================
-class SeqTwoDimWG : public IAdvectorX {
-    using IAdvectorX::IAdvectorX;
+// class TwoDimWG : public IAdvectorX {
+//     using IAdvectorX::IAdvectorX;
 
-  public:
-    sycl::event operator()(sycl::queue &Q, double* fdist_dev,
-                           const Solver &solver) override;
-};
+//   public:
+//     sycl::event operator()(sycl::queue &Q, double* fdist_dev,
+//                            const Solver &solver) override;
+// };
+
+// =============================================================================
+// class SeqTwoDimWG : public IAdvectorX {
+//     using IAdvectorX::IAdvectorX;
+
+//   public:
+//     sycl::event operator()(sycl::queue &Q, double* fdist_dev,
+//                            const Solver &solver) override;
+// };
 
 // =============================================================================
 class Exp1 : public IAdvectorX {
@@ -476,12 +476,12 @@ class Exp6 : public IAdvectorX {
 };
 
 // =============================================================================
-class CudaLDG : public IAdvectorX {
-    using IAdvectorX::IAdvectorX;
+// class CudaLDG : public IAdvectorX {
+//     using IAdvectorX::IAdvectorX;
 
-  public:
-    sycl::event operator()(sycl::queue &Q, double* fdist_dev,
-                           const Solver &solver) override;
-};
+//   public:
+//     sycl::event operator()(sycl::queue &Q, double* fdist_dev,
+//                            const Solver &solver) override;
+// };
 
 }   // namespace AdvX
