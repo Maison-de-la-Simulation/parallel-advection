@@ -9,6 +9,6 @@ class IAdvectorX {
     virtual ~IAdvectorX() = default;
 
     virtual sycl::event operator()(sycl::queue &Q, double *fdist_dev,
-                                   const ADVParams &params) = 0;
+                                   const Solver &solver) = 0;
 
 };

@@ -18,7 +18,7 @@ double static constexpr loc[] = {-1. / 24, 1. / 24.,  -1. / 12.,
 //     fdist, i0, std::experimental::full_extent, i2);
 
 struct Solver {
-    ADVParams p;   // mettre que le necessaire
+    ADVParams p;
 
     // ==========================================
     // ==========================================

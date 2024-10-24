@@ -24,7 +24,7 @@ class Sequential : public IAdvectorX {
 
   public:
     sycl::event operator()(sycl::queue &Q, double* fdist_dev,
-                           const ADVParams &params) override;
+                           const Solver &solver) override;
 };
 
 /* For BasicRange kernels we have to do it out-of-place so we need a global
@@ -38,14 +38,14 @@ class BasicRange : public IAdvectorX {
         : m_global_buff_ftmp{sycl::range<3>(nvx, n1, n2)} {}
 
     sycl::event operator()(sycl::queue &Q, double* fdist_dev,
-                           const ADVParams &params) override;
+                           const Solver &solver) override;
 };
 
 // class BasicRange2D : public BasicRange {
 //   public:
 //     sycl::event operator()(sycl::queue &Q,
 //                            double* fdist_dev,
-//                            const ADVParams &params) override;
+//                            const Solver &solver) override;
 
 //     explicit BasicRange2D(const size_t n1, const size_t nvx, const size_t
 //     n2)
@@ -56,7 +56,7 @@ class BasicRange : public IAdvectorX {
 //   public:
 //     sycl::event operator()(sycl::queue &Q,
 //                            double* fdist_dev,
-//                            const ADVParams &params) override;
+//                            const Solver &solver) override;
 
 //     explicit BasicRange1D(const size_t n1, const size_t nvx, const size_t
 //     n2)
@@ -68,7 +68,7 @@ class Hierarchical : public IAdvectorX {
 
   public:
     sycl::event operator()(sycl::queue &Q, double* fdist_dev,
-                           const ADVParams &params) override;
+                           const Solver &solver) override;
 };
 
 class NDRange : public IAdvectorX {
@@ -76,7 +76,7 @@ class NDRange : public IAdvectorX {
 
   public:
     sycl::event operator()(sycl::queue &Q, double* fdist_dev,
-                           const ADVParams &params) override;
+                           const Solver &solver) override;
 };
 
 class Scoped : public IAdvectorX {
@@ -84,7 +84,7 @@ class Scoped : public IAdvectorX {
 
   public:
     sycl::event operator()(sycl::queue &Q, double* fdist_dev,
-                           const ADVParams &params) override;
+                           const Solver &solver) override;
 };
 
 // class FakeAdvector : public IAdvectorX {
@@ -93,7 +93,7 @@ class Scoped : public IAdvectorX {
 //   public:
 //     sycl::event operator()(sycl::queue &Q,
 //                            double* fdist_dev,
-//                            const ADVParams &params) override;
+//                            const Solver &solver) override;
 
 //     sycl::event stream_bench(sycl::queue &Q,
 //                              sycl::buffer<double, 1> &buff);
@@ -105,7 +105,7 @@ class Scoped : public IAdvectorX {
 //   public:
 //     sycl::event operator()(sycl::queue &Q,
 //                            double* fdist_dev,
-//                            const ADVParams &params) override;
+//                            const Solver &solver) override;
 // };
 
 // /* Fixed memory footprint using a basic range */
@@ -115,7 +115,7 @@ class Scoped : public IAdvectorX {
 //   public:
 //     sycl::event operator()(sycl::queue &Q,
 //                            double* fdist_dev,
-//                            const ADVParams &params) override;
+//                            const Solver &solver) override;
 // };
 
 // =============================================================================
@@ -124,14 +124,14 @@ class Scoped : public IAdvectorX {
 class StreamY : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
     sycl::event actual_advection(sycl::queue &Q, double* fdist_dev,
-                                 const ADVParams &params, const size_t &n_nvx,
+                                 const Solver &solver, const size_t &n_nvx,
                                  const size_t &ny_offset);
 
   public:
-    // StreamY(const ADVParams &params);
+    // StreamY(const Solver &solver);
 
     sycl::event operator()(sycl::queue &Q, double* fdist_dev,
-                           const ADVParams &params) override;
+                           const Solver &solver) override;
 };
 
 // =============================================================================
@@ -140,21 +140,21 @@ class ReducedPrecision : public IAdvectorX {
 
   public:
     sycl::event operator()(sycl::queue &Q, double* fdist_dev,
-                           const ADVParams &params) override;
+                           const Solver &solver) override;
 };
 
 // =============================================================================
 class StraddledMalloc : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
     sycl::event adv_opt3(sycl::queue &Q, double* fdist_dev,
-                         const ADVParams &params,
+                         const Solver &solver,
                          const size_t &nx_rest_to_malloc);
 
   public:
-    // StraddledMalloc(const ADVParams &params);
+    // StraddledMalloc(const Solver &solver);
 
     sycl::event operator()(sycl::queue &Q, double* fdist_dev,
-                           const ADVParams &params) override;
+                           const Solver &solver) override;
 };
 
 // =============================================================================
@@ -163,7 +163,7 @@ class ReverseIndexes : public IAdvectorX {
 
   public:
     sycl::event operator()(sycl::queue &Q, double* fdist_dev,
-                           const ADVParams &params) override;
+                           const Solver &solver) override;
 };
 
 // =============================================================================
@@ -172,7 +172,7 @@ class TwoDimWG : public IAdvectorX {
 
   public:
     sycl::event operator()(sycl::queue &Q, double* fdist_dev,
-                           const ADVParams &params) override;
+                           const Solver &solver) override;
 };
 
 // =============================================================================
@@ -181,14 +181,14 @@ class SeqTwoDimWG : public IAdvectorX {
 
   public:
     sycl::event operator()(sycl::queue &Q, double* fdist_dev,
-                           const ADVParams &params) override;
+                           const Solver &solver) override;
 };
 
 // =============================================================================
 class Exp1 : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
     sycl::event actual_advection(sycl::queue &Q, double* fdist_dev,
-                                 const ADVParams &params,
+                                 const Solver &solver,
                                  const size_t &ny_batch_size,
                                  const size_t &ny_offset);
 
@@ -204,33 +204,33 @@ class Exp1 : public IAdvectorX {
     size_t last_ny_offset_;
     size_t nx_rest_malloc_;
 
-    void init_batchs(const ADVParams &p) {
+    void init_batchs(const Solver &s) {
         /* Compute number of batchs */
         float div =
-            static_cast<float>(p.n0) / static_cast<float>(MAX_NY_BATCHS);
+            static_cast<float>(s.p.n0) / static_cast<float>(MAX_NY_BATCHS);
         auto floor_div = std::floor(div);
         auto div_is_int = div == floor_div;
         n_batch_ = div_is_int ? div : floor_div + 1;
 
-        last_ny_size_ = div_is_int ? MAX_NY_BATCHS : (p.n0 % MAX_NY_BATCHS);
+        last_ny_size_ = div_is_int ? MAX_NY_BATCHS : (s.p.n0 % MAX_NY_BATCHS);
         last_ny_offset_ = MAX_NY_BATCHS * (n_batch_ - 1);
     }
 
   public:
     sycl::event operator()(sycl::queue &Q, double* fdist_dev,
-                           const ADVParams &params) override;
+                           const Solver &solver) override;
 
     Exp1() = delete;
 
-    Exp1(const ADVParams &p, const sycl::queue &q) : q_(q) {
-        init_batchs(p);
+    Exp1(const Solver &s, const sycl::queue &q) : q_(q) {
+        init_batchs(s);
 
-        nx_rest_malloc_ = p.n1 <= MAX_NX_ALLOC ? 0 : p.n1 - MAX_NX_ALLOC;
+        nx_rest_malloc_ = s.p.n1 <= MAX_NX_ALLOC ? 0 : s.p.n1 - MAX_NX_ALLOC;
 
         if (nx_rest_malloc_ > 0) {
             // TODO: don't allocate full n0, only the current batch_size_ny size
             global_vertical_buffer_ =
-                sycl::malloc_device<double>(p.n0 * nx_rest_malloc_ * p.n2, q_);
+                sycl::malloc_device<double>(s.p.n0 * nx_rest_malloc_ * s.p.n2, q_);
         } else {
             global_vertical_buffer_ = nullptr;
         }
@@ -246,19 +246,19 @@ class Exp1 : public IAdvectorX {
 class Exp2 : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
     sycl::event actual_advection(sycl::queue &Q, double* fdist_dev,
-                                 const ADVParams &params,
+                                 const Solver &solver,
                                  const size_t &ny_batch_size,
                                  const size_t &ny_offset);
 
-    void init_batchs(const ADVParams &p) {
+    void init_batchs(const Solver &s) {
         /* Compute number of batchs */
         float div =
-            static_cast<float>(p.n0) / static_cast<float>(MAX_NY_BATCHS);
+            static_cast<float>(s.p.n0) / static_cast<float>(MAX_NY_BATCHS);
         auto floor_div = std::floor(div);
         auto div_is_int = div == floor_div;
         n_batch_ = div_is_int ? div : floor_div + 1;
 
-        last_ny_size_ = div_is_int ? MAX_NY_BATCHS : (p.n0 % MAX_NY_BATCHS);
+        last_ny_size_ = div_is_int ? MAX_NY_BATCHS : (s.p.n0 % MAX_NY_BATCHS);
         last_ny_offset_ = MAX_NY_BATCHS * (n_batch_ - 1);
     }
 
@@ -279,33 +279,33 @@ class Exp2 : public IAdvectorX {
 
   public:
     sycl::event operator()(sycl::queue &Q, double* fdist_dev,
-                           const ADVParams &params) override;
+                           const Solver &solver) override;
 
     Exp2() = delete;
 
-    Exp2(const ADVParams &params) {
-        init_batchs(params);
+    Exp2(const Solver &solver) {
+        init_batchs(solver);
         k_global_ = 0;
-        k_local_ = params.n0 * params.n2;
+        k_local_ = solver.p.n0 * solver.p.n2;
     }
 
     // TODO: gérer le cas ou percent_loc est 1 ou 0 (on fait tou dans la local
     // mem ou tout dnas la global)
-    Exp2(const ADVParams &params,
+    Exp2(const Solver &solver,
          const float percent_in_local_mem_per_ny1_slice, const sycl::queue &q)
         : q_(q) {
-        init_batchs(params);
+        init_batchs(solver);
 
-        /* n_kernel_per_ny1 = params.n0; TODO: attention ça c'est vrai seulement
+        /* n_kernel_per_ny1 = solver.p.n0; TODO: attention ça c'est vrai seulement
          quand n0 < MAX_NY et qu'on a un seul batch, sinon on le percentage doit
          s'appliquer pour chaque taille de batch_ny!!! */
-        auto div = params.n0 * percent_in_local_mem_per_ny1_slice;
+        auto div = solver.p.n0 * percent_in_local_mem_per_ny1_slice;
         k_local_ = std::floor(div);
-        k_global_ = params.n0 - k_local_;
+        k_global_ = solver.p.n0 - k_local_;
 
         if (k_global_ > 0) {
             global_buffer_ = sycl::malloc_device<double>(
-                k_global_ * params.n1 * params.n2, q);
+                k_global_ * solver.p.n1 * solver.p.n2, q);
         } else {
             global_buffer_ = nullptr;
         }
@@ -318,7 +318,7 @@ class Exp2 : public IAdvectorX {
 class Exp3 : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
     sycl::event actual_advection(sycl::queue &Q, double* fdist_dev,
-                                 const ADVParams &params,
+                                 const Solver &solver,
                                  const size_t &ny_batch_size,
                                  const size_t &ny_offset);
 
@@ -331,39 +331,39 @@ class Exp3 : public IAdvectorX {
 
     double* scratch_;
 
-     void init_batchs(const ADVParams &p) {
+     void init_batchs(const Solver &s) {
         /* Compute number of batchs */
-        double div = static_cast<float>(p.n0) /
+        double div = static_cast<float>(s.p.n0) /
                      static_cast<float>(concurrent_ny_slices_);
         auto floor_div = std::floor(div);
         auto div_is_int = div == floor_div;
         n_batch_ = div_is_int ? div : floor_div + 1;
 
         last_ny_size_ =
-            div_is_int ? concurrent_ny_slices_ : (p.n0 % concurrent_ny_slices_);
+            div_is_int ? concurrent_ny_slices_ : (s.p.n0 % concurrent_ny_slices_);
         last_ny_offset_ = concurrent_ny_slices_ * (n_batch_ - 1);
     }
 
   public:
     sycl::event operator()(sycl::queue &Q, double* fdist_dev,
-                           const ADVParams &params) override;
+                           const Solver &solver) override;
 
     Exp3() = delete;
 
-    Exp3(const ADVParams &params, const sycl::queue &q) : q_(q) {
+    Exp3(const Solver &solver, const sycl::queue &q) : q_(q) {
         /*TODO: this percent_loc is not actually percent_in_local_memory but is
         used to obtain CONCURRENT_NY_SLICES, we could specify this value with a
         MAX_GLOBAL_MEM_ALLOC size or directly with the number of concurrent n0
         slices we want to process or a max size to not exceed */
-        auto div = params.n0 * params.percent_loc;
+        auto div = solver.p.n0 * solver.p.percent_loc;
         concurrent_ny_slices_ = std::floor(div);
         /*TODO: check concurrent_ny_slices_ does not exceed max memory available
         when creating the buffer*/
 
-        init_batchs(params);
+        init_batchs(solver);
 
         scratch_ = sycl::malloc_device<double>(
-            concurrent_ny_slices_ * params.n1 * params.n2, q_);
+            concurrent_ny_slices_ * solver.p.n1 * solver.p.n2, q_);
     }
 
     ~Exp3(){sycl::free(scratch_, q_);}
@@ -374,7 +374,7 @@ class Exp3 : public IAdvectorX {
 class Exp4 : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
     sycl::event actual_advection(sycl::queue &Q, double* fdist_dev,
-                                 const ADVParams &params,
+                                 const Solver &solver,
                                  const size_t &ny_batch_size,
                                  const size_t &ny_offset);
 
@@ -382,12 +382,12 @@ class Exp4 : public IAdvectorX {
 
   public:
     sycl::event operator()(sycl::queue &Q, double* fdist_dev,
-                           const ADVParams &params) override;
+                           const Solver &solver) override;
 
     Exp4() = delete;
 
-    Exp4(const ADVParams &params) {
-        if(params.n1 * params.n2 > MAX_ALLOC_SIZE_){
+    Exp4(const Solver &solver) {
+        if(solver.p.n1 * solver.p.n2 > MAX_ALLOC_SIZE_){
             throw std::runtime_error(
                 "n1*n0 > MAX_ALLOC_SIZE_: a single slice of the problem cannot "
                 "fit in local memory, Exp4 not possible");
@@ -399,7 +399,7 @@ class Exp4 : public IAdvectorX {
 class Exp5 : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
     sycl::event actual_advection(sycl::queue &Q, double* fdist_dev,
-                                 const ADVParams &params,
+                                 const Solver &solver,
                                  const size_t &ny_batch_size,
                                  const size_t &ny_offset);
 
@@ -412,15 +412,15 @@ class Exp5 : public IAdvectorX {
 
   public:
     sycl::event operator()(sycl::queue &Q, double* fdist_dev,
-                           const ADVParams &params) override;
+                           const Solver &solver) override;
 
     Exp5() = delete;
 
-    Exp5(const ADVParams &params) {
+    Exp5(const Solver &solver) {
 
-        wg_size_1_ = std::ceil(PREF_WG_SIZE_ / params.n2);
+        wg_size_1_ = std::ceil(PREF_WG_SIZE_ / solver.p.n2);
         wg_size_2_ =
-            wg_size_1_ > 1 ? params.n2 : PREF_WG_SIZE_;
+            wg_size_1_ > 1 ? solver.p.n2 : PREF_WG_SIZE_;
 
         /*
         3 cas:
@@ -439,7 +439,7 @@ class Exp5 : public IAdvectorX {
 class Exp6 : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
     sycl::event actual_advection(sycl::queue &Q, double* fdist_dev,
-                                 const ADVParams &params,
+                                 const Solver &solver,
                                  const size_t &ny_batch_size,
                                  const size_t &ny_offset);
 /*Same as Exp5 but in global memory*/
@@ -455,19 +455,19 @@ class Exp6 : public IAdvectorX {
 
   public:
     sycl::event operator()(sycl::queue &Q, double* fdist_dev,
-                           const ADVParams &params) override;
+                           const Solver &solver) override;
 
     Exp6() = delete;
 
-    Exp6(const ADVParams &params, const sycl::queue &q) : q_(q) {
+    Exp6(const Solver &solver, const sycl::queue &q) : q_(q) {
 
-        wg_size_1_ = std::ceil(PREF_WG_SIZE_ / params.n2);
+        wg_size_1_ = std::ceil(PREF_WG_SIZE_ / solver.p.n2);
         wg_size_2_ =
-            wg_size_1_ > 1 ? params.n2 : PREF_WG_SIZE_;
+            wg_size_1_ > 1 ? solver.p.n2 : PREF_WG_SIZE_;
 
         /* TODO: allocate only for concurrent slice in dim0*/
         scratch_ =
-            sycl::malloc_device<double>(params.n0 * params.n1 * params.n2, q_);
+            sycl::malloc_device<double>(solver.p.n0 * solver.p.n1 * solver.p.n2, q_);
     }
 
     ~Exp6(){
@@ -481,7 +481,7 @@ class CudaLDG : public IAdvectorX {
 
   public:
     sycl::event operator()(sycl::queue &Q, double* fdist_dev,
-                           const ADVParams &params) override;
+                           const Solver &solver) override;
 };
 
 }   // namespace AdvX
