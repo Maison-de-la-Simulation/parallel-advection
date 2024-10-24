@@ -1,6 +1,5 @@
 #pragma once
 
-#include "AdvectionParams.h"
 #include <sycl/sycl.hpp>
 #include <Solver.h>
 
