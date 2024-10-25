@@ -37,7 +37,7 @@ AdvX::Exp5::operator()(sycl::queue &Q,
                     fdist, i0, std::experimental::full_extent, i2);
 
                 for(int ii1 = i1; ii1 < n1; ii1 += wg1){
-                    slice_ftmp[i2][ii1] = solver(i0, ii1, i2, slice);
+                    slice_ftmp[i2][ii1] = solver(slice, i0, ii1, i2);
                 }
                 // }
 

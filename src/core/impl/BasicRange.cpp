@@ -23,9 +23,9 @@ AdvX::BasicRange::operator()(sycl::queue &Q, double *fdist_dev,
             const int i2 = itm[2];
 
             ftmp[i0][i1][i2] =
-                solver(i0, i1, i2,
-                       std::experimental::submdspan(
-                           fdist, i0, std::experimental::full_extent, i2));
+                solver(std::experimental::submdspan(
+                           fdist, i0, std::experimental::full_extent, i2),
+                       i0, i1, i2);
             // barrier
         });   // end parallel_for
     });       // end Q.submit

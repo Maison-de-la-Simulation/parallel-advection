@@ -24,7 +24,7 @@ AdvX::Hierarchical::operator()(sycl::queue &Q, double *fdist_dev,
                     auto slice = std::experimental::submdspan(
                         fdist, i0, std::experimental::full_extent, i2);
 
-                    slice_ftmp[i1] = solver(i0, i1, i2, slice);
+                    slice_ftmp[i1] = solver(slice, i0, i1, i2);
                 });   // end parallel_for_work_item --> Implicit barrier
 #ifdef SYCL_IMPLEMENTATION_ONEAPI   // for DPCPP
             g.parallel_for_work_item(

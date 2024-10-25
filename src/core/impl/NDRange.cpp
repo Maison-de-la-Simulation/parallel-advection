@@ -25,7 +25,7 @@ AdvX::NDRange::operator()(sycl::queue &Q,
                 auto slice = std::experimental::submdspan(
                     fdist, i0, std::experimental::full_extent, i2);
 
-                slice_ftmp[i1] = solver(i0, i1, i2, slice);
+                slice_ftmp[i1] = solver(slice, i0, i1, i2);
 
                 sycl::group_barrier(itm.get_group());
 

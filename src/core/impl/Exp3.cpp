@@ -57,7 +57,7 @@ AdvX::Exp3::actual_advection(sycl::queue &Q, double *fdist_dev,
                 auto slice = std::experimental::submdspan(
                     fdist_view, i0, std::experimental::full_extent, i2);
 
-                scr_view(scr_iy, i1, i2) = solver(i0, i1, i2, slice);
+                scr_view(scr_iy, i1, i2) = solver(slice, i0, i1, i2);
             });   // end parallel_for_work_item --> Implicit barrier
 
             /* Copy kernel*/

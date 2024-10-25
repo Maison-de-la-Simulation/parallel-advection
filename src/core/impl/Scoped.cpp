@@ -26,7 +26,7 @@ throw std::logic_error("Scoped kernel is not compatible with DPCPP");
                     auto slice = std::experimental::submdspan(
                         fdist, i0, std::experimental::full_extent, i2);
 
-                    slice_ftmp[i1] = solver(i0, i1, i2, slice);
+                    slice_ftmp[i1] = solver(slice, i0, i1, i2);
                 });   // end distribute items
 
                 g.async_work_group_copy(

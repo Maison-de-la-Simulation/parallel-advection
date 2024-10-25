@@ -31,7 +31,7 @@ AdvX::Exp6::operator()(sycl::queue &Q, double *fdist_dev,
 
                 // for(int ii2 = i2; ii2 < n2; ii2 += wg2){
                 for (int ii1 = i1; ii1 < n1; ii1 += wg1) {
-                    scr(i0, ii1, i2) = solver(i0, ii1, i2, slice);
+                    scr(i0, ii1, i2) = solver(slice, i0, ii1, i2);
                 }
                 // }
 
