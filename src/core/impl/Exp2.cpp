@@ -152,12 +152,12 @@ AdvX::Exp2::operator()(sycl::queue &Q, double *fdist_dev,
     // can be parallel on multiple streams?
     for (size_t i_batch = 0; i_batch < n_batch_ - 1; ++i_batch) {
 
-        size_t ny_offset = (i_batch * MAX_NY_BATCHS);
+        size_t ny_offset = (i_batch * MAX_NY_BATCHS_);
 
-        actual_advection(Q, fdist_dev, solver, MAX_NY_BATCHS, ny_offset).wait();
+        actual_advection(Q, fdist_dev, solver, MAX_NY_BATCHS_, ny_offset).wait();
     }
 
     // return the last advection with the rest
-    return actual_advection(Q, fdist_dev, solver, last_ny_size_,
-                            last_ny_offset_);
+    return actual_advection(Q, fdist_dev, solver, last_n0_size_,
+                            last_n0_offset_);
 }

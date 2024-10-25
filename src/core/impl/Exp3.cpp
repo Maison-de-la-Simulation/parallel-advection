@@ -98,7 +98,7 @@ AdvX::Exp3::operator()(sycl::queue &Q, double *fdist_dev,
     }
 
     // return the last advection with the rest
-    return actual_advection(Q, fdist_dev, solver, last_ny_size_,
-                            last_ny_offset_);
+    return actual_advection(Q, fdist_dev, solver, last_n0_size_,
+                            last_n0_offset_);
     // }
 }
