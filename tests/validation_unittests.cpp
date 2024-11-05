@@ -43,6 +43,8 @@ TEST(Validation, ValidateEachIterFor10Iterations){
         sycl::malloc_device<double>(params.n0 * params.n1 * params.n2, Q);
     fill_buffer(Q, fdist, params);
 
+    Solver solver(params);
+
     /* Creating a BasicRange advector */
     auto advector = sref::make_unique<AdvX::BasicRange>(params.n1, params.n0, params.n2);
 
@@ -51,7 +53,7 @@ TEST(Validation, ValidateEachIterFor10Iterations){
     for(size_t it=0; it < 10; ++it){
         params.maxIter++;
 
-        advector(Q, fdist, params).wait_and_throw();
+        advector(Q, fdist, solver).wait_and_throw();
 
         err = validate_result(Q, fdist, params, false);
         Q.wait();
@@ -77,11 +79,13 @@ TEST(Validation, ValidateNIterations){
         sycl::malloc_device<double>(params.n0 * params.n1 * params.n2, Q);
 
     fill_buffer(Q, fdist, params);
+    
+    Solver solver(params);
 
     auto advector = sref::make_unique<AdvX::BasicRange>(params.n1, params.n0, params.n2);
 
     for(size_t it=0; it<params.maxIter; ++it)
-        advector(Q, fdist, params).wait_and_throw();
+        advector(Q, fdist, solver).wait_and_throw();
 
     auto err = validate_result(Q, fdist, params, false);
     Q.wait();

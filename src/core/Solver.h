@@ -74,7 +74,7 @@ struct Solver {
     // ==========================================
     /* The _solve_ function of the algorithm presented */
     template <class ArrayLike1D>
-    double operator()(ArrayLike1D data, const size_t &i0, const size_t &i1,
+    double operator()(const ArrayLike1D data, const size_t &i0, const size_t &i1,
                       const size_t &i2) const {
 
         double const xFootCoord = displ(i1, i0);

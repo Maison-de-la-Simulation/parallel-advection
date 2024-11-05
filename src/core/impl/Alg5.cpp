@@ -10,10 +10,8 @@ global memory: 2 types of kernels scheduled
 sycl::event
 AdvX::Alg5::actual_advection(sycl::queue &Q, double *fdist_dev,
                              const Solver &solver, const size_t &ny_batch_size,
-                             const size_t &ny_offset,
-                             const size_t k_global,
-                             const size_t k_local
-                             ) {
+                             const size_t &ny_offset, const size_t k_global,
+                             const size_t k_local) {
 
     auto const n0 = solver.p.n0;
     auto const n1 = solver.p.n1;
@@ -30,11 +28,12 @@ AdvX::Alg5::actual_advection(sycl::queue &Q, double *fdist_dev,
     }
 
     /*TODO: on veut un splitting dans les 2dim d0 et d2 pour les kernels locaux,
-    
-    Dans ce cas on set limité par la mémoire globale, on sait que wg2*n1 est 
-    trop grand pour rentrer dans la mem local, donc on veut submit les noyaux différements
-    pour garantir la coalesence on peut faire des groupes plus petits?
-    
+
+    Dans ce cas on set limité par la mémoire globale, on sait que wg2*n1 est
+    trop grand pour rentrer dans la mem local, donc on veut submit les noyaux
+    différements pour garantir la coalesence on peut faire des groupes plus
+    petits?
+
     POur la mémoire global on est tranquille*/
 
     const sycl::range nb_wg_local{k_local / wg_size_0, 1, n2};
@@ -91,33 +90,33 @@ AdvX::Alg5::actual_advection(sycl::queue &Q, double *fdist_dev,
     });               // end Q.submit
 
     return Q.submit([&](sycl::handler &cgh) {
-        sycl::local_accessor<double, 2> slice_ftmp(
-            sycl::range<2>(wg2, n1), cgh);
+        sycl::local_accessor<double, 2> slice_ftmp(sycl::range<2>(wg2, n1),
+                                                   cgh);
 
-        cgh.parallel_for(
-            sycl::nd_range<3>{global_size, local_size},
-            [=](auto itm) {
-                mdspan3d_t fdist(fdist_dev, n0, n1, n2);
-                const int i0 = itm.get_global_id(0);
-                const int i1 = itm.get_local_id(1);
-                const int i2 = itm.get_global_id(2);
+        cgh.parallel_for(sycl::nd_range<3>{global_size, local_size},
+                         [=](auto itm) {
+                             mdspan3d_t fdist(fdist_dev, n0, n1, n2);
+                             const int i0 = itm.get_global_id(0);
+                             const int i1 = itm.get_local_id(1);
+                             const int i2 = itm.get_global_id(2);
 
-                auto slice = std::experimental::submdspan(
-                    fdist, i0, std::experimental::full_extent, i2);
+                             auto slice = std::experimental::submdspan(
+                                 fdist, i0, std::experimental::full_extent, i2);
 
-                for(int ii1 = i1; ii1 < n1; ii1 += wg1){
-                    slice_ftmp[i2][ii1] = solver(slice, i0, ii1, i2);
-                }
-                // }
+                             for (int ii1 = i1; ii1 < n1; ii1 += wg1) {
+                                 slice_ftmp[i2][ii1] =
+                                     solver(slice, i0, ii1, i2);
+                             }
+                             // }
 
-                sycl::group_barrier(itm.get_group());
+                             sycl::group_barrier(itm.get_group());
 
-                for(int ii1 = i1; ii1 < n1; ii1 += wg1){
-                    fdist(i0, ii1, i2) = slice_ftmp[i2][ii1];
-                }
-            }   // end lambda in parallel_for
-        );      // end parallel_for nd_range
-    });         // end Q.submit
+                             for (int ii1 = i1; ii1 < n1; ii1 += wg1) {
+                                 fdist(i0, ii1, i2) = slice_ftmp[i2][ii1];
+                             }
+                         }   // end lambda in parallel_for
+        );   // end parallel_for nd_range
+    });      // end Q.submit
 }   // end actual_advection
 
 // ==========================================
@@ -129,12 +128,12 @@ AdvX::Alg5::operator()(sycl::queue &Q, double *fdist_dev,
     // can be parallel on multiple streams?
     for (size_t i_batch = 0; i_batch < n_batch_ - 1; ++i_batch) {
 
-        size_t ny_offset = (i_batch * MAX_NY_BATCHS);
+        size_t ny_offset = (i_batch * MAX_NY_BATCHS_);
 
-        actual_advection(Q, fdist_dev, solver, MAX_NY_BATCHS, ny_offset).wait();
+        actual_advection(Q, fdist_dev, solver, MAX_NY_BATCHS_, ny_offset).wait();
     }
 
     // return the last advection with the rest
-    return actual_advection(Q, fdist_dev, solver, last_ny_size_,
-                            last_ny_offset_);
+    return actual_advection(Q, fdist_dev, solver, last_n0_size_,
+                            last_n0_offset_);
 }

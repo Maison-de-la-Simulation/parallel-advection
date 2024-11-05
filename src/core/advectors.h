@@ -528,6 +528,7 @@ class Alg5 : public IAdvectorX {
     size_t last_k_global_;
     size_t last_k_local_;
 
+    size_t wg_size_0_ = 1; //TODO: set this as in alg latex
     size_t wg_size_1_;
     size_t wg_size_2_;
 

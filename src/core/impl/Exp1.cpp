@@ -1,4 +1,3 @@
-#include "IAdvectorX.h"
 #include "advectors.h"
 #include <cstddef>
 
@@ -87,23 +86,6 @@ AdvX::Exp1::actual_advection(sycl::queue &Q, double *fdist_dev,
         cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<3> g) {
             // if y1 > 1 //if we have a stide, we transpose, else we copy
 
-            /* Copy kernel*/
-            g.parallel_for_work_item(
-                sycl::range{wg_size_0, n1, 1}, [&](sycl::h_item<3> it) {
-                    mdspan3d_t fdist_view(fdist_dev, n0, n1, n2);
-                    HybridBuffer<double> scratch(ptr_global, n0, nx_rest_malloc,
-                                                 n2, slice_ftmp);
-
-                    const int i1 = it.get_local_id(1);
-                    const int i2 = g.get_group_id(2);
-
-                    const int local_ny = it.get_local_id(0);
-                    const int i0 =
-                        wg_size_0 * g.get_group_id(0) + ny_offset + local_ny;
-
-                    scratch(i0, i1, i2) = fdist_view(i0, i1, i2);
-                });   // barrier
-
             /* Solve kernel */
             g.parallel_for_work_item(
                 sycl::range{wg_size_0, n1, 1}, [&](sycl::h_item<3> it) {
@@ -118,14 +100,28 @@ AdvX::Exp1::actual_advection(sycl::queue &Q, double *fdist_dev,
                     const int i0 =
                         wg_size_0 * g.get_group_id(0) + ny_offset + local_ny;
 
-                    fdist_view(i0, i1, i2) = 0.;
-                    for (int k = 0; k <= LAG_ORDER; k++) {
-                        int id1_ipos = (n1 + ipos1 + k) % n1;
+                    auto slice = std::experimental::submdspan(
+                        fdist_view, i0, std::experimental::full_extent, i2);
 
-                        fdist_view(i0, i1, i2) +=
-                            coef[k] * scratch(i0, id1_ipos, i2);
-                    }
+                    scratch(i0, i1, i2) = solver(slice, i0, i1, i2);
                 });   // end parallel_for_work_item --> Implicit barrier
+
+            /* Copy kernel*/
+            g.parallel_for_work_item(
+                sycl::range{wg_size_0, n1, 1}, [&](sycl::h_item<3> it) {
+                    mdspan3d_t fdist_view(fdist_dev, n0, n1, n2);
+                    HybridBuffer<double> scratch(ptr_global, n0, nx_rest_malloc,
+                                                 n2, slice_ftmp);
+
+                    const int i1 = it.get_local_id(1);
+                    const int i2 = g.get_group_id(2);
+
+                    const int local_ny = it.get_local_id(0);
+                    const int i0 =
+                        wg_size_0 * g.get_group_id(0) + ny_offset + local_ny;
+
+                    fdist_view(i0, i1, i2) = scratch(i0, i1, i2);
+                });   // barrier
         });           // end parallel_for_work_group
     });               // end Q.submit
 }   // end actual_advection
@@ -138,11 +134,12 @@ AdvX::Exp1::operator()(sycl::queue &Q, double *fdist_dev,
 
     // can be parallel on multiple queues ? or other CUDA streams?
     for (size_t i_batch = 0; i_batch < n_batch_ - 1; ++i_batch) {
-        size_t ny_offset = (i_batch * MAX_NY_BATCHS);
-        actual_advection(Q, fdist_dev, solver, MAX_NY_BATCHS, ny_offset).wait();
+        size_t ny_offset = (i_batch * MAX_NY_BATCHS_);
+        actual_advection(Q, fdist_dev, solver, MAX_NY_BATCHS_, ny_offset)
+            .wait();
     }
 
     // return the last advection with the rest
-    return actual_advection(Q, fdist_dev, solver, last_ny_size_,
-                            last_ny_offset_);
+    return actual_advection(Q, fdist_dev, solver, last_n0_size_,
+                            last_n0_offset_);
 }

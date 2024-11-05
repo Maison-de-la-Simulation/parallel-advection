@@ -19,13 +19,13 @@ target_sources(core
   # impl/StraddledMalloc.cpp
   # impl/TwoDimWG.cpp
   # impl/SeqTwoDimWG.cpp
-  # impl/Exp1.cpp
+  impl/Exp1.cpp
   impl/Exp2.cpp
   impl/Exp3.cpp
   impl/Exp4.cpp
   impl/Exp5.cpp
   impl/Exp6.cpp
-  impl/Alg5.cpp
+  # impl/Alg5.cpp
   )
 
 target_include_directories(core
