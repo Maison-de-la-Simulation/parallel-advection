@@ -76,12 +76,12 @@ AdvX::Exp1::actual_advection(sycl::queue &Q, double *fdist_dev,
 
     return Q.submit([&](sycl::handler &cgh) {
         /* We use a 2D local accessor here */
-        auto local_malloc_size = n1 > MAX_NX_ALLOC ? MAX_NX_ALLOC : n1;
+        // auto local_malloc_size = n1 > MAX_NX_ALLOC ? MAX_NX_ALLOC : n1;
         sycl::local_accessor<double, 2> slice_ftmp(
-            sycl::range<2>(wg_size_0, local_malloc_size), cgh, sycl::no_init);
+            sycl::range<2>(wg_size_0, local_alloc_size_), cgh, sycl::no_init);
 
         auto ptr_global = global_vertical_buffer_;
-        auto nx_rest_malloc = nx_rest_malloc_;
+        auto n0_rest_malloc = n0_rest_malloc_;
 
         cgh.parallel_for_work_group(nb_wg, wg_size, [=](sycl::group<3> g) {
             // if y1 > 1 //if we have a stide, we transpose, else we copy
@@ -90,7 +90,7 @@ AdvX::Exp1::actual_advection(sycl::queue &Q, double *fdist_dev,
             g.parallel_for_work_item(
                 sycl::range{wg_size_0, n1, 1}, [&](sycl::h_item<3> it) {
                     mdspan3d_t fdist_view(fdist_dev, n0, n1, n2);
-                    HybridBuffer<double> scratch(ptr_global, n0, nx_rest_malloc,
+                    HybridBuffer<double> scratch(ptr_global, n0, n0_rest_malloc,
                                                  n2, slice_ftmp);
 
                     const int i1 = it.get_local_id(1);
@@ -110,7 +110,7 @@ AdvX::Exp1::actual_advection(sycl::queue &Q, double *fdist_dev,
             g.parallel_for_work_item(
                 sycl::range{wg_size_0, n1, 1}, [&](sycl::h_item<3> it) {
                     mdspan3d_t fdist_view(fdist_dev, n0, n1, n2);
-                    HybridBuffer<double> scratch(ptr_global, n0, nx_rest_malloc,
+                    HybridBuffer<double> scratch(ptr_global, n0, n0_rest_malloc,
                                                  n2, slice_ftmp);
 
                     const int i1 = it.get_local_id(1);

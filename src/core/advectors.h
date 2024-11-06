@@ -192,16 +192,17 @@ class Exp1 : public IAdvectorX {
                                  const size_t &ny_offset);
 
     /* Max number of batch submitted */
-    static constexpr size_t MAX_NY_BATCHS_ = 128;
+    static constexpr size_t MAX_NY_BATCHS_ = 65535;
     /* Max number of elements in the local accessor */
-    static constexpr size_t MAX_NX_ALLOC = 64;
+    // static constexpr size_t MAX_NX_ALLOC = 64;
 
     sycl::queue q_;
     double *global_vertical_buffer_;
     size_t n_batch_;
     size_t last_n0_size_;
     size_t last_n0_offset_;
-    size_t nx_rest_malloc_;
+    size_t n0_rest_malloc_;
+    size_t local_alloc_size_;
 
     void init_batchs(const Solver &s) {
         /* Compute number of batchs */
@@ -224,19 +225,20 @@ class Exp1 : public IAdvectorX {
     Exp1(const Solver &s, const sycl::queue &q) : q_(q) {
         init_batchs(s);
 
-        nx_rest_malloc_ = s.p.n1 <= MAX_NX_ALLOC ? 0 : s.p.n1 - MAX_NX_ALLOC;
+        local_alloc_size_ = std::floor(s.p.percent_loc * s.p.n0);
+        n0_rest_malloc_ = s.p.n1 - local_alloc_size_;
 
-        if (nx_rest_malloc_ > 0) {
+        if (n0_rest_malloc_ > 0) {
             // TODO: don't allocate full n0, only the current batch_size_ny size
             global_vertical_buffer_ = sycl::malloc_device<double>(
-                s.p.n0 * nx_rest_malloc_ * s.p.n2, q_);
+                s.p.n0 * n0_rest_malloc_ * s.p.n2, q_);
         } else {
             global_vertical_buffer_ = nullptr;
         }
     }
 
     ~Exp1() {
-        if (nx_rest_malloc_ > 0)
+        if (n0_rest_malloc_ > 0)
             sycl::free(global_vertical_buffer_, q_);
     }
 };
