@@ -36,8 +36,13 @@ ADVParamsNonCopyable::ADVParamsNonCopyable(ADVParams &other){
   gpu = other.gpu;
   outputSolution = other.outputSolution;
 
-  wg_size_1 = other.wg_size_1;
-  wg_size_0 = other.wg_size_0;
+  loc_wg_size_0 = other.loc_wg_size_0;
+  loc_wg_size_1 = other.loc_wg_size_1;
+  loc_wg_size_2 = other.loc_wg_size_2;
+  
+  glob_wg_size_0 = other.glob_wg_size_0;
+  glob_wg_size_1 = other.glob_wg_size_1;
+  glob_wg_size_2 = other.glob_wg_size_2;
 
   dt = other.dt;
 
@@ -69,8 +74,14 @@ void ADVParamsNonCopyable::setup(const ConfigMap& configMap)
   percent_loc = configMap.getFloat("run", "percent_loc", 1.0);
 
   kernelImpl = configMap.getString("run", "kernelImpl", "BasicRange");
-  wg_size_1 = configMap.getInteger("run", "workGroupSizeX", 128);
-  wg_size_0 = configMap.getInteger("run", "workGroupSizeY", 1);
+  
+  glob_wg_size_0 = configMap.getInteger("run", "globWorkGroupSize0", 1);
+  glob_wg_size_1 = configMap.getInteger("run", "globWorkGroupSize1", 128);
+  glob_wg_size_2 = configMap.getInteger("run", "globWorkGroupSize2", 1);
+  
+  loc_wg_size_0 = configMap.getInteger("run", "locWorkGroupSize0", 1);
+  loc_wg_size_1 = configMap.getInteger("run", "locWorkGroupSize1", 128);
+  loc_wg_size_2 = configMap.getInteger("run", "locWorkGroupSize2", 1);
 
   // discretization parameters
   dt  = configMap.getFloat("discretization", "dt" , 0.0001);
