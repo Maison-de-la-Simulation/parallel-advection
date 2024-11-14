@@ -8,7 +8,6 @@ AdvX::Exp5::operator()(sycl::queue &Q,
     auto const n0 = solver.p.n0;
     auto const n2 = solver.p.n2;
 
-    // const sycl::range global_size{n0, 1         , 1};
     const sycl::range global_size{n0, wg_size_1_, n2};
     const sycl::range local_size {1 , wg_size_1_, wg_size_2_};
 

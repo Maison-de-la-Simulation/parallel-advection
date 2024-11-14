@@ -25,7 +25,9 @@ target_sources(core
   impl/Exp4.cpp
   impl/Exp5.cpp
   impl/Exp6.cpp
-  # impl/Alg5.cpp
+  # impl/Exp7.cpp
+  impl/FullyLocal.cpp
+  impl/FullyGlobal.cpp
   )
 
 target_include_directories(core

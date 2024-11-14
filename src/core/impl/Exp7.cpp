@@ -8,7 +8,7 @@ global memory: 2 types of kernels scheduled
 // ==========================================
 // ==========================================
 sycl::event
-AdvX::Alg5::actual_advection(sycl::queue &Q, double *fdist_dev,
+AdvX::Exp7::actual_advection(sycl::queue &Q, double *fdist_dev,
                              const Solver &solver, const size_t &ny_batch_size,
                              const size_t &ny_offset, const size_t k_global,
                              const size_t k_local) {
@@ -27,19 +27,16 @@ AdvX::Alg5::actual_advection(sycl::queue &Q, double *fdist_dev,
             "wg_size_0*n1 must be < to 6144 (local memory limit)");
     }
 
-    /*TODO: on veut un splitting dans les 2dim d0 et d2 pour les kernels locaux,
+    const sycl::range nb_wg_local{k_local/loc_wg_size_0_,
+                                  1,
+                                  n2/glob_wg_size_2_};
 
-    Dans ce cas on set limité par la mémoire globale, on sait que wg2*n1 est
-    trop grand pour rentrer dans la mem local, donc on veut submit les noyaux
-    différements pour garantir la coalesence on peut faire des groupes plus
-    petits?
+    const sycl::range nb_wg_global{k_global/glob_wg_size_0_,
+                                   1,
+                                   n2/loc_wg_size_2_};
 
-    POur la mémoire global on est tranquille*/
-
-    const sycl::range nb_wg_local{k_local / wg_size_0, 1, n2};
-    const sycl::range nb_wg_global{k_global / wg_size_0, 1, n2};
-
-    const sycl::range wg_size{wg_size_0, wg_size_1, 1};
+    const sycl::range glob_wg_size{glob_wg_size_0_, glob_wg_size_1_, glob_wg_size_2_};
+    const sycl::range loc_wg_size{loc_wg_size_0_  , loc_wg_size_1_, loc_wg_size_2_};
 
     const size_t global_offset = k_local;
     const auto ptr_global = scratchG_;
@@ -48,7 +45,7 @@ AdvX::Alg5::actual_advection(sycl::queue &Q, double *fdist_dev,
     auto const wg1 = wg_size_1_;
 
     /* k_global: kernels running in the global memory */
-    Q.submit([&](sycl::handler &cgh) {
+    auto event = Q.submit([&](sycl::handler &cgh) {
         cgh.parallel_for_work_group(nb_wg_global, wg_size, [=](auto g) {
             /* Solve kernel */
             g.parallel_for_work_item(

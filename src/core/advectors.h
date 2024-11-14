@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstddef>
 #include <experimental/mdspan>
+#include <hipSYCL/sycl/usm.hpp>
 #include <stdexcept>
 
 using real_t = double;
@@ -225,8 +226,11 @@ class Exp1 : public IAdvectorX {
     Exp1(const Solver &s, const sycl::queue &q) : q_(q) {
         init_batchs(s);
 
-        local_alloc_size_ = std::floor(s.p.percent_loc * s.p.n0);
+        local_alloc_size_ = std::floor(s.p.percent_loc * s.p.n1);
         n0_rest_malloc_ = s.p.n1 - local_alloc_size_;
+
+        std::cout << "Local alloc size: " << local_alloc_size_ << std::endl;
+        std::cout << "Global alloc size: " << n0_rest_malloc_ << std::endl;
 
         if (n0_rest_malloc_ > 0) {
             // TODO: don't allocate full n0, only the current batch_size_ny size
@@ -476,7 +480,7 @@ class Exp6 : public IAdvectorX {
 };
 
 // =============================================================================
-class Alg5 : public IAdvectorX {
+class Exp7 : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
     sycl::event actual_advection(sycl::queue &Q, double *fdist_dev,
                                  const Solver &solver,
@@ -507,10 +511,10 @@ class Alg5 : public IAdvectorX {
                                                  : MAX_NY_BATCHS_ - k_local_;
 
         if (n_batch_ > 1) {
-            last_k_local_  = std::floor(last_n0_size_ * solver.p.percent_loc);
-            last_k_global_ = last_n0_size_ -last_k_local_;
+            last_k_local_ = std::floor(last_n0_size_ * solver.p.percent_loc);
+            last_k_global_ = last_n0_size_ - last_k_local_;
         } else {
-            last_k_local_  = k_local_;
+            last_k_local_ = k_local_;
             last_k_global_ = k_global_;
         }
     }
@@ -518,6 +522,7 @@ class Alg5 : public IAdvectorX {
     /* Max number of batch submitted */
     static constexpr size_t MAX_NY_BATCHS_ = 65535;
     static constexpr size_t PREF_WG_SIZE_ = 128;   // for A100
+    static constexpr size_t MAX_LOCAL_ALLOC_ = 6144;
 
     size_t n_batch_;
     size_t last_n0_size_;
@@ -530,9 +535,13 @@ class Alg5 : public IAdvectorX {
     size_t last_k_global_;
     size_t last_k_local_;
 
-    size_t wg_size_0_ = 1; //TODO: set this as in alg latex
-    size_t wg_size_1_;
-    size_t wg_size_2_;
+    size_t loc_wg_size_0_ = 1;   // TODO: set this as in alg latex
+    size_t loc_wg_size_1_;
+    size_t loc_wg_size_2_;
+
+    size_t glob_wg_size_0_ = 1;   // TODO: set this as in alg latex
+    size_t glob_wg_size_1_;
+    size_t glob_wg_size_2_;
 
     sycl::queue q_;
     double *scratchG_;
@@ -541,9 +550,9 @@ class Alg5 : public IAdvectorX {
     sycl::event operator()(sycl::queue &Q, double *fdist_dev,
                            const Solver &solver) override;
 
-    Alg5() = delete;
+    Exp7() = delete;
 
-    // Alg5(const Solver &solver) {
+    // Exp7(const Solver &solver) {
     //     init_batchs(solver);
     //     k_global_ = 0;
     //     k_local_ = solver.p.n0 * solver.p.n2;
@@ -551,16 +560,39 @@ class Alg5 : public IAdvectorX {
 
     // TODO: gérer le cas ou percent_loc est 1 ou 0 (on fait tou dans la local
     // mem ou tout dnas la global)
-    Alg5(const Solver &solver, const sycl::queue &q) : q_(q) {
+    Exp7(const Solver &solver, const sycl::queue &q) : q_(q) {
         init_batchs(solver);
         init_splitting(solver);
 
-        wg_size_1_ = std::ceil(PREF_WG_SIZE_ / solver.p.n2);
-        wg_size_2_ = wg_size_1_ > 1 ? solver.p.n2 : PREF_WG_SIZE_;
+        auto n1 = solver.p.n1;
+        auto n2 = solver.p.n2;
 
-        /* TODO: allocate only for concurrent slice in dim0*/
-        scratchG_ = sycl::malloc_device<double>(
-            solver.p.n0 * solver.p.n1 * solver.p.n2, q_);
+        /* Global kernels wg sizes */
+        glob_wg_size_0_ = 1;
+        if (n2 >= PREF_WG_SIZE_) {
+            glob_wg_size_1_ = 1;
+            glob_wg_size_2_ = PREF_WG_SIZE_;
+        } else {
+            if (n1 * n2 >= PREF_WG_SIZE_) {
+                glob_wg_size_1_ = std::floor(PREF_WG_SIZE_ / n2);
+                glob_wg_size_2_ = n2;
+            } else {
+                // Not enough n1*n2 to fill up work group, we use more n0
+                glob_wg_size_0_ = std::floor(PREF_WG_SIZE_ / n1 * n2);
+                glob_wg_size_1_ = n1;
+                glob_wg_size_2_ = n2;
+            }
+        }
+
+        if (glob_wg_size_2_ * n1 >= MAX_LOCAL_ALLOC_) {
+            loc_wg_size_2_ = std::floor(MAX_LOCAL_ALLOC_ / n1);
+            loc_wg_size_1_ = std::floor(PREF_WG_SIZE_ / loc_wg_size_2_);
+            loc_wg_size_0_ = 1;
+        } else {
+            loc_wg_size_0_ = glob_wg_size_0_;
+            loc_wg_size_1_ = glob_wg_size_1_;
+            loc_wg_size_2_ = glob_wg_size_2_;
+        }
 
         if (k_global_ > 0) {
             scratchG_ = sycl::malloc_device<double>(
@@ -570,7 +602,7 @@ class Alg5 : public IAdvectorX {
         }
     }
 
-    ~Alg5() {
+    ~Exp7() {
         if (scratchG_ != nullptr)
             sycl::free(scratchG_, q_);
     }
@@ -584,5 +616,131 @@ class Alg5 : public IAdvectorX {
 //     sycl::event operator()(sycl::queue &Q, double* fdist_dev,
 //                            const Solver &solver) override;
 // };
+
+
+// =============================================================================
+// =============================================================================
+// For experiments only
+class FullyLocal : public IAdvectorX {
+    using IAdvectorX::IAdvectorX;
+    sycl::event actual_advection(sycl::queue &Q, double *fdist_dev,
+                                 const Solver &solver,
+                                 const size_t &ny_batch_size,
+                                 const size_t &ny_offset);
+
+    static constexpr size_t MAX_LOCAL_ALLOC_ = 6144;
+    static constexpr size_t PREF_WG_SIZE_ = 128;
+
+    size_t wg_size_0_;
+    size_t wg_size_1_;
+    size_t wg_size_2_;
+
+  public:
+    sycl::event operator()(sycl::queue &Q, double *fdist_dev,
+                           const Solver &solver) override;
+
+    FullyLocal() = delete;
+
+    FullyLocal(Solver &solver) {
+        auto n1 = solver.p.n1;
+        auto n2 = solver.p.n2;
+
+        wg_size_0_ = 1;
+        if (n2 >= PREF_WG_SIZE_) {
+            wg_size_1_ = 1;
+            wg_size_2_ = PREF_WG_SIZE_;
+        } else {
+            if (n1 * n2 >= PREF_WG_SIZE_) {
+                wg_size_1_ = std::floor(PREF_WG_SIZE_ / n2);
+                wg_size_2_ = n2;
+            } else {
+                // Not enough n1*n2 to fill up work group, we use more n0
+                wg_size_0_ = std::floor(PREF_WG_SIZE_ / n1 * n2);
+                wg_size_1_ = n1;
+                wg_size_2_ = n2;
+            }
+        }
+
+        if (wg_size_2_ * n1 >= MAX_LOCAL_ALLOC_) {
+            wg_size_2_ = std::floor(MAX_LOCAL_ALLOC_ / n1);
+            wg_size_1_ = std::floor(PREF_WG_SIZE_ / wg_size_2_);
+            wg_size_0_ = 1;
+        }
+
+        solver.p.loc_wg_size_0 = wg_size_0_;
+        solver.p.loc_wg_size_1 = wg_size_1_;
+        solver.p.loc_wg_size_2 = wg_size_2_;
+
+        solver.p.glob_wg_size_0 = -1;
+        solver.p.glob_wg_size_1 = -1;
+        solver.p.glob_wg_size_2 = -1;
+
+        std::cout << "locWgSize0 : " << wg_size_0_ << std::endl;
+        std::cout << "locWgSize1 : " << wg_size_1_ << std::endl;
+        std::cout << "locWgSize2 : " << wg_size_2_ << std::endl;
+    }
+};
+
+class FullyGlobal : public IAdvectorX {
+    using IAdvectorX::IAdvectorX;
+    sycl::event actual_advection(sycl::queue &Q, double *fdist_dev,
+                                 const Solver &solver,
+                                 const size_t &ny_batch_size,
+                                 const size_t &ny_offset);
+
+    static constexpr size_t PREF_WG_SIZE_ = 128;
+
+    sycl::queue q_;
+    double *scratch_;
+    size_t wg_size_0_;
+    size_t wg_size_1_;
+    size_t wg_size_2_;
+
+  public:
+    sycl::event operator()(sycl::queue &Q, double *fdist_dev,
+                           const Solver &solver) override;
+
+    FullyGlobal() = delete;
+
+    FullyGlobal(Solver &solver, const sycl::queue &q) : q_(q) {
+        auto n1 = solver.p.n1;
+        auto n2 = solver.p.n2;
+
+        wg_size_0_ = 1;
+        if (n2 >= PREF_WG_SIZE_) {
+            wg_size_1_ = 1;
+            wg_size_2_ = PREF_WG_SIZE_;
+        } else {
+            if (n1 * n2 >= PREF_WG_SIZE_) {
+                wg_size_1_ = std::floor(PREF_WG_SIZE_ / n2);
+                wg_size_2_ = n2;
+            } else {
+                // Not enough n1*n2 to fill up work group, we use more n0
+                wg_size_0_ = std::floor(PREF_WG_SIZE_ / n1 * n2);
+                wg_size_1_ = n1;
+                wg_size_2_ = n2;
+            }
+        }
+
+        scratch_ = sycl::malloc_device<double>(solver.p.n0 * n1 * n2, q_);
+
+        solver.p.loc_wg_size_0 = -1;
+        solver.p.loc_wg_size_1 = -1;
+        solver.p.loc_wg_size_2 = -1;
+
+        solver.p.glob_wg_size_0 = wg_size_0_;
+        solver.p.glob_wg_size_1 = wg_size_1_;
+        solver.p.glob_wg_size_2 = wg_size_2_;
+
+        std::cout << "globWgSize0 : " << wg_size_0_ << std::endl;
+        std::cout << "globWgSize1 : " << wg_size_1_ << std::endl;
+        std::cout << "globWgSize2 : " << wg_size_2_ << std::endl;
+    }
+
+    ~FullyGlobal(){
+        sycl::free(scratch_, q_);
+    }
+};
+
 
 }   // namespace AdvX

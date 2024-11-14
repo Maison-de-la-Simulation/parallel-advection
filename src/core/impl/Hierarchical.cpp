@@ -8,7 +8,7 @@ AdvX::Hierarchical::operator()(sycl::queue &Q, double *fdist_dev,
     const auto n2 = solver.p.n2;
 
     const sycl::range nb_wg{n0, 1, n2};
-    const sycl::range wg_size{1, solver.p.wg_size_1, 1};
+    const sycl::range wg_size{1, solver.p.loc_wg_size_1, 1};
 
     return Q.submit([&](sycl::handler &cgh) {
         sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>(n1), cgh);
