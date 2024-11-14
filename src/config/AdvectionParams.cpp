@@ -10,8 +10,13 @@ ADVParams::ADVParams(ADVParamsNonCopyable &other){
   gpu = other.gpu;
   outputSolution = other.outputSolution;
 
-  wg_size_1 = other.wg_size_1;
-  wg_size_0 = other.wg_size_0;
+  loc_wg_size_0 = other.loc_wg_size_0;
+  loc_wg_size_1 = other.loc_wg_size_1;
+  loc_wg_size_2 = other.loc_wg_size_2;
+  
+  glob_wg_size_0 = other.glob_wg_size_0;
+  glob_wg_size_1 = other.glob_wg_size_1;
+  glob_wg_size_2 = other.glob_wg_size_2;
 
   dt = other.dt;
 
@@ -113,12 +118,16 @@ void ADVParamsNonCopyable::print()
   std::cout << "Runtime parameters:" << std::endl;
   std::cout << "##########################" << std::endl;
   std::cout << "kernelImpl  : " << kernelImpl << std::endl;
-  std::cout << "wgSizeX     : " << wg_size_1    << std::endl;
-  std::cout << "wgSizeY     : " << wg_size_0    << std::endl;
+  std::cout << "globWgSize0 : " << glob_wg_size_0    << std::endl;
+  std::cout << "globWgSize1 : " << glob_wg_size_1    << std::endl;
+  std::cout << "globWgSize2 : " << glob_wg_size_2    << std::endl;
+  std::cout << "locWgSize0  : " << loc_wg_size_0    << std::endl;
+  std::cout << "locWgSize1  : " << loc_wg_size_1    << std::endl;
+  std::cout << "locWgSize2  : " << loc_wg_size_2    << std::endl;
   std::cout << "gpu         : " << gpu    << std::endl;
   std::cout << "maxIter     : " << maxIter    << std::endl;
   std::cout << "n0 (nvx)    : " << n0    << std::endl;
-  std::cout << "n1          : " << n1    << std::endl;
+  std::cout << "n1 (nx)     : " << n1    << std::endl;
   std::cout << "n2          : " << n2    << std::endl;
   std::cout << "percent_loc : " << percent_loc << std::endl;
   std::cout << "dt          : " << dt    << std::endl;

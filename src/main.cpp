@@ -11,10 +11,9 @@
 // returns duration for maxIter-1 iterations
 std::chrono::duration<double>
 advection(sycl::queue &Q, double* fidst_dev,
-          sref::unique_ref<IAdvectorX> &advector, const ADVParams &params) {
+          sref::unique_ref<IAdvectorX> &advector, const Solver &solver) {
 
-    auto static const maxIter = params.maxIter;
-    Solver solver(params);
+    auto static const maxIter = solver.p.maxIter;
 
     auto start = std::chrono::high_resolution_clock::now();
     // Time loop
@@ -75,10 +74,11 @@ main(int argc, char **argv) {
     // sycl::buffer<double, 3> buff_fdistrib(sycl::range<3>(n0, n1, n2));
     double* fdist = sycl::malloc_device<double>(n0*n1*n2, Q);
     fill_buffer(Q, fdist, params);
+    
+    Solver solver(params);
+    auto advector = kernel_impl_factory(Q, strParams, solver);
 
-    auto advector = kernel_impl_factory(Q, strParams);
-
-    auto elapsed_seconds = advection(Q, fdist, advector, params);
+    auto elapsed_seconds = advection(Q, fdist, advector, solver);
 
     std::cout << "\nRESULTS_VALIDATION:" << std::endl;
     validate_result(Q, fdist, params);

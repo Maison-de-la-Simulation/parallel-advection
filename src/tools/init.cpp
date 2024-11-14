@@ -16,7 +16,8 @@ static constexpr auto error_str =
 // // ==========================================
 // // ==========================================
 sref::unique_ref<IAdvectorX>
-kernel_impl_factory(const sycl::queue &q, const ADVParamsNonCopyable &params) {
+kernel_impl_factory(const sycl::queue &q, const ADVParamsNonCopyable &params,
+                    Solver &s) {
     std::string kernel_name(params.kernelImpl.begin(), params.kernelImpl.end());
 
     switch (str2int(kernel_name.data())) {
@@ -61,8 +62,12 @@ kernel_impl_factory(const sycl::queue &q, const ADVParamsNonCopyable &params) {
         return sref::make_unique<AdvX::Exp5>(params);
     case str2int("Exp6"):
         return sref::make_unique<AdvX::Exp6>(params, q);
-    case str2int("Alg5"):
-        return sref::make_unique<AdvX::Exp6>(params, q);
+    // case str2int("Alg5"):
+    //     return sref::make_unique<AdvX::Alg5>(params, q);
+    case str2int("FullyLocal"):
+        return sref::make_unique<AdvX::FullyLocal>(s);
+    case str2int("FullyGlobal"):
+        return sref::make_unique<AdvX::FullyGlobal>(s, q);
     // case str2int("CudaLDG"):
     //     return sref::make_unique<AdvX::CudaLDG>();
     default:
