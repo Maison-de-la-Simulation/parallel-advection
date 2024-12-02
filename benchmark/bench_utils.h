@@ -28,9 +28,9 @@ enum AdvImpl : int {
 };
 
 using bm_vec_t = std::vector<int64_t>;
-static bm_vec_t NB_LARGE_RANGE = benchmark::CreateRange(2 << 5, 2 << 20, 2);
-static bm_vec_t NB_RANGE = {16384, 32768, 65535};
-static bm_vec_t NS_RANGE = {1, 2, 4, 8, 16, 32, 64};
+static bm_vec_t N0_LARGE_RANGE = benchmark::CreateRange(2 << 5, 2 << 20, 2);
+static bm_vec_t N0_RANGE = {16384, 32768, 65535};
+static bm_vec_t N2_RANGE = {1, 2, 4, 8, 16, 32, 64};
 static int64_t n1 = 1024;
 
 static bm_vec_t WG_SIZES_X_RANGE = {1, 4, 8, 64, 128, 256, 512, 1024};
@@ -39,7 +39,11 @@ static bm_vec_t IMPL_RANGE = {
     // AdvImpl::BR3D,
     AdvImpl::HIER,     AdvImpl::NDRA,         AdvImpl::SCOP,
     AdvImpl::STREAMY,  AdvImpl::STRAD,        AdvImpl::REVIDX,
-    AdvImpl::TWODIMWG, AdvImpl::SEQ_TWODIMWG, AdvImpl::EXP1};
+    AdvImpl::TWODIMWG, AdvImpl::SEQ_TWODIMWG,
+    AdvImpl::EXP1, AdvImpl::EXP2, AdvImpl::EXP3, AdvImpl::EXP4,
+    AdvImpl::EXP5, AdvImpl::EXP6, /*AdvImpl::EXP7*/
+    AdvImpl::FULLYGLOBAL, AdvImpl::FULLYLOCAL,
+    };
 
 // static bm_vec_t IMPL_RANGE_NO_SCOPED = {
 //                               AdvImpl::BR3D, AdvImpl::HIER, AdvImpl::NDRA,
@@ -100,7 +104,7 @@ createSyclQueue(const bool run_on_gpu, benchmark::State &state) {
 
 // =============================================
 // =============================================
-[[nodiscard]] sref::unique_ref<IAdvectorX>
+[[nodiscard]] inline sref::unique_ref<IAdvectorX>
 advectorFactory(const sycl::queue &q, ADVParams &p, Solver &s,
                 const AdvImpl kernel_id, benchmark::State &state) {
     ADVParamsNonCopyable params(p);

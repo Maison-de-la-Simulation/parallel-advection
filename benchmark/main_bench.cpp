@@ -64,9 +64,9 @@ BM_WgSize(benchmark::State &state){
 BENCHMARK(BM_WgSize)
     ->ArgsProduct({
         {0, 1}, /*gpu*/
-        NB_RANGE, /*n0*/
+        N0_RANGE, /*n0*/
         {n1}, /*n1*/
-        NS_RANGE, /*n2*/
+        N2_RANGE, /*n2*/
         WG_SIZES_X_RANGE /*wg_size*/
     })
     ->UseRealTime()

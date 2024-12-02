@@ -53,7 +53,7 @@ BENCHMARK(BM_STREAM)
         {1, 0},     /*gpu*/
         NY_RANGE, /*n0*/
         {n1},  /*n1*/
-        NS_RANGE /*n2*/
+        N2_RANGE /*n2*/
     })
     ->UseRealTime() /* real time benchmark */
     ->Unit(benchmark::kMillisecond);
