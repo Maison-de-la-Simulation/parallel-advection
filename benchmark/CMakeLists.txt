@@ -7,6 +7,11 @@ adv1d::config
 adv1d::core
 adv1d::tools)
 
+if(SYCL_IS_ACPP)
+    add_sycl_to_target(TARGET main-bench)
+else()
+    target_link_libraries(main-bench PUBLIC dpcpp_opt)
+endif()
 #
 # add_executable(submission-bench submission_bench.cpp)
 

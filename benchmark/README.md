@@ -1,5 +1,5 @@
 # Running benchmarks
-This section is part of the reproductibility initiative of SC24.
+This section is part of the reproductibility initiative.
 Benchmark are implemented using the [google benchmark](https://github.com/google/benchmark/) microbenchmark suite.
 
 ## Prerequisites

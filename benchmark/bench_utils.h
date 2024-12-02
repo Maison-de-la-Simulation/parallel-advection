@@ -1,56 +1,67 @@
 #pragma once
 
 #include <AdvectionParams.h>
-#include <sycl/sycl.hpp>
-#include <init.h>
 #include <advectors.h>
 #include <benchmark/benchmark.h>
+#include <init.h>
+#include <sycl/sycl.hpp>
 
 enum AdvImpl : int {
-    BR3D,        // 0
-    HIER,        // 1
-    NDRA,        // 2
-    SCOP,        // 3
-    STREAMY,     // 4
-    STRAD,       // 5
-    REVIDX,      // 6
-    TWODIMWG,    // 7
-    SEQ_TWODIMWG, // 8
-    EXP1,
+    BR3D,           // 0
+    HIER,           // 1
+    NDRA,           // 2
+    SCOP,           // 3
+    STREAMY,        // 4
+    STRAD,          // 5
+    REVIDX,         // 6
+    TWODIMWG,       // 7
+    SEQ_TWODIMWG,   // 8
+    EXP1,           // 9
+    EXP2,           // 10
+    EXP3,           // 11
+    EXP4,           // 12
+    EXP5,           // 13
+    EXP6,           // 14
+    // EXP7,     // 15
+    FULLYGLOBAL,   // 16
+    FULLYLOCAL,    // 17
 };
 
 using bm_vec_t = std::vector<int64_t>;
 static bm_vec_t NB_LARGE_RANGE = benchmark::CreateRange(2 << 5, 2 << 20, 2);
 static bm_vec_t NB_RANGE = {16384, 32768, 65535};
 static bm_vec_t NS_RANGE = {1, 2, 4, 8, 16, 32, 64};
-static int64_t  n1 = 1024;
+static int64_t n1 = 1024;
 
 static bm_vec_t WG_SIZES_X_RANGE = {1, 4, 8, 64, 128, 256, 512, 1024};
 
 static bm_vec_t IMPL_RANGE = {
     // AdvImpl::BR3D,
-    AdvImpl::HIER, AdvImpl::NDRA,
-    AdvImpl::SCOP, AdvImpl::STREAMY, AdvImpl::STRAD,
-    AdvImpl::REVIDX, AdvImpl::TWODIMWG, 
-    AdvImpl::SEQ_TWODIMWG, AdvImpl::EXP1};
+    AdvImpl::HIER,     AdvImpl::NDRA,         AdvImpl::SCOP,
+    AdvImpl::STREAMY,  AdvImpl::STRAD,        AdvImpl::REVIDX,
+    AdvImpl::TWODIMWG, AdvImpl::SEQ_TWODIMWG, AdvImpl::EXP1};
 
 // static bm_vec_t IMPL_RANGE_NO_SCOPED = {
 //                               AdvImpl::BR3D, AdvImpl::HIER, AdvImpl::NDRA,
-//                               AdvImpl::STREAMY, AdvImpl::STRAD, AdvImpl::REVIDX,
-//                               AdvImpl::TWODIMWG, AdvImpl::SEQ_TWODIMWG};
+//                               AdvImpl::STREAMY, AdvImpl::STRAD,
+//                               AdvImpl::REVIDX, AdvImpl::TWODIMWG,
+//                               AdvImpl::SEQ_TWODIMWG};
 
 // =============================================
 // =============================================
 [[nodiscard]] inline ADVParams
-createParams(const bool gpu,
-             const size_t &n0,
-             const size_t &n1,
+createParams(const bool gpu, const size_t &n0, const size_t &n1,
              const size_t &n2) {
     ADVParams p;
 
     p.outputSolution = false;
-    p.wg_size_1 = 128;
-    p.wg_size_0 = 1;
+    p.loc_wg_size_0 = 1;
+    p.loc_wg_size_1 = 128;
+    p.loc_wg_size_2 = 1;
+
+    p.glob_wg_size_0 = 1;
+    p.glob_wg_size_1 = 128;
+    p.glob_wg_size_2 = 1;
 
     /* Static physicals params*/
     p.dt = 0.001;
@@ -79,7 +90,8 @@ createSyclQueue(const bool run_on_gpu, benchmark::State &state) {
         try {
             d = sycl::device{sycl::gpu_selector_v};
         } catch (const sycl::exception e) {
-            state.SkipWithError("GPU was requested but none is available, skipping benchmark.");
+            state.SkipWithError(
+                "GPU was requested but none is available, skipping benchmark.");
         }
     else
         d = sycl::device{sycl::cpu_selector_v};
@@ -89,9 +101,8 @@ createSyclQueue(const bool run_on_gpu, benchmark::State &state) {
 // =============================================
 // =============================================
 [[nodiscard]] sref::unique_ref<IAdvectorX>
-advectorFactory(const AdvImpl kernel_id,
-                ADVParams p,
-                benchmark::State &state) {
+advectorFactory(const sycl::queue &q, ADVParams &p, Solver &s,
+                const AdvImpl kernel_id, benchmark::State &state) {
     ADVParamsNonCopyable params(p);
 
     switch (kernel_id) {
@@ -125,11 +136,35 @@ advectorFactory(const AdvImpl kernel_id,
     case AdvImpl::EXP1:
         params.kernelImpl = "Exp1";
         break;
+    case AdvImpl::EXP2:
+        params.kernelImpl = "Exp2";
+        break;
+    case AdvImpl::EXP3:
+        params.kernelImpl = "Exp3";
+        break;
+    case AdvImpl::EXP4:
+        params.kernelImpl = "Exp4";
+        break;
+    case AdvImpl::EXP5:
+        params.kernelImpl = "Exp5";
+        break;
+    case AdvImpl::EXP6:
+        params.kernelImpl = "Exp6";
+        break;
+    // case AdvImpl::EXP7:
+    //     params.kernelImpl = "Exp7";
+    //     break;
+    case AdvImpl::FULLYGLOBAL:
+        params.kernelImpl = "FullyGlobal";
+        break;
+    case AdvImpl::FULLYLOCAL:
+        params.kernelImpl = "FullyLocal";
+        break;
     default:
         auto str = "Error: wrong kernel_id.\n";
         throw std::runtime_error(str);
         break;
     }
 
-    return kernel_impl_factory(params);
+    return kernel_impl_factory(q, params, s);
 }   // end advectorFactory
