@@ -62,6 +62,8 @@ kernel_impl_factory(const sycl::queue &q, const ADVParamsNonCopyable &params,
         return sref::make_unique<AdvX::Exp5>(params);
     case str2int("Exp6"):
         return sref::make_unique<AdvX::Exp6>(params, q);
+    case str2int("Exp7"):
+        return sref::make_unique<AdvX::Exp7>(params, q);
     // case str2int("Alg5"):
     //     return sref::make_unique<AdvX::Alg5>(params, q);
     case str2int("FullyLocal"):

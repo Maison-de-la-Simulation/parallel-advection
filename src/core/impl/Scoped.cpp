@@ -15,7 +15,7 @@ AdvX::Scoped::operator()(sycl::queue &Q,double* fdist_dev,
 throw std::logic_error("Scoped kernel is not compatible with DPCPP");
 #else   // for acpp
         sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>(n1), cgh);
-
+         
         cgh.parallel(nb_wg, wg_size, [=](auto g) {
                 sycl::distribute_items_and_wait(g, [&](auto /*sycl::s_item<3>*/ it) {
                     mdspan3d_t fdist(fdist_dev, n0, n1, n2);

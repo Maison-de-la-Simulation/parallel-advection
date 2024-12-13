@@ -62,8 +62,8 @@ AdvX::Exp1::actual_advection(sycl::queue &Q, double *fdist_dev,
     auto const n1 = solver.p.n1;
     auto const n2 = solver.p.n2;
 
-    auto const wg_size_0 = solver.p.loc_wg_size_0;
-    auto const wg_size_1 = solver.p.loc_wg_size_1;
+    auto const wg_size_0 = 1;//solver.p.loc_wg_size_0;
+    auto const wg_size_1 = solver.p.pref_wg_size;
 
     /* n0 must be divisible by slice_size_dim_y */
     if (ny_batch_size % wg_size_0 != 0) {

@@ -4,7 +4,6 @@
 #include <cmath>
 #include <cstddef>
 #include <experimental/mdspan>
-#include <hipSYCL/sycl/usm.hpp>
 #include <stdexcept>
 
 using real_t = double;
@@ -42,28 +41,6 @@ class BasicRange : public IAdvectorX {
                            const Solver &solver) override;
 };
 
-// class BasicRange2D : public BasicRange {
-//   public:
-//     sycl::event operator()(sycl::queue &Q,
-//                            double* fdist_dev,
-//                            const Solver &solver) override;
-
-//     explicit BasicRange2D(const size_t n1, const size_t nvx, const size_t
-//     n2)
-//         : BasicRange(n1, nvx, n2){};
-// };
-
-// class BasicRange1D : public BasicRange {
-//   public:
-//     sycl::event operator()(sycl::queue &Q,
-//                            double* fdist_dev,
-//                            const Solver &solver) override;
-
-//     explicit BasicRange1D(const size_t n1, const size_t nvx, const size_t
-//     n2)
-//         : BasicRange(n1, nvx, n2){};
-// };
-
 class Hierarchical : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
 
@@ -87,37 +64,6 @@ class Scoped : public IAdvectorX {
     sycl::event operator()(sycl::queue &Q, double *fdist_dev,
                            const Solver &solver) override;
 };
-
-// class FakeAdvector : public IAdvectorX {
-//     using IAdvectorX::IAdvectorX;
-
-//   public:
-//     sycl::event operator()(sycl::queue &Q,
-//                            double* fdist_dev,
-//                            const Solver &solver) override;
-
-//     sycl::event stream_bench(sycl::queue &Q,
-//                              sycl::buffer<double, 1> &buff);
-// };
-
-// class HierarchicalAlloca : public IAdvectorX {
-//     using IAdvectorX::IAdvectorX;
-
-//   public:
-//     sycl::event operator()(sycl::queue &Q,
-//                            double* fdist_dev,
-//                            const Solver &solver) override;
-// };
-
-// /* Fixed memory footprint using a basic range */
-// class FixedMemoryFootprint : public IAdvectorX {
-//     using IAdvectorX::IAdvectorX;
-
-//   public:
-//     sycl::event operator()(sycl::queue &Q,
-//                            double* fdist_dev,
-//                            const Solver &solver) override;
-// };
 
 // =============================================================================
 // EXPERIMENTS
@@ -156,33 +102,6 @@ class StraddledMalloc : public IAdvectorX {
     sycl::event operator()(sycl::queue &Q, double *fdist_dev,
                            const Solver &solver) override;
 };
-
-// =============================================================================
-// class ReverseIndexes : public IAdvectorX {
-//     using IAdvectorX::IAdvectorX;
-
-//   public:
-//     sycl::event operator()(sycl::queue &Q, double* fdist_dev,
-//                            const Solver &solver) override;
-// };
-
-// =============================================================================
-// class TwoDimWG : public IAdvectorX {
-//     using IAdvectorX::IAdvectorX;
-
-//   public:
-//     sycl::event operator()(sycl::queue &Q, double* fdist_dev,
-//                            const Solver &solver) override;
-// };
-
-// =============================================================================
-// class SeqTwoDimWG : public IAdvectorX {
-//     using IAdvectorX::IAdvectorX;
-
-//   public:
-//     sycl::event operator()(sycl::queue &Q, double* fdist_dev,
-//                            const Solver &solver) override;
-// };
 
 // =============================================================================
 class Exp1 : public IAdvectorX {
@@ -412,7 +331,7 @@ class Exp5 : public IAdvectorX {
 
     static constexpr size_t MAX_ALLOC_SIZE_ = 6144;   // TODO this is for A100
     static constexpr size_t WARP_SIZE_ = 32;          // for A100
-    static constexpr size_t PREF_WG_SIZE_ = 128;      // for A100
+    // static constexpr size_t PREF_WG_SIZE_ = 128;      // for A100
 
     size_t wg_size_1_;
     size_t wg_size_2_;
@@ -424,9 +343,11 @@ class Exp5 : public IAdvectorX {
     Exp5() = delete;
 
     Exp5(const Solver &solver) {
+        auto pref_wg_size = solver.p.pref_wg_size;
 
-        wg_size_1_ = std::ceil(PREF_WG_SIZE_ / solver.p.n2);
-        wg_size_2_ = wg_size_1_ > 1 ? solver.p.n2 : PREF_WG_SIZE_;
+
+        wg_size_1_ = std::ceil(pref_wg_size / solver.p.n2);
+        wg_size_2_ = wg_size_1_ > 1 ? solver.p.n2 : pref_wg_size;
 
         /*
         3 cas:
@@ -453,7 +374,7 @@ class Exp6 : public IAdvectorX {
 
     static constexpr size_t MAX_ALLOC_SIZE_ = 6144;   // TODO this is for A100
     static constexpr size_t WARP_SIZE_ = 32;          // for A100
-    static constexpr size_t PREF_WG_SIZE_ = 128;      // for A100
+    // static constexpr size_t PREF_WG_SIZE_ = 128;      // for A100
 
     size_t wg_size_1_;
     size_t wg_size_2_;
@@ -467,9 +388,10 @@ class Exp6 : public IAdvectorX {
     Exp6() = delete;
 
     Exp6(const Solver &solver, const sycl::queue &q) : q_(q) {
+        auto pref_wg_size = solver.p.pref_wg_size;
 
-        wg_size_1_ = std::ceil(PREF_WG_SIZE_ / solver.p.n2);
-        wg_size_2_ = wg_size_1_ > 1 ? solver.p.n2 : PREF_WG_SIZE_;
+        wg_size_1_ = std::ceil(pref_wg_size / solver.p.n2);
+        wg_size_2_ = wg_size_1_ > 1 ? solver.p.n2 : pref_wg_size;
 
         /* TODO: allocate only for concurrent slice in dim0*/
         scratch_ = sycl::malloc_device<double>(
@@ -491,24 +413,24 @@ class Exp7 : public IAdvectorX {
     void init_batchs(const Solver &s) {
         /* Compute number of batchs */
         float div =
-            static_cast<float>(s.p.n0) / static_cast<float>(MAX_NY_BATCHS_);
+            static_cast<float>(s.p.n0) / static_cast<float>(MAX_N0_BATCHS_);
         auto floor_div = std::floor(div);
         auto div_is_int = div == floor_div;
         n_batch_ = div_is_int ? div : floor_div + 1;
 
-        last_n0_size_ = div_is_int ? MAX_NY_BATCHS_ : (s.p.n0 % MAX_NY_BATCHS_);
-        last_n0_offset_ = MAX_NY_BATCHS_ * (n_batch_ - 1);
+        last_n0_size_ = div_is_int ? MAX_N0_BATCHS_ : (s.p.n0 % MAX_N0_BATCHS_);
+        last_n0_offset_ = MAX_N0_BATCHS_ * (n_batch_ - 1);
     }
 
     /* Initiate how many local/global kernels will be running*/
     void init_splitting(const Solver &solver) {
-        auto div = solver.p.n0 < MAX_NY_BATCHS_
+        auto div = solver.p.n0 < MAX_N0_BATCHS_
                        ? solver.p.n0 * solver.p.percent_loc
-                       : MAX_NY_BATCHS_ * solver.p.percent_loc;
+                       : MAX_N0_BATCHS_ * solver.p.percent_loc;
         k_local_ = std::floor(div);
 
-        k_global_ = solver.p.n0 < MAX_NY_BATCHS_ ? solver.p.n0 - k_local_
-                                                 : MAX_NY_BATCHS_ - k_local_;
+        k_global_ = solver.p.n0 < MAX_N0_BATCHS_ ? solver.p.n0 - k_local_
+                                                 : MAX_N0_BATCHS_ - k_local_;
 
         if (n_batch_ > 1) {
             last_k_local_ = std::floor(last_n0_size_ * solver.p.percent_loc);
@@ -520,8 +442,8 @@ class Exp7 : public IAdvectorX {
     }
 
     /* Max number of batch submitted */
-    static constexpr size_t MAX_NY_BATCHS_ = 65535;
-    static constexpr size_t PREF_WG_SIZE_ = 128;   // for A100
+    static constexpr size_t MAX_N0_BATCHS_ = 65535;
+    // static constexpr size_t PREF_WG_SIZE_ = 128;   // for A100
     static constexpr size_t MAX_LOCAL_ALLOC_ = 6144;
 
     size_t n_batch_;
@@ -566,19 +488,20 @@ class Exp7 : public IAdvectorX {
 
         auto n1 = solver.p.n1;
         auto n2 = solver.p.n2;
+        auto pref_wg_size = solver.p.pref_wg_size;
 
         /* Global kernels wg sizes */
         glob_wg_size_0_ = 1;
-        if (n2 >= PREF_WG_SIZE_) {
+        if (n2 >= pref_wg_size) {
             glob_wg_size_1_ = 1;
-            glob_wg_size_2_ = PREF_WG_SIZE_;
+            glob_wg_size_2_ = pref_wg_size;
         } else {
-            if (n1 * n2 >= PREF_WG_SIZE_) {
-                glob_wg_size_1_ = std::floor(PREF_WG_SIZE_ / n2);
+            if (n1 * n2 >= pref_wg_size) {
+                glob_wg_size_1_ = std::floor(pref_wg_size / n2);
                 glob_wg_size_2_ = n2;
             } else {
                 // Not enough n1*n2 to fill up work group, we use more n0
-                glob_wg_size_0_ = std::floor(PREF_WG_SIZE_ / n1 * n2);
+                glob_wg_size_0_ = std::floor(pref_wg_size / n1 * n2);
                 glob_wg_size_1_ = n1;
                 glob_wg_size_2_ = n2;
             }
@@ -586,7 +509,7 @@ class Exp7 : public IAdvectorX {
 
         if (glob_wg_size_2_ * n1 >= MAX_LOCAL_ALLOC_) {
             loc_wg_size_2_ = std::floor(MAX_LOCAL_ALLOC_ / n1);
-            loc_wg_size_1_ = std::floor(PREF_WG_SIZE_ / loc_wg_size_2_);
+            loc_wg_size_1_ = std::floor(pref_wg_size / loc_wg_size_2_);
             loc_wg_size_0_ = 1;
         } else {
             loc_wg_size_0_ = glob_wg_size_0_;
@@ -600,6 +523,30 @@ class Exp7 : public IAdvectorX {
         } else {
             scratchG_ = nullptr;
         }
+
+
+        std::cout << "loc_wg_size_0 : " << loc_wg_size_0_ << std::endl;
+        std::cout << "loc_wg_size_1 : " << loc_wg_size_1_ << std::endl;
+        std::cout << "loc_wg_size_2 : " << loc_wg_size_2_ << std::endl;
+
+        std::cout << "glob_wg_size_0: " << glob_wg_size_0_ << std::endl;
+        std::cout << "glob_wg_size_1: " << glob_wg_size_1_ << std::endl;
+        std::cout << "glob_wg_size_2: " << glob_wg_size_2_ << std::endl;
+
+        std::cout << "--------------------------------" << std::endl;
+        std::cout << "n_batch       : " << n_batch_ << std::endl;
+        std::cout << "k_local       : " << k_local_ << std::endl;
+        std::cout << "k_global      : " << k_global_ << std::endl;
+        std::cout << "last_k_global : " << last_k_global_ << std::endl;
+        std::cout << "last_k_local  : " << last_k_local_ << std::endl;
+
+        std::cout << "local wg sizes: {" << loc_wg_size_0_ << ","
+                  << loc_wg_size_1_ << "," << loc_wg_size_2_ << "}"
+                  << std::endl;
+
+        std::cout << "glob wg sizes : {" << glob_wg_size_0_ << ","
+                  << glob_wg_size_1_ << "," << glob_wg_size_2_ << "}"
+                  << std::endl;
     }
 
     ~Exp7() {
@@ -629,7 +576,7 @@ class FullyLocal : public IAdvectorX {
                                  const size_t &ny_offset);
 
     static constexpr size_t MAX_LOCAL_ALLOC_ = 6144;
-    static constexpr size_t PREF_WG_SIZE_ = 128;
+    // static constexpr size_t PREF_WG_SIZE_ = 128;
 
     size_t wg_size_0_;
     size_t wg_size_1_;
@@ -644,18 +591,19 @@ class FullyLocal : public IAdvectorX {
     FullyLocal(Solver &solver) {
         auto n1 = solver.p.n1;
         auto n2 = solver.p.n2;
+        auto pref_wg_size = solver.p.pref_wg_size;
 
         wg_size_0_ = 1;
-        if (n2 >= PREF_WG_SIZE_) {
+        if (n2 >= pref_wg_size) {
             wg_size_1_ = 1;
-            wg_size_2_ = PREF_WG_SIZE_;
+            wg_size_2_ = pref_wg_size;
         } else {
-            if (n1 * n2 >= PREF_WG_SIZE_) {
-                wg_size_1_ = std::floor(PREF_WG_SIZE_ / n2);
+            if (n1 * n2 >= pref_wg_size) {
+                wg_size_1_ = std::floor(pref_wg_size / n2);
                 wg_size_2_ = n2;
             } else {
                 // Not enough n1*n2 to fill up work group, we use more n0
-                wg_size_0_ = std::floor(PREF_WG_SIZE_ / n1 * n2);
+                wg_size_0_ = std::floor(pref_wg_size / n1 * n2);
                 wg_size_1_ = n1;
                 wg_size_2_ = n2;
             }
@@ -663,17 +611,26 @@ class FullyLocal : public IAdvectorX {
 
         if (wg_size_2_ * n1 >= MAX_LOCAL_ALLOC_) {
             wg_size_2_ = std::floor(MAX_LOCAL_ALLOC_ / n1);
-            wg_size_1_ = std::floor(PREF_WG_SIZE_ / wg_size_2_);
+            wg_size_1_ = std::floor(pref_wg_size / wg_size_2_);
             wg_size_0_ = 1;
         }
 
-        solver.p.loc_wg_size_0 = wg_size_0_;
-        solver.p.loc_wg_size_1 = wg_size_1_;
-        solver.p.loc_wg_size_2 = wg_size_2_;
+        // solver.p.loc_wg_size_0 = wg_size_0_;
+        // solver.p.loc_wg_size_1 = wg_size_1_;
+        // solver.p.loc_wg_size_2 = wg_size_2_;
 
-        solver.p.glob_wg_size_0 = -1;
-        solver.p.glob_wg_size_1 = -1;
-        solver.p.glob_wg_size_2 = -1;
+        // solver.p.glob_wg_size_0 = -1;
+        // solver.p.glob_wg_size_1 = -1;
+        // solver.p.glob_wg_size_2 = -1;
+
+        // n2/wg2 = 2.666
+        // floor = 2
+        // div = floor(n2/wg2) // ou ceil? et certains threads ne font rien? je pense que c'est mieux. Et je met un IF dans le noyau.
+
+        // auto rest = n2%wg_size_2_;
+        // autso div = std::floor(n2/wg_size_2_);
+        // wg2*div = global_size
+
 
         std::cout << "locWgSize0 : " << wg_size_0_ << std::endl;
         std::cout << "locWgSize1 : " << wg_size_1_ << std::endl;
@@ -688,7 +645,7 @@ class FullyGlobal : public IAdvectorX {
                                  const size_t &ny_batch_size,
                                  const size_t &ny_offset);
 
-    static constexpr size_t PREF_WG_SIZE_ = 128;
+    // static constexpr size_t PREF_WG_SIZE_ = 128;
 
     sycl::queue q_;
     double *scratch_;
@@ -705,18 +662,19 @@ class FullyGlobal : public IAdvectorX {
     FullyGlobal(Solver &solver, const sycl::queue &q) : q_(q) {
         auto n1 = solver.p.n1;
         auto n2 = solver.p.n2;
+        auto pref_wg_size = solver.p.pref_wg_size;
 
         wg_size_0_ = 1;
-        if (n2 >= PREF_WG_SIZE_) {
+        if (n2 >= pref_wg_size) {
             wg_size_1_ = 1;
-            wg_size_2_ = PREF_WG_SIZE_;
+            wg_size_2_ = pref_wg_size;
         } else {
-            if (n1 * n2 >= PREF_WG_SIZE_) {
-                wg_size_1_ = std::floor(PREF_WG_SIZE_ / n2);
+            if (n1 * n2 >= pref_wg_size) {
+                wg_size_1_ = std::floor(pref_wg_size / n2);
                 wg_size_2_ = n2;
             } else {
                 // Not enough n1*n2 to fill up work group, we use more n0
-                wg_size_0_ = std::floor(PREF_WG_SIZE_ / n1 * n2);
+                wg_size_0_ = std::floor(pref_wg_size / n1 * n2);
                 wg_size_1_ = n1;
                 wg_size_2_ = n2;
             }
@@ -724,13 +682,13 @@ class FullyGlobal : public IAdvectorX {
 
         scratch_ = sycl::malloc_device<double>(solver.p.n0 * n1 * n2, q_);
 
-        solver.p.loc_wg_size_0 = -1;
-        solver.p.loc_wg_size_1 = -1;
-        solver.p.loc_wg_size_2 = -1;
+        // solver.p.loc_wg_size_0 = -1;
+        // solver.p.loc_wg_size_1 = -1;
+        // solver.p.loc_wg_size_2 = -1;
 
-        solver.p.glob_wg_size_0 = wg_size_0_;
-        solver.p.glob_wg_size_1 = wg_size_1_;
-        solver.p.glob_wg_size_2 = wg_size_2_;
+        // solver.p.glob_wg_size_0 = wg_size_0_;
+        // solver.p.glob_wg_size_1 = wg_size_1_;
+        // solver.p.glob_wg_size_2 = wg_size_2_;
 
         std::cout << "globWgSize0 : " << wg_size_0_ << std::endl;
         std::cout << "globWgSize1 : " << wg_size_1_ << std::endl;

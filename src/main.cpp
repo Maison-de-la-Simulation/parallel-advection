@@ -56,13 +56,13 @@ main(int argc, char **argv) {
 
     sycl::queue Q{d};
 
-    /* Make trivially copyable params based on strParams*/
-    strParams.print();
-    ADVParams params(strParams);
-
     /* Display infos on current device */
     std::cout << "Using device: "
               << Q.get_device().get_info<sycl::info::device::name>() << "\n";
+
+    /* Make trivially copyable params based on strParams*/
+    strParams.print();
+    ADVParams params(strParams);
 
     const auto n1 = params.n1;
     const auto n0 = params.n0;

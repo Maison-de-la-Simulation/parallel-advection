@@ -32,13 +32,14 @@ struct ADVParams {
   //We get n2*n0 independent problems of size n1, and x has a stride of n2
 
   // Sizes of the SYCL work groups
-  size_t glob_wg_size_1 = 128;
-  size_t glob_wg_size_2 = 1;
-  size_t glob_wg_size_0 = 1;
+  size_t pref_wg_size = 128;
+  // size_t glob_wg_size_1 = 128;
+  // size_t glob_wg_size_2 = 1;
+  // size_t glob_wg_size_0 = 1;
   
-  size_t loc_wg_size_1 = 128;
-  size_t loc_wg_size_2 = 1;
-  size_t loc_wg_size_0 = 1;
+  // size_t loc_wg_size_1 = 128;
+  // size_t loc_wg_size_2 = 1;
+  // size_t loc_wg_size_0 = 1;
 
 
 
