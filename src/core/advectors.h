@@ -520,18 +520,13 @@ class Exp7 : public IAdvectorX {
         if (k_global_ > 0) {
             scratchG_ = sycl::malloc_device<double>(
                 k_global_ * solver.p.n1 * solver.p.n2, q);
+            std::cout << "Allocated " << k_global_ << "*" << solver.p.n1 << "*"
+                      << solver.p.n2 << "bytes in memory for scartchG"
+                      << std::endl;
         } else {
             scratchG_ = nullptr;
         }
 
-
-        std::cout << "loc_wg_size_0 : " << loc_wg_size_0_ << std::endl;
-        std::cout << "loc_wg_size_1 : " << loc_wg_size_1_ << std::endl;
-        std::cout << "loc_wg_size_2 : " << loc_wg_size_2_ << std::endl;
-
-        std::cout << "glob_wg_size_0: " << glob_wg_size_0_ << std::endl;
-        std::cout << "glob_wg_size_1: " << glob_wg_size_1_ << std::endl;
-        std::cout << "glob_wg_size_2: " << glob_wg_size_2_ << std::endl;
 
         std::cout << "--------------------------------" << std::endl;
         std::cout << "n_batch       : " << n_batch_ << std::endl;
@@ -539,6 +534,7 @@ class Exp7 : public IAdvectorX {
         std::cout << "k_global      : " << k_global_ << std::endl;
         std::cout << "last_k_global : " << last_k_global_ << std::endl;
         std::cout << "last_k_local  : " << last_k_local_ << std::endl;
+        std::cout << "last_n0_offset: " << last_n0_offset_ << std::endl;
 
         std::cout << "local wg sizes: {" << loc_wg_size_0_ << ","
                   << loc_wg_size_1_ << "," << loc_wg_size_2_ << "}"
@@ -547,6 +543,7 @@ class Exp7 : public IAdvectorX {
         std::cout << "glob wg sizes : {" << glob_wg_size_0_ << ","
                   << glob_wg_size_1_ << "," << glob_wg_size_2_ << "}"
                   << std::endl;
+        std::cout << "--------------------------------" << std::endl;
     }
 
     ~Exp7() {
