@@ -474,12 +474,6 @@ class Exp7 : public IAdvectorX {
 
     Exp7() = delete;
 
-    // Exp7(const Solver &solver) {
-    //     init_batchs(solver);
-    //     k_global_ = 0;
-    //     k_local_ = solver.p.n0 * solver.p.n2;
-    // }
-
     // TODO: gérer le cas ou percent_loc est 1 ou 0 (on fait tou dans la local
     // mem ou tout dnas la global)
     Exp7(const Solver &solver, const sycl::queue &q) : q_(q) {
@@ -497,7 +491,7 @@ class Exp7 : public IAdvectorX {
             glob_wg_size_2_ = pref_wg_size;
         } else {
             if (n1 * n2 >= pref_wg_size) {
-                glob_wg_size_1_ = std::floor(pref_wg_size / n2);
+                glob_wg_size_1_ = pref_wg_size / n2;
                 glob_wg_size_2_ = n2;
             } else {
                 // Not enough n1*n2 to fill up work group, we use more n0
@@ -528,22 +522,14 @@ class Exp7 : public IAdvectorX {
         }
 
 
-        std::cout << "--------------------------------" << std::endl;
-        std::cout << "n_batch       : " << n_batch_ << std::endl;
-        std::cout << "k_local       : " << k_local_ << std::endl;
-        std::cout << "k_global      : " << k_global_ << std::endl;
-        std::cout << "last_k_global : " << last_k_global_ << std::endl;
-        std::cout << "last_k_local  : " << last_k_local_ << std::endl;
+        std::cout << "--------------------------------"    << std::endl;
+        std::cout << "n_batch       : " << n_batch_        << std::endl;
+        std::cout << "k_local       : " << k_local_        << std::endl;
+        std::cout << "k_global      : " << k_global_       << std::endl;
+        std::cout << "last_k_global : " << last_k_global_  << std::endl;
+        std::cout << "last_k_local  : " << last_k_local_   << std::endl;
         std::cout << "last_n0_offset: " << last_n0_offset_ << std::endl;
-
-        std::cout << "local wg sizes: {" << loc_wg_size_0_ << ","
-                  << loc_wg_size_1_ << "," << loc_wg_size_2_ << "}"
-                  << std::endl;
-
-        std::cout << "glob wg sizes : {" << glob_wg_size_0_ << ","
-                  << glob_wg_size_1_ << "," << glob_wg_size_2_ << "}"
-                  << std::endl;
-        std::cout << "--------------------------------" << std::endl;
+        std::cout << "--------------------------------"    << std::endl;
     }
 
     ~Exp7() {
