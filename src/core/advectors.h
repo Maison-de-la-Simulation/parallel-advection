@@ -1,6 +1,7 @@
 #pragma once
 #include "AdvectionParams.h"
 #include "IAdvectorX.h"
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <experimental/mdspan>
@@ -444,7 +445,9 @@ class Exp7 : public IAdvectorX {
     /* Max number of batch submitted */
     static constexpr size_t MAX_N0_BATCHS_ = 65535;
     // static constexpr size_t PREF_WG_SIZE_ = 128;   // for A100
-    static constexpr size_t MAX_LOCAL_ALLOC_ = 6144;
+    // static constexpr size_t MAX_LOCAL_ALLOC_ = 6144;
+
+    size_t max_elem_local_mem_;
 
     size_t n_batch_;
     size_t last_n0_size_;
@@ -480,6 +483,10 @@ class Exp7 : public IAdvectorX {
         init_batchs(solver);
         init_splitting(solver);
 
+        max_elem_local_mem_ =
+            q.get_device().get_info<sycl::info::device::local_mem_size>() /
+            sizeof(double);
+
         auto n1 = solver.p.n1;
         auto n2 = solver.p.n2;
         auto pref_wg_size = solver.p.pref_wg_size;
@@ -501,8 +508,8 @@ class Exp7 : public IAdvectorX {
             }
         }
 
-        if (glob_wg_size_2_ * n1 >= MAX_LOCAL_ALLOC_) {
-            loc_wg_size_2_ = std::floor(MAX_LOCAL_ALLOC_ / n1);
+        if (glob_wg_size_2_ * n1 >= max_elem_local_mem_) {
+            loc_wg_size_2_ = std::floor(max_elem_local_mem_ / n1);
             loc_wg_size_1_ = std::floor(pref_wg_size / loc_wg_size_2_);
             loc_wg_size_0_ = 1;
         } else {
@@ -523,12 +530,13 @@ class Exp7 : public IAdvectorX {
 
 
         std::cout << "--------------------------------"    << std::endl;
-        std::cout << "n_batch       : " << n_batch_        << std::endl;
-        std::cout << "k_local       : " << k_local_        << std::endl;
-        std::cout << "k_global      : " << k_global_       << std::endl;
-        std::cout << "last_k_global : " << last_k_global_  << std::endl;
-        std::cout << "last_k_local  : " << last_k_local_   << std::endl;
-        std::cout << "last_n0_offset: " << last_n0_offset_ << std::endl;
+        std::cout << "n_batch        : " << n_batch_        << std::endl;
+        std::cout << "k_local        : " << k_local_        << std::endl;
+        std::cout << "k_global       : " << k_global_       << std::endl;
+        std::cout << "last_k_global  : " << last_k_global_  << std::endl;
+        std::cout << "last_k_local   : " << last_k_local_   << std::endl;
+        std::cout << "last_n0_offset : " << last_n0_offset_ << std::endl;
+        std::cout << "max_elems_alloc: " << max_elem_local_mem_ << std::endl;
         std::cout << "--------------------------------"    << std::endl;
     }
 
