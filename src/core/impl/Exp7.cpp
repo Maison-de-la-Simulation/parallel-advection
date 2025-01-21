@@ -34,27 +34,19 @@ AdvX::Exp7::actual_advection(sycl::queue &Q, double *fdist_dev,
                                     "MAX_LOCAL_ALLOC_ (local memory limit)");
     }
 
-    sycl::range local_ndr{
+    sycl::range loc_range{
         k_local / loc_wg_size_0_,
         loc_wg_size_1_,
         n2};   // TODO: bug here, not divisible
 
-    // const sycl::range local_ndr{
-    //     k_local / loc_wg_size_0_, 1,
-    //     n2 / loc_wg_size_2_};   // TODO: bug here, not divisible
-
-    const sycl::range global_ndr{
+    const sycl::range glob_range{
         k_global / glob_wg_size_0_, glob_wg_size_1_,
         n2};   // TODO: bug here, not divisible
 
-    // const sycl::range global_ndr{
-    //     k_global / glob_wg_size_0_, 1,
-    //     n2 / glob_wg_size_2_};   // TODO: bug here, not divisible
-
-    const sycl::range glob_wg_size{glob_wg_size_0_, glob_wg_size_1_,
+    const sycl::range glob_wgsize{glob_wg_size_0_, glob_wg_size_1_,
                                    glob_wg_size_2_};
 
-    sycl::range loc_wg_size{loc_wg_size_0_, loc_wg_size_1_,
+    sycl::range loc_wgsize{loc_wg_size_0_, loc_wg_size_1_,
                                   loc_wg_size_2_};
 
     const size_t global_offset = k_local;
@@ -67,7 +59,7 @@ AdvX::Exp7::actual_advection(sycl::queue &Q, double *fdist_dev,
 
     /* k_global: kernels running in the global memory, start from k_local to last*/
     Q.submit([&](sycl::handler &cgh) {
-        cgh.parallel_for(sycl::nd_range<3>{global_ndr, glob_wg_size},
+        cgh.parallel_for(sycl::nd_range<3>{glob_range, glob_wgsize},
                          [=](auto itm) {
                              mdspan3d_t fdist(fdist_dev, n0, n1, n2);
                              mdspan3d_t scr(ptr_global, k_global, n1, n2);
@@ -98,33 +90,32 @@ AdvX::Exp7::actual_advection(sycl::queue &Q, double *fdist_dev,
     });      // end Q.submit
 
     /* SUBMIT LES NOYAUX RESTANT POUR LES KERNELS LOCAUX!!!!!!
-    ON FAIT UN SUBMIT ET ON TRAITE EN MEME TEMPS QUE LE RESTE
-        Check if n2 is divisible with loc_wg_size_2_ 
-        // loc_wg_size_2_ = div_is_int ? ?????? : loc_wg_size_2_;
-    Q.submit()*/
+    ON FAIT UN SUBMIT ET ON TRAITE EN MEME TEMPS QUE LE RESTE*/
     float div =
         static_cast<float>(n2) / static_cast<float>(loc_wg_size_2_);
-    const size_t floor_div = std::floor(div); // = 5.    30 = floor_div*loc_wg_size_2_
+    const size_t floor_div = std::floor(div);
     const auto div_is_int = div == floor_div;
     const auto rest_n2 = n2 % loc_wg_size_2_;
 
     /* If there is some rest, we schedule the kernels with uncontiguous access*/
     if (rest_n2 > 0) {
         /* Same sizes in dim 0 and 1, we only take the rest for dim 2 */
-        const sycl::range rest_range{local_ndr.get(0), local_ndr.get(1),
+        const sycl::range rest_range{loc_range.get(0), loc_range.get(1),
                                      rest_n2};
 
-        const sycl::range rest_loc_size{loc_wg_size.get(0), loc_wg_size.get(1),
-                                        1};
+        const sycl::range rest_wgsize{loc_wgsize.get(0), loc_wgsize.get(1),
+                                        rest_n2/*1*/};
 
         auto offset_rest_n2 = n2-rest_n2;
+
+        std::cout << "My rest local accessor is of size: " << rest_n2 << "*" << n1 << std::endl;
 
         Q.submit([&](sycl::handler &cgh) {
             sycl::local_accessor<double, 2> slice_ftmp(
                 sycl::range<2>(rest_n2, n1), cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<3>{rest_range, rest_loc_size},
+                sycl::nd_range<3>{rest_range, rest_wgsize},
                 [=](auto itm) {
                     mdspan3d_t fdist(fdist_dev, n0, n1, n2);
                     const int i0 = itm.get_global_id(0);
@@ -136,13 +127,13 @@ AdvX::Exp7::actual_advection(sycl::queue &Q, double *fdist_dev,
                     auto slice = std::experimental::submdspan(
                         fdist, i0, std::experimental::full_extent, i2);
 
-                    for (int ii1 = i1; ii1 < n1; ii1 += rest_loc_size.get(1)) {
+                    for (int ii1 = i1; ii1 < n1; ii1 += rest_wgsize.get(1)) {
                         slice_ftmp[i2][ii1] = solver(slice, i0, ii1, i2_fdist);
                     }
 
                     sycl::group_barrier(itm.get_group());
 
-                    for (int ii1 = i1; ii1 < n1; ii1 += rest_loc_size.get(1)) {
+                    for (int ii1 = i1; ii1 < n1; ii1 += rest_wgsize.get(1)) {
                         fdist(i0, ii1, i2_fdist) = slice_ftmp[i2][ii1];
                     }
                 }   // end lambda in parallel_for
@@ -151,50 +142,53 @@ AdvX::Exp7::actual_advection(sycl::queue &Q, double *fdist_dev,
 
 
     //     /* Update the sizes of dim2 for the local kernels later, we */
-        loc_wg_size =
-            sycl::range{loc_wg_size.get(0), loc_wg_size.get(1), floor_div};
-        local_ndr = sycl::range{local_ndr.get(0), local_ndr.get(1),
+        loc_wgsize =
+            sycl::range{loc_wgsize.get(0), loc_wgsize.get(1), floor_div};
+        loc_range = sycl::range{loc_range.get(0), loc_range.get(1),
                                 floor_div * loc_wg_size_2_};
 
 
-        // print_range("rest_range", rest_range, 0);
-        // print_range("rest_loc_size", rest_loc_size, 1);
+        print_range("rest_range", rest_range, 0);
+        print_range("rest_wgsize", rest_wgsize, 1);
     }   // end if rest>0
 
-    // print_range("local_ndr", local_ndr, 0);
-    // print_range("loc_wg_size", loc_wg_size, 1);
+    print_range("loc_range", loc_range, 0);
+    print_range("loc_wgsize", loc_wgsize, 1);
 
-    // print_range("global_ndr", global_ndr, 0);
-    // print_range("glob_wg_size", glob_wg_size, 1);
+    print_range("glob_range", glob_range, 0);
+    print_range("glob_wgsize", glob_wgsize, 1);
 
-    // auto const l_wg0 = loc_wg_size_0_;
-    auto const l_wg1 = local_ndr.get(1);;//loc_wg_size_1_;
-    auto const l_wg2 = local_ndr.get(2);//loc_wg_size_2_;
+    auto const l_wg1 = loc_wgsize.get(1);//loc_wg_size_1_;
+    auto const l_wg2 = loc_wgsize.get(2);//loc_wg_size_2_;
+    /* TODO: corect bug */
+
+    // std::cout << "My local accessor is of size: " << l_wg2<< "*" << n1 << std::endl;
 
     /* Local kernels, start from 0 to k_local-1*/
     return Q.submit([&](sycl::handler &cgh) {
         sycl::local_accessor<double, 2> slice_ftmp(sycl::range<2>(l_wg2, n1),
                                                    cgh);
 
-        cgh.parallel_for(sycl::nd_range<3>{local_ndr, loc_wg_size},
+        cgh.parallel_for(sycl::nd_range<3>{loc_range, loc_wgsize},
                          [=](auto itm) {
                              mdspan3d_t fdist(fdist_dev, n0, n1, n2);
                              const int i0 = itm.get_global_id(0);
                              const int i1 = itm.get_local_id(1);
-                             const int i2 = itm.get_global_id(2);
+
+                             const int i2_local = itm.get_local_id(2);
+                             const int i2 = i2_local + itm.get_group().get_group_id(2)*loc_wgsize.get(2) /*id_groupe*groupe_size TODO:*/;
 
                              auto slice = std::experimental::submdspan(
                                  fdist, i0, std::experimental::full_extent, i2);
 
                              for (int ii1 = i1; ii1 < n1; ii1 += l_wg1) {
-                                 slice_ftmp[i2][ii1] = solver(slice, i0, ii1, i2);
+                                 slice_ftmp[i2_local][ii1] = solver(slice, i0, ii1, i2);
                              }
-                             // }
 
                              sycl::group_barrier(itm.get_group());
 
                              for (int ii1 = i1; ii1 < n1; ii1 += l_wg1) {
-                                 fdist(i0, ii1, i2) = slice_ftmp[i2][ii1];
+                                 fdist(i0, ii1, i2) = slice_ftmp[i2_local][ii1];
                              }
                          }   // end lambda in parallel_for
         );   // end parallel_for nd_range
