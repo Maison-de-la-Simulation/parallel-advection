@@ -30,10 +30,6 @@ AdvX::Exp7::actual_advection(sycl::queue &Q, double *fdist_dev,
         throw std::invalid_argument(
             "n0_batch_size must be divisible by [loc/glob]_wg_size_0");
     }
-    if (loc_wg_size_0_ * n1 > MAX_LOCAL_ALLOC_) {
-        throw std::invalid_argument("loc_wg_size_0_*n1 must be < to "
-                                    "MAX_LOCAL_ALLOC_ (local memory limit)");
-    }
 
     sycl::range loc_range{k_local / loc_wg_size_0_, loc_wg_size_1_,
                           n2};   // TODO: bug here, not divisible
