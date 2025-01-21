@@ -30,18 +30,19 @@ AdvX::FullyLocal::operator()(sycl::queue &Q, double *fdist_dev,
                              const int i1 = itm.get_local_id(1);
                              const int i2 = itm.get_global_id(2);
 
+                             const int loc_i2 = itm.get_local_id(2);
+
                              auto slice = std::experimental::submdspan(
                                  fdist, i0, std::experimental::full_extent, i2);
 
                              for (int ii1 = i1; ii1 < n1; ii1 += wg1) {
-                                 slice_ftmp[i2][ii1] =
-                                     solver(slice, i0, ii1, i2);
+                                 slice_ftmp[loc_i2][ii1] = solver(slice, i0, ii1, i2);
                              }
 
                              sycl::group_barrier(itm.get_group());
 
                              for (int ii1 = i1; ii1 < n1; ii1 += wg1) {
-                                 fdist(i0, ii1, i2) = slice_ftmp[i2][ii1];
+                                 fdist(i0, ii1, i2) = slice_ftmp[loc_i2][ii1];
                              }
                          }   // end lambda in parallel_for
         );   // end parallel_for nd_range
