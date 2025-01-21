@@ -483,9 +483,10 @@ class Exp7 : public IAdvectorX {
         init_batchs(solver);
         init_splitting(solver);
 
+        //SYCL query returns the size in bytes
         max_elem_local_mem_ =
             q.get_device().get_info<sycl::info::device::local_mem_size>() /
-            sizeof(double);
+            sizeof(double); //TODO: this can be templated by ElemType
 
         auto n1 = solver.p.n1;
         auto n2 = solver.p.n2;
