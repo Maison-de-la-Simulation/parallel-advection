@@ -539,16 +539,6 @@ class Exp7 : public IAdvectorX {
 };
 
 // =============================================================================
-// class CudaLDG : public IAdvectorX {
-//     using IAdvectorX::IAdvectorX;
-
-//   public:
-//     sycl::event operator()(sycl::queue &Q, double* fdist_dev,
-//                            const Solver &solver) override;
-// };
-
-
-// =============================================================================
 // =============================================================================
 // For experiments only
 class FullyLocal : public IAdvectorX {
@@ -598,23 +588,6 @@ class FullyLocal : public IAdvectorX {
             wg_size_0_ = 1;
         }
 
-        // solver.p.loc_wg_size_0 = wg_size_0_;
-        // solver.p.loc_wg_size_1 = wg_size_1_;
-        // solver.p.loc_wg_size_2 = wg_size_2_;
-
-        // solver.p.glob_wg_size_0 = -1;
-        // solver.p.glob_wg_size_1 = -1;
-        // solver.p.glob_wg_size_2 = -1;
-
-        // n2/wg2 = 2.666
-        // floor = 2
-        // div = floor(n2/wg2) // ou ceil? et certains threads ne font rien? je pense que c'est mieux. Et je met un IF dans le noyau.
-
-        // auto rest = n2%wg_size_2_;
-        // autso div = std::floor(n2/wg_size_2_);
-        // wg2*div = global_size
-
-
         std::cout << "locWgSize0 : " << wg_size_0_ << std::endl;
         std::cout << "locWgSize1 : " << wg_size_1_ << std::endl;
         std::cout << "locWgSize2 : " << wg_size_2_ << std::endl;
@@ -627,8 +600,6 @@ class FullyGlobal : public IAdvectorX {
                                  const Solver &solver,
                                  const size_t &ny_batch_size,
                                  const size_t &ny_offset);
-
-    // static constexpr size_t PREF_WG_SIZE_ = 128;
 
     sycl::queue q_;
     double *scratch_;
@@ -664,14 +635,6 @@ class FullyGlobal : public IAdvectorX {
         }
 
         scratch_ = sycl::malloc_device<double>(solver.p.n0 * n1 * n2, q_);
-
-        // solver.p.loc_wg_size_0 = -1;
-        // solver.p.loc_wg_size_1 = -1;
-        // solver.p.loc_wg_size_2 = -1;
-
-        // solver.p.glob_wg_size_0 = wg_size_0_;
-        // solver.p.glob_wg_size_1 = wg_size_1_;
-        // solver.p.glob_wg_size_2 = wg_size_2_;
 
         std::cout << "globWgSize0 : " << wg_size_0_ << std::endl;
         std::cout << "globWgSize1 : " << wg_size_1_ << std::endl;
