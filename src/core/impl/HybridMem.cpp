@@ -15,7 +15,7 @@ print_range(std::string_view name, sycl::range<3> r, bool lvl = 0) {
 // ==========================================
 // ==========================================
 sycl::event
-AdvX::Exp7::actual_advection(sycl::queue &Q, double *fdist_dev,
+AdvX::HybridMem::actual_advection(sycl::queue &Q, double *fdist_dev,
                              const Solver &solver, const size_t &n0_batch_size,
                              const size_t &n0_offset, const size_t k_global,
                              const size_t k_local) {
@@ -195,7 +195,7 @@ AdvX::Exp7::actual_advection(sycl::queue &Q, double *fdist_dev,
 // ==========================================
 // ==========================================
 sycl::event
-AdvX::Exp7::operator()(sycl::queue &Q, double *fdist_dev,
+AdvX::HybridMem::operator()(sycl::queue &Q, double *fdist_dev,
                        const Solver &solver) {
 
     // can be parallel on multiple streams?

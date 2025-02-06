@@ -22,7 +22,7 @@ enum AdvImpl : int {
     EXP4,           // 12
     EXP5,           // 13
     EXP6,           // 14
-    // EXP7,     // 15
+    // HybridMem,     // 15
     FULLYGLOBAL,   // 16
     FULLYLOCAL,    // 17
 };
@@ -41,7 +41,7 @@ static bm_vec_t IMPL_RANGE = {
     AdvImpl::STREAMY,  AdvImpl::STRAD,        AdvImpl::REVIDX,
     AdvImpl::TWODIMWG, AdvImpl::SEQ_TWODIMWG,
     AdvImpl::EXP1, AdvImpl::EXP2, AdvImpl::EXP3, AdvImpl::EXP4,
-    AdvImpl::EXP5, AdvImpl::EXP6, /*AdvImpl::EXP7*/
+    AdvImpl::EXP5, AdvImpl::EXP6, /*AdvImpl::HybridMem*/
     AdvImpl::FULLYGLOBAL, AdvImpl::FULLYLOCAL,
     };
 
@@ -155,8 +155,8 @@ advectorFactory(const sycl::queue &q, ADVParams &p, Solver &s,
     case AdvImpl::EXP6:
         params.kernelImpl = "Exp6";
         break;
-    // case AdvImpl::EXP7:
-    //     params.kernelImpl = "Exp7";
+    // case AdvImpl::HybridMem:
+    //     params.kernelImpl = "HybridMem";
     //     break;
     case AdvImpl::FULLYGLOBAL:
         params.kernelImpl = "FullyGlobal";

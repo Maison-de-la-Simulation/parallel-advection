@@ -3,31 +3,13 @@ add_library(core)
 target_sources(core
   PUBLIC
   IAdvectorX.h
-  # impl/Sequential.cpp
   impl/BasicRange.cpp
-  # impl/BasicRange1D.cpp
-  impl/Hierarchical.cpp
   impl/NDRange.cpp
-  impl/Scoped.cpp
-  # impl/FakeAdvector.cpp
-  # impl/HierarchicalAlloca.cpp
-  # impl/FixedMemoryFootprint.cpp
-  # impl/StreamY.cpp
-  # impl/ReducedPrecision.cpp
-  # impl/CudaLDG.cpp
-  # impl/ReverseIndexes.cpp
-  # impl/StraddledMalloc.cpp
-  # impl/TwoDimWG.cpp
-  # impl/SeqTwoDimWG.cpp
-  impl/Exp1.cpp
-  impl/Exp2.cpp
-  impl/Exp3.cpp
-  impl/Exp4.cpp
-  impl/Exp5.cpp
-  impl/Exp6.cpp
-  impl/Exp7.cpp
-  impl/FullyLocal.cpp
-  impl/FullyGlobal.cpp
+  impl/Hierarchical.cpp
+  # impl/AdaptiveWg.cpp
+  impl/HybridMem.cpp
+  # impl/FullyLocal.cpp
+  # impl/FullyGlobal.cpp
   )
 
 target_include_directories(core
