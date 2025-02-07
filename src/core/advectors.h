@@ -101,6 +101,22 @@ class AdaptiveWg : public IAdvectorX {
 
         wg_dispatch_ = set_wg_size(solver.params.pref_wg_size,
                                    max_elem_local_mem, n0, n1, n2);
+
+        std::cout << "--------------------------------"    << std::endl;
+        std::cout << "n_batch0       : " << batchs_dispatch_d0_.n_batch_ << std::endl;
+        std::cout << "last_n0_offset : " << batchs_dispatch_d0_.last_offset_ << std::endl;
+        std::cout << "last_batch_size_0 : " << batchs_dispatch_d0_.last_batch_size_ << std::endl;
+        
+        std::cout << std::endl;
+        
+        std::cout << "n_batch2       : " << batchs_dispatch_d2_.n_batch_ << std::endl;
+        std::cout << "last_n2_offset : " << batchs_dispatch_d2_.last_offset_ << std::endl;
+        std::cout << "last_batch_size_2 : " << batchs_dispatch_d2_.last_batch_size_ << std::endl;
+
+
+        std::cout << "max_elems_alloc: " << max_elem_local_mem << std::endl;
+        std::cout << "--------------------------------"    << std::endl;
+    
     }
 };
 

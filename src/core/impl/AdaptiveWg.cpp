@@ -28,6 +28,10 @@ AdvX::AdaptiveWg::actual_advection(sycl::queue &Q, double *fdist_dev,
     const sycl::range global_size{n0_batch_size, w1, n2_batch_size};
     const sycl::range local_size{w0, w1, w2};
 
+    // print_range("global_size", global_size);
+    // print_range("local_size", local_size);
+    // print_range("local_accessor_range", sycl::range(w0, w2, n1));
+
     return Q.submit([&](sycl::handler &cgh) {
         sycl::local_accessor<double, 3> scratch(sycl::range(w0, w2, n1), cgh);
 
@@ -37,21 +41,25 @@ AdvX::AdaptiveWg::actual_advection(sycl::queue &Q, double *fdist_dev,
                 mdspan3d_t fdist(fdist_dev, n0, n1, n2);
                 mdspan3d_t scr(scratch.get_pointer(), w0, w2, n1);
 
+                const int local_i0 = itm.get_local_id(0);
                 const int i0 = itm.get_global_id(0) + n0_offset;
+
                 const int i1 = itm.get_local_id(1);
+
+                const int local_i2 = itm.get_local_id(2);
                 const int i2 = itm.get_global_id(2) + n2_offset;
 
                 auto slice = std::experimental::submdspan(
                     fdist, i0, std::experimental::full_extent, i2);
 
                 for (int ii1 = i1; ii1 < n1; ii1 += w1) {
-                    scr(i0, ii1, i2) = solver(slice, i0, ii1, i2);
+                    scr(local_i0, local_i2, ii1) = solver(slice, i0, ii1, i2);
                 }
 
                 sycl::group_barrier(itm.get_group());
 
                 for (int ii1 = i1; ii1 < n1; ii1 += w1) {
-                    fdist(i0, ii1, i2) = scr(i0, ii1, i2);
+                    fdist(i0, ii1, i2) = scr(local_i0, local_i2, ii1);
                 }
             }   // end lambda in parallel_for
         );   // end parallel_for nd_range
@@ -64,15 +72,21 @@ sycl::event
 AdvX::AdaptiveWg::operator()(sycl::queue &Q, double *fdist_dev,
                        const Solver &solver) {
 
+    // std::cout << "operator()" << std::endl;
+
     for (size_t i0_batch = 0; i0_batch < batchs_dispatch_d0_.n_batch_ - 1;
          ++i0_batch) {
 
         size_t n0_offset = (i0_batch * max_batchs_x_);
 
-        for (size_t i2_batch = 2; i2_batch < batchs_dispatch_d2_.n_batch_ - 1;
+        // std::cout << "n0_offset" << n0_offset << std::endl;
+
+        for (size_t i2_batch = 0; i2_batch < batchs_dispatch_d2_.n_batch_ - 1;
             ++i2_batch) {
 
             size_t n2_offset = (i2_batch * max_batchs_yz_);
+
+            // std::cout << "n2_offset" << n2_offset << std::endl;
 
             actual_advection(Q, fdist_dev, solver, max_batchs_x_, n0_offset,
                              max_batchs_yz_, n2_offset)
@@ -80,6 +94,7 @@ AdvX::AdaptiveWg::operator()(sycl::queue &Q, double *fdist_dev,
             }
     }
 
+    // std::cout << "last iteration"<<std::endl;
     // return the last advection with the rest
     return actual_advection(
         Q, fdist_dev, solver, batchs_dispatch_d0_.last_batch_size_,

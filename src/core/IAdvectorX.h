@@ -26,7 +26,6 @@ struct WgDispatch{
 
 struct BlockingDispatch1D{
   size_t n_batch_;
-  size_t batch_size_;
   size_t last_batch_size_;
   size_t last_offset_;
 };
