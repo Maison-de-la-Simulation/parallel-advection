@@ -16,9 +16,11 @@ print_range(std::string_view name, sycl::range<3> r, bool lvl = 0) {
 // ==========================================
 sycl::event
 AdvX::HybridMem::actual_advection(sycl::queue &Q, double *fdist_dev,
-                             const Solver &solver, const size_t &n0_batch_size,
-                             const size_t &n0_offset, const size_t k_global,
-                             const size_t k_local) {
+                                   const Solver &solver,
+                                   const size_t &n0_batch_size,
+                                   const size_t &n0_offset,
+                                   const size_t &n2_batch_size,
+                                   const size_t &n2_offset) {
 
     auto const n0 = solver.p.n0;
     auto const n1 = solver.p.n1;

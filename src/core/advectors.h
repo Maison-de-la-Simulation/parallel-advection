@@ -1,11 +1,9 @@
 #pragma once
-#include "AdvectionParams.h"
 #include "IAdvectorX.h"
 #include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <experimental/mdspan>
-#include <stdexcept>
 
 using real_t = double;
 
@@ -59,257 +57,202 @@ class NDRange : public IAdvectorX {
 };
 
 // =============================================================================
-class HybridMem : public IAdvectorX {
+class AdaptiveWg : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
+    WgDispatch wg_dispatch_;
+    BlockingDispatch1D batchs_dispatch_d0_;
+    BlockingDispatch1D batchs_dispatch_d2_;
+
     sycl::event actual_advection(sycl::queue &Q, double *fdist_dev,
-                                 const Solver &solver,
-                                 const size_t &ny_batch_size,
-                                 const size_t &ny_offset, const size_t k_global,
-                                 const size_t k_local);
-
-    void init_batchs(const Solver &s) {
-        /* Compute number of batchs */
-        float div =
-            static_cast<float>(s.p.n0) / static_cast<float>(MAX_N0_BATCHS_);
-        auto floor_div = std::floor(div);
-        auto div_is_int = div == floor_div;
-        n_batch_ = div_is_int ? div : floor_div + 1;
-
-        last_n0_size_ = div_is_int ? MAX_N0_BATCHS_ : (s.p.n0 % MAX_N0_BATCHS_);
-        last_n0_offset_ = MAX_N0_BATCHS_ * (n_batch_ - 1);
-    }
-
-    /* Initiate how many local/global kernels will be running*/
-    void init_splitting(const Solver &solver) {
-        auto div = solver.p.n0 < MAX_N0_BATCHS_
-                       ? solver.p.n0 * solver.p.percent_loc
-                       : MAX_N0_BATCHS_ * solver.p.percent_loc;
-        k_local_ = std::floor(div);
-
-        k_global_ = solver.p.n0 < MAX_N0_BATCHS_ ? solver.p.n0 - k_local_
-                                                 : MAX_N0_BATCHS_ - k_local_;
-
-        if (n_batch_ > 1) {
-            last_k_local_ = std::floor(last_n0_size_ * solver.p.percent_loc);
-            last_k_global_ = last_n0_size_ - last_k_local_;
-        } else {
-            last_k_local_ = k_local_;
-            last_k_global_ = k_global_;
-        }
-    }
-
-    /* Max number of batch submitted */
-    static constexpr size_t MAX_N0_BATCHS_ = 65535;
-    // static constexpr size_t PREF_WG_SIZE_ = 128;   // for A100
-    // static constexpr size_t MAX_LOCAL_ALLOC_ = 6144;
-
-    size_t max_elem_local_mem_;
-
-    size_t n_batch_;
-    size_t last_n0_size_;
-    size_t last_n0_offset_;
-
-    /* Number of kernels to run in global memory */
-    // float p_local_kernels = 0.5; //half by default
-    size_t k_local_;
-    size_t k_global_;
-    size_t last_k_global_;
-    size_t last_k_local_;
-
-    size_t loc_wg_size_0_ = 1;   // TODO: set this as in alg latex
-    size_t loc_wg_size_1_;
-    size_t loc_wg_size_2_;
-
-    size_t glob_wg_size_0_ = 1;   // TODO: set this as in alg latex
-    size_t glob_wg_size_1_;
-    size_t glob_wg_size_2_;
-
-    sycl::queue q_;
-    double *scratchG_;
+                                   const Solver &solver,
+                                   const size_t &n0_batch_size,
+                                   const size_t &n0_offset,
+                                   const size_t &n2_batch_size,
+                                   const size_t &n2_offset);
 
   public:
     sycl::event operator()(sycl::queue &Q, double *fdist_dev,
                            const Solver &solver) override;
 
-    HybridMem() = delete;
+    AdaptiveWg() = delete;
 
-    // TODO: gérer le cas ou percent_loc est 1 ou 0 (on fait tou dans la local
-    // mem ou tout dnas la global)
-    HybridMem(const Solver &solver, const sycl::queue &q) : q_(q) {
-        init_batchs(solver);
-        init_splitting(solver);
+    const size_t max_batchs_x_ = 2147483648-1;
+    const size_t max_batchs_yz_ = 65536-1;
+    AdaptiveWg(const Solver &solver, sycl::queue q){
+        const auto n0 = solver.params.n0;
+        const auto n1 = solver.params.n1;
+        const auto n2 = solver.params.n2;
+
+        /* We should be able to query max_batchs to the API. 
+                 |    x    |   y/z   |
+            CUDA:| 2**31-1 | 2**16-1 |
+            HIP :| 2**32-1 | 2**32-1 |
+            L0  :| 2**32-1 | 2**32-1 | (compile with -fno-sycl-query-fit-in-int)
+            CPU : a lot
+        */
+        batchs_dispatch_d0_ = init_1d_blocking(n0, max_batchs_x_);
+        batchs_dispatch_d2_ =
+            init_1d_blocking(n2, max_batchs_yz_);
 
         //SYCL query returns the size in bytes
-        max_elem_local_mem_ =
+        auto max_elem_local_mem =
             q.get_device().get_info<sycl::info::device::local_mem_size>() /
-            sizeof(double); //TODO: this can be templated by ElemType
+            sizeof(double);
 
-        auto n1 = solver.p.n1;
-        auto n2 = solver.p.n2;
-        auto pref_wg_size = solver.p.pref_wg_size;
-
-        /* Global kernels wg sizes */
-        glob_wg_size_0_ = 1;
-        if (n2 >= pref_wg_size) {
-            glob_wg_size_1_ = 1;
-            glob_wg_size_2_ = pref_wg_size;
-        } else {
-            if (n1 * n2 >= pref_wg_size) {
-                glob_wg_size_1_ = pref_wg_size / n2;
-                glob_wg_size_2_ = n2;
-            } else {
-                // Not enough n1*n2 to fill up work group, we use more n0
-                glob_wg_size_0_ = std::floor(pref_wg_size / n1 * n2);
-                glob_wg_size_1_ = n1;
-                glob_wg_size_2_ = n2;
-            }
-        }
-
-        if (glob_wg_size_2_ * n1 >= max_elem_local_mem_) {
-            loc_wg_size_2_ = std::floor(max_elem_local_mem_ / n1);
-            loc_wg_size_1_ = std::floor(pref_wg_size / loc_wg_size_2_);
-            loc_wg_size_0_ = 1;
-        } else {
-            loc_wg_size_0_ = glob_wg_size_0_;
-            loc_wg_size_1_ = glob_wg_size_1_;
-            loc_wg_size_2_ = glob_wg_size_2_;
-        }
-
-        if (k_global_ > 0) {
-            scratchG_ = sycl::malloc_device<double>(
-                k_global_ * solver.p.n1 * solver.p.n2, q);
-            std::cout << "Allocated " << k_global_ << "*" << solver.p.n1 << "*"
-                      << solver.p.n2 << "bytes in memory for scartchG"
-                      << std::endl;
-        } else {
-            scratchG_ = nullptr;
-        }
-
-
-        std::cout << "--------------------------------"    << std::endl;
-        std::cout << "n_batch        : " << n_batch_        << std::endl;
-        std::cout << "k_local        : " << k_local_        << std::endl;
-        std::cout << "k_global       : " << k_global_       << std::endl;
-        std::cout << "last_k_global  : " << last_k_global_  << std::endl;
-        std::cout << "last_k_local   : " << last_k_local_   << std::endl;
-        std::cout << "last_n0_offset : " << last_n0_offset_ << std::endl;
-        std::cout << "max_elems_alloc: " << max_elem_local_mem_ << std::endl;
-        std::cout << "--------------------------------"    << std::endl;
-    }
-
-    ~HybridMem() {
-        if (scratchG_ != nullptr)
-            sycl::free(scratchG_, q_);
+        wg_dispatch_ = set_wg_size(solver.params.pref_wg_size,
+                                   max_elem_local_mem, n0, n1, n2);
     }
 };
 
-// =============================================================================
-// =============================================================================
-// For experiments only
-class FullyLocal : public IAdvectorX {
-    using IAdvectorX::IAdvectorX;
-    sycl::event actual_advection(sycl::queue &Q, double *fdist_dev,
-                                 const Solver &solver,
-                                 const size_t &ny_batch_size,
-                                 const size_t &ny_offset);
+// // =============================================================================
+// class HybridMem : public IAdvectorX {
+//     using IAdvectorX::IAdvectorX;
 
-    static constexpr size_t MAX_LOCAL_ALLOC_ = 6144;
-    // static constexpr size_t PREF_WG_SIZE_ = 128;
+// };
 
-    size_t wg_size_0_;
-    size_t wg_size_1_;
-    size_t wg_size_2_;
+// // =============================================================================
+// class HybridMem : public IAdvectorX {
+//     using IAdvectorX::IAdvectorX;
+//     sycl::event actual_advection(sycl::queue &Q, double *fdist_dev,
+//                                  const Solver &solver,
+//                                  const size_t &ny_batch_size,
+//                                  const size_t &ny_offset, const size_t k_global,
+//                                  const size_t k_local);
 
-  public:
-    sycl::event operator()(sycl::queue &Q, double *fdist_dev,
-                           const Solver &solver) override;
+//     void init_batchs(const Solver &s) {
+//         /* Compute number of batchs */
+//         float div =
+//             static_cast<float>(s.p.n0) / static_cast<float>(MAX_N0_BATCHS_);
+//         auto floor_div = std::floor(div);
+//         auto div_is_int = div == floor_div;
+//         n_batch_ = div_is_int ? div : floor_div + 1;
 
-    FullyLocal() = delete;
+//         last_n0_size_ = div_is_int ? MAX_N0_BATCHS_ : (s.p.n0 % MAX_N0_BATCHS_);
+//         last_n0_offset_ = MAX_N0_BATCHS_ * (n_batch_ - 1);
+//     }
 
-    FullyLocal(Solver &solver) {
-        auto n1 = solver.p.n1;
-        auto n2 = solver.p.n2;
-        auto pref_wg_size = solver.p.pref_wg_size;
+//     /* Initiate how many local/global kernels will be running*/
+//     void init_splitting(const Solver &solver) {
+//         auto div = solver.p.n0 < MAX_N0_BATCHS_
+//                        ? solver.p.n0 * solver.p.percent_loc
+//                        : MAX_N0_BATCHS_ * solver.p.percent_loc;
+//         k_local_ = std::floor(div);
 
-        wg_size_0_ = 1;
-        if (n2 >= pref_wg_size) {
-            wg_size_1_ = 1;
-            wg_size_2_ = pref_wg_size;
-        } else {
-            if (n1 * n2 >= pref_wg_size) {
-                wg_size_1_ = std::floor(pref_wg_size / n2);
-                wg_size_2_ = n2;
-            } else {
-                // Not enough n1*n2 to fill up work group, we use more n0
-                wg_size_0_ = std::floor(pref_wg_size / n1 * n2);
-                wg_size_1_ = n1;
-                wg_size_2_ = n2;
-            }
-        }
+//         k_global_ = solver.p.n0 < MAX_N0_BATCHS_ ? solver.p.n0 - k_local_
+//                                                  : MAX_N0_BATCHS_ - k_local_;
 
-        if (wg_size_2_ * n1 >= MAX_LOCAL_ALLOC_) {
-            wg_size_2_ = std::floor(MAX_LOCAL_ALLOC_ / n1);
-            wg_size_1_ = std::floor(pref_wg_size / wg_size_2_);
-            wg_size_0_ = 1;
-        }
+//         if (n_batch_ > 1) {
+//             last_k_local_ = std::floor(last_n0_size_ * solver.p.percent_loc);
+//             last_k_global_ = last_n0_size_ - last_k_local_;
+//         } else {
+//             last_k_local_ = k_local_;
+//             last_k_global_ = k_global_;
+//         }
+//     }
 
-        std::cout << "locWgSize0 : " << wg_size_0_ << std::endl;
-        std::cout << "locWgSize1 : " << wg_size_1_ << std::endl;
-        std::cout << "locWgSize2 : " << wg_size_2_ << std::endl;
-    }
-};
+//     /* Max number of batch submitted */
+//     static constexpr size_t MAX_N0_BATCHS_ = 65535;
+//     // static constexpr size_t PREF_WG_SIZE_ = 128;   // for A100
+//     // static constexpr size_t MAX_LOCAL_ALLOC_ = 6144;
 
-class FullyGlobal : public IAdvectorX {
-    using IAdvectorX::IAdvectorX;
-    sycl::event actual_advection(sycl::queue &Q, double *fdist_dev,
-                                 const Solver &solver,
-                                 const size_t &ny_batch_size,
-                                 const size_t &ny_offset);
+//     size_t max_elem_local_mem_;
 
-    sycl::queue q_;
-    double *scratch_;
-    size_t wg_size_0_;
-    size_t wg_size_1_;
-    size_t wg_size_2_;
+//     size_t n_batch_;
+//     size_t last_n0_size_;
+//     size_t last_n0_offset_;
 
-  public:
-    sycl::event operator()(sycl::queue &Q, double *fdist_dev,
-                           const Solver &solver) override;
+//     /* Number of kernels to run in global memory */
+//     // float p_local_kernels = 0.5; //half by default
+//     size_t k_local_;
+//     size_t k_global_;
+//     size_t last_k_global_;
+//     size_t last_k_local_;
 
-    FullyGlobal() = delete;
+//     size_t loc_wg_size_0_ = 1;   // TODO: set this as in alg latex
+//     size_t loc_wg_size_1_;
+//     size_t loc_wg_size_2_;
 
-    FullyGlobal(Solver &solver, const sycl::queue &q) : q_(q) {
-        auto n1 = solver.p.n1;
-        auto n2 = solver.p.n2;
-        auto pref_wg_size = solver.p.pref_wg_size;
+//     size_t glob_wg_size_0_ = 1;   // TODO: set this as in alg latex
+//     size_t glob_wg_size_1_;
+//     size_t glob_wg_size_2_;
 
-        wg_size_0_ = 1;
-        if (n2 >= pref_wg_size) {
-            wg_size_1_ = 1;
-            wg_size_2_ = pref_wg_size;
-        } else {
-            if (n1 * n2 >= pref_wg_size) {
-                wg_size_1_ = std::floor(pref_wg_size / n2);
-                wg_size_2_ = n2;
-            } else {
-                // Not enough n1*n2 to fill up work group, we use more n0
-                wg_size_0_ = std::floor(pref_wg_size / n1 * n2);
-                wg_size_1_ = n1;
-                wg_size_2_ = n2;
-            }
-        }
+//     sycl::queue q_;
+//     double *scratchG_;
 
-        scratch_ = sycl::malloc_device<double>(solver.p.n0 * n1 * n2, q_);
+//   public:
+//     sycl::event operator()(sycl::queue &Q, double *fdist_dev,
+//                            const Solver &solver) override;
 
-        std::cout << "globWgSize0 : " << wg_size_0_ << std::endl;
-        std::cout << "globWgSize1 : " << wg_size_1_ << std::endl;
-        std::cout << "globWgSize2 : " << wg_size_2_ << std::endl;
-    }
+//     HybridMem() = delete;
 
-    ~FullyGlobal(){
-        sycl::free(scratch_, q_);
-    }
-};
+//     // TODO: gérer le cas ou percent_loc est 1 ou 0 (on fait tou dans la local
+//     // mem ou tout dnas la global)
+//     HybridMem(const Solver &solver, const sycl::queue &q) : q_(q) {
+//         init_batchs(solver);
+//         init_splitting(solver);
 
+//         //SYCL query returns the size in bytes
+//         max_elem_local_mem_ =
+//             q.get_device().get_info<sycl::info::device::local_mem_size>() /
+//             sizeof(double); //TODO: this can be templated by ElemType
+
+//         auto n1 = solver.p.n1;
+//         auto n2 = solver.p.n2;
+//         auto pref_wg_size = solver.p.pref_wg_size;
+
+//         /* Global kernels wg sizes */
+//         glob_wg_size_0_ = 1;
+//         if (n2 >= pref_wg_size) {
+//             glob_wg_size_1_ = 1;
+//             glob_wg_size_2_ = pref_wg_size;
+//         } else {
+//             if (n1 * n2 >= pref_wg_size) {
+//                 glob_wg_size_1_ = pref_wg_size / n2;
+//                 glob_wg_size_2_ = n2;
+//             } else {
+//                 // Not enough n1*n2 to fill up work group, we use more n0
+//                 glob_wg_size_0_ = std::floor(pref_wg_size / n1 * n2);
+//                 glob_wg_size_1_ = n1;
+//                 glob_wg_size_2_ = n2;
+//             }
+//         }
+
+//         if (glob_wg_size_2_ * n1 >= max_elem_local_mem_) {
+//             loc_wg_size_2_ = std::floor(max_elem_local_mem_ / n1);
+//             loc_wg_size_1_ = std::floor(pref_wg_size / loc_wg_size_2_);
+//             loc_wg_size_0_ = 1;
+//         } else {
+//             loc_wg_size_0_ = glob_wg_size_0_;
+//             loc_wg_size_1_ = glob_wg_size_1_;
+//             loc_wg_size_2_ = glob_wg_size_2_;
+//         }
+
+//         if (k_global_ > 0) {
+//             scratchG_ = sycl::malloc_device<double>(
+//                 k_global_ * solver.p.n1 * solver.p.n2, q);
+//             std::cout << "Allocated " << k_global_ << "*" << solver.p.n1 << "*"
+//                       << solver.p.n2 << "bytes in memory for scartchG"
+//                       << std::endl;
+//         } else {
+//             scratchG_ = nullptr;
+//         }
+
+
+//         std::cout << "--------------------------------"    << std::endl;
+//         std::cout << "n_batch        : " << n_batch_        << std::endl;
+//         std::cout << "k_local        : " << k_local_        << std::endl;
+//         std::cout << "k_global       : " << k_global_       << std::endl;
+//         std::cout << "last_k_global  : " << last_k_global_  << std::endl;
+//         std::cout << "last_k_local   : " << last_k_local_   << std::endl;
+//         std::cout << "last_n0_offset : " << last_n0_offset_ << std::endl;
+//         std::cout << "max_elems_alloc: " << max_elem_local_mem_ << std::endl;
+//         std::cout << "--------------------------------"    << std::endl;
+//     }
+
+//     ~HybridMem() {
+//         if (scratchG_ != nullptr)
+//             sycl::free(scratchG_, q_);
+//     }
+// };
 
 }   // namespace AdvX
