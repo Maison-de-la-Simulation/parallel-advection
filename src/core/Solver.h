@@ -18,10 +18,10 @@ double static constexpr loc[] = {-1. / 24, 1. / 24.,  -1. / 12.,
 //     fdist, i0, std::experimental::full_extent, i2);
 
 struct Solver {
-    ADVParams p;
+    ADVParams params;
 
     Solver() = delete;
-    Solver(const ADVParams &params) : p(params){};
+    Solver(const ADVParams &p) : params(p){};
 
     // ==========================================
     // ==========================================
@@ -61,30 +61,33 @@ struct Solver {
     /* Computes the covered distance by x during dt. returns the feet coord */
     [[nodiscard]] inline __attribute__((always_inline)) double
     displ(const int i1, const int i0) const noexcept {
-        double const x = coord(i1, p.minRealX, p.dx);
-        double const vx = coord(i0, p.minRealVx, p.dvx);
+        double const x = coord(i1, params.minRealX, params.dx);
+        double const vx = coord(i0, params.minRealVx, params.dvx);
 
-        double const displx = p.dt * vx;
+        double const displx = params.dt * vx;
 
-        return p.minRealX +
-               sycl::fmod(p.realWidthX + x - displx - p.minRealX, p.realWidthX);
+        return params.minRealX +
+               sycl::fmod(params.realWidthX + x - displx - params.minRealX,
+                          params.realWidthX);
     }   // end displ
 
     // ==========================================
     // ==========================================
     /* The _solve_ function of the algorithm presented */
     template <class ArrayLike1D>
-    double operator()(const ArrayLike1D data, const size_t &i0, const size_t &i1,
-                      const size_t &i2) const {
+    double operator()(const ArrayLike1D data, const size_t &i0,
+                      const size_t &i1, const size_t &i2) const {
 
         double const xFootCoord = displ(i1, i0);
 
         // index of the cell to the left of footCoord
-        const int leftNode = sycl::floor((xFootCoord - p.minRealX) * p.inv_dx);
+        const int leftNode =
+            sycl::floor((xFootCoord - params.minRealX) * params.inv_dx);
 
         const double d_prev1 =
             LAG_OFFSET +
-            p.inv_dx * (xFootCoord - coord(leftNode, p.minRealX, p.dx));
+            params.inv_dx *
+                (xFootCoord - coord(leftNode, params.minRealX, params.dx));
 
         auto coef = lag_basis(d_prev1);
 
@@ -92,7 +95,7 @@ struct Solver {
 
         double value = 0.;
         for (int k = 0; k <= LAG_ORDER; k++) {
-            int id1_ipos = (p.n1 + ipos1 + k) % p.n1;
+            int id1_ipos = (params.n1 + ipos1 + k) % params.n1;
 
             value += coef[k] * data(id1_ipos);
         }

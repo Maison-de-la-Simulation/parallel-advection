@@ -3,12 +3,12 @@
 sycl::event
 AdvX::Hierarchical::operator()(sycl::queue &Q, double *fdist_dev,
                                const Solver &solver) {
-    const auto n0 = solver.p.n0;
-    const auto n1 = solver.p.n1;
-    const auto n2 = solver.p.n2;
+    const auto n0 = solver.params.n0;
+    const auto n1 = solver.params.n1;
+    const auto n2 = solver.params.n2;
 
     const sycl::range nb_wg{n0, 1, n2};
-    const sycl::range wg_size{1, solver.p.pref_wg_size, 1};
+    const sycl::range wg_size{1, solver.params.pref_wg_size, 1};
 
     return Q.submit([&](sycl::handler &cgh) {
         sycl::local_accessor<double, 1> slice_ftmp(sycl::range<1>(n1), cgh);

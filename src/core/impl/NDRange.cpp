@@ -4,9 +4,9 @@ sycl::event
 AdvX::NDRange::operator()(sycl::queue &Q,
                           double* fdist_dev,
                           const Solver &solver) {
-    auto const n0 = solver.p.n0;
-    auto const n1 = solver.p.n1;
-    auto const n2 = solver.p.n2;
+    auto const n0 = solver.params.n0;
+    auto const n1 = solver.params.n1;
+    auto const n2 = solver.params.n2;
 
     const sycl::range global_size{n0, n1, n2};
     const sycl::range local_size{1, n1, 1};

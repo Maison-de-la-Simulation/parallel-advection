@@ -24,10 +24,14 @@ kernel_impl_factory(const sycl::queue &q, const ADVParamsNonCopyable &params,
     case str2int("BasicRange"):
         return sref::make_unique<AdvX::BasicRange>(params.n1, params.n0,
                                                    params.n2);
-    case str2int("Hierarchical"):
-        return sref::make_unique<AdvX::Hierarchical>();
     case str2int("NDRange"):
         return sref::make_unique<AdvX::NDRange>();
+    case str2int("Hierarchical"):
+        return sref::make_unique<AdvX::Hierarchical>();
+
+    // case str2int("AdaptiveWg"):
+    //     return sref::make_unique<AdvX::HybridMem>(params, q);
+
     case str2int("HybridMem"):
         return sref::make_unique<AdvX::HybridMem>(params, q);
     // case str2int("FullyLocal"):

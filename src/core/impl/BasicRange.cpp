@@ -3,9 +3,9 @@
 sycl::event
 AdvX::BasicRange::operator()(sycl::queue &Q, double *fdist_dev,
                              const Solver &solver) {
-    auto const n0 = solver.p.n0;
-    auto const n1 = solver.p.n1;
-    auto const n2 = solver.p.n2;
+    auto const n0 = solver.params.n0;
+    auto const n1 = solver.params.n1;
+    auto const n2 = solver.params.n2;
 
     sycl::range r3d(n0, n1, n2);
 

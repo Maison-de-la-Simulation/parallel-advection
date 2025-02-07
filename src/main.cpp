@@ -13,7 +13,7 @@ std::chrono::duration<double>
 advection(sycl::queue &Q, double* fidst_dev,
           sref::unique_ref<IAdvectorX> &advector, const Solver &solver) {
 
-    auto static const maxIter = solver.p.maxIter;
+    auto static const maxIter = solver.params.maxIter;
 
     auto start = std::chrono::high_resolution_clock::now();
     // Time loop
