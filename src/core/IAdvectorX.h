@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include <cstddef>
 #include <hipSYCL/sycl/libkernel/range.hpp>
 #include <sycl/sycl.hpp>
@@ -118,11 +117,6 @@ compute_ideal_wg_size(const size_t pref_wg_size, const size_t max_elem_mem,
     return dispatch;
 }   // set_wg_size
 
-/*TODO: check_work_group_compatibility(WgDispatch, BlockingDispatch){}
-If I cannot make a global range with this size on this dimension, returns
-a valid wg configuration for this batch size
-*/
-// bool check_wg_compat(, const BlockingDispatch1D)
 [[nodiscard]] inline WgDispatch
 adjust_wg_dispatch(const WgDispatch &ideal_wg,
                    const BlockingDispatch1D &block_d0,
