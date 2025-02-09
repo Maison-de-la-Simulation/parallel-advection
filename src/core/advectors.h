@@ -59,16 +59,20 @@ class NDRange : public IAdvectorX {
 // =============================================================================
 class AdaptiveWg : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
+
     WgDispatch wg_dispatch_;
-    BlockingDispatch1D batchs_dispatch_d0_;
-    BlockingDispatch1D batchs_dispatch_d2_;
+    BlockingConfig1D bconf_d0_;
+    BlockingConfig1D bconf_d2_;
+
+    // const size_t max_batchs_x_ = 2147483648-1;
+    // const size_t max_batchs_yz_ = 65536-1;
+    const size_t max_batchs_x_ = 100;
+    const size_t max_batchs_yz_ = 100;
 
     sycl::event actual_advection(sycl::queue &Q, double *fdist_dev,
                                    const Solver &solver,
-                                   const size_t &n0_batch_size,
-                                   const size_t &n0_offset,
-                                   const size_t &n2_batch_size,
-                                   const size_t &n2_offset);
+                                   const BlockingDispatch1D &block_n0,
+                                   const BlockingDispatch1D &block_n2);
 
   public:
     sycl::event operator()(sycl::queue &Q, double *fdist_dev,
@@ -76,8 +80,7 @@ class AdaptiveWg : public IAdvectorX {
 
     AdaptiveWg() = delete;
 
-    const size_t max_batchs_x_ = 2147483648-1;
-    const size_t max_batchs_yz_ = 65536-1;
+
     AdaptiveWg(const Solver &solver, sycl::queue q){
         const auto n0 = solver.params.n0;
         const auto n1 = solver.params.n1;
@@ -90,9 +93,8 @@ class AdaptiveWg : public IAdvectorX {
             L0  :| 2**32-1 | 2**32-1 | (compile with -fno-sycl-query-fit-in-int)
             CPU : a lot
         */
-        batchs_dispatch_d0_ = init_1d_blocking(n0, max_batchs_x_);
-        batchs_dispatch_d2_ =
-            init_1d_blocking(n2, max_batchs_yz_);
+        bconf_d0_ = init_1d_blocking(n0, max_batchs_x_);
+        bconf_d2_ = init_1d_blocking(n2, max_batchs_yz_);
 
         //SYCL query returns the size in bytes
         auto max_elem_local_mem =
@@ -103,16 +105,17 @@ class AdaptiveWg : public IAdvectorX {
                                    max_elem_local_mem, n0, n1, n2);
 
         std::cout << "--------------------------------"    << std::endl;
-        std::cout << "n_batch0       : " << batchs_dispatch_d0_.n_batch_ << std::endl;
-        std::cout << "last_n0_offset : " << batchs_dispatch_d0_.last_offset_ << std::endl;
-        std::cout << "last_batch_size_0 : " << batchs_dispatch_d0_.last_batch_size_ << std::endl;
+        std::cout << "n_batch0       : " << bconf_d0_.n_batch_ << std::endl;
+        std::cout << "last_n0_offset : " << bconf_d0_.last_dispatch_.offset_ << std::endl;
+        std::cout << "last_batch_size_0 : " << bconf_d0_.last_dispatch_.batch_size_ << std::endl;
         
         std::cout << std::endl;
         
-        std::cout << "n_batch2       : " << batchs_dispatch_d2_.n_batch_ << std::endl;
-        std::cout << "last_n2_offset : " << batchs_dispatch_d2_.last_offset_ << std::endl;
-        std::cout << "last_batch_size_2 : " << batchs_dispatch_d2_.last_batch_size_ << std::endl;
+        std::cout << "n_batch2       : " << bconf_d2_.n_batch_ << std::endl;
+        std::cout << "last_n2_offset : " << bconf_d2_.last_dispatch_.offset_ << std::endl;
+        std::cout << "last_batch_size_2 : " << bconf_d2_.last_dispatch_.batch_size_ << std::endl;
 
+        std::cout << std::endl;
 
         std::cout << "max_elems_alloc: " << max_elem_local_mem << std::endl;
         std::cout << "--------------------------------"    << std::endl;
@@ -120,11 +123,22 @@ class AdaptiveWg : public IAdvectorX {
     }
 };
 
-// // =============================================================================
-// class HybridMem : public IAdvectorX {
-//     using IAdvectorX::IAdvectorX;
+// =============================================================================
+class HybridMem : public IAdvectorX {
+    using IAdvectorX::IAdvectorX;
+    WgDispatch wg_dispatch_;
+    BlockingDispatch1D batchs_dispatch_d0_;
+    BlockingDispatch1D batchs_dispatch_d2_;
 
-// };
+    sycl::event actual_advection(sycl::queue &Q, double *fdist_dev,
+                                   const Solver &solver,
+                                   const size_t &n0_batch_size,
+                                   const size_t &n0_offset,
+                                   const size_t &n2_batch_size,
+                                   const size_t &n2_offset,
+                                   const size_t k_global,
+                                   const size_t k_local);
+};
 
 // // =============================================================================
 // class HybridMem : public IAdvectorX {

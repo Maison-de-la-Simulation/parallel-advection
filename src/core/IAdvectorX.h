@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+#include <cstddef>
 #include <sycl/sycl.hpp>
 #include <Solver.h>
 
@@ -25,26 +27,35 @@ struct WgDispatch{
 };
 
 struct BlockingDispatch1D{
-  size_t n_batch_;
-  size_t last_batch_size_;
-  size_t last_offset_;
+  size_t batch_size_;
+  size_t offset_;
+
+  void set_offset(size_t & i){offset_ = batch_size_*i;}
 };
 
-[[nodiscard]] inline BlockingDispatch1D
+struct BlockingConfig1D{
+  size_t n_batch_;
+  size_t max_batch_size_;
+  BlockingDispatch1D last_dispatch_;
+};
+
+[[nodiscard]] inline BlockingConfig1D
 init_1d_blocking(const size_t n, const size_t max_batchs) noexcept {
-    BlockingDispatch1D dispatch;
+    BlockingConfig1D bconf;
+    bconf.max_batch_size_ = max_batchs;
 
     /* Compute number of batchs */
     float div =
         static_cast<float>(n) / static_cast<float>(max_batchs);
     auto floor_div = std::floor(div);
     auto div_is_int = div == floor_div;
-    dispatch.n_batch_ = div_is_int ? div : floor_div + 1;
+    bconf.n_batch_ = div_is_int ? div : floor_div + 1;
 
-    dispatch.last_batch_size_ = div_is_int ? max_batchs : (n % max_batchs);
-    dispatch.last_offset_ = max_batchs * (dispatch.n_batch_ - 1);
+    bconf.last_dispatch_.batch_size_ =
+        div_is_int ? max_batchs : (n % max_batchs);
+    bconf.last_dispatch_.offset_ = max_batchs * (bconf.n_batch_ - 1);
 
-    return dispatch;
+    return bconf;
 }
 
 [[nodiscard]] inline KernelDispatch
@@ -89,3 +100,8 @@ set_wg_size(const size_t pref_wg_size, const size_t max_elem_mem,
 
     return dispatch;
 }// set_wg_size
+
+/*TODO: check_work_group_compatibility(WgDispatch, BlockingDispatch){}
+If I cannot make a global range with this size on this dimension, returns
+a valid wg configuration for this batch size
+*/

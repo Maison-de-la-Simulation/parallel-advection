@@ -1,3 +1,4 @@
+#include "IAdvectorX.h"
 #include "advectors.h"
 
 void
@@ -13,10 +14,8 @@ print_range(std::string_view name, sycl::range<3> r, bool lvl = 0) {
 sycl::event
 AdvX::AdaptiveWg::actual_advection(sycl::queue &Q, double *fdist_dev,
                                    const Solver &solver,
-                                   const size_t &n0_batch_size,
-                                   const size_t &n0_offset,
-                                   const size_t &n2_batch_size,
-                                   const size_t &n2_offset) {
+                                   const BlockingDispatch1D &block_n0,
+                                   const BlockingDispatch1D &block_n2) {
     auto const n0 = solver.params.n0;
     auto const n1 = solver.params.n1;
     auto const n2 = solver.params.n2;
@@ -24,6 +23,12 @@ AdvX::AdaptiveWg::actual_advection(sycl::queue &Q, double *fdist_dev,
     auto const w0 = wg_dispatch_.w0_;
     auto const w1 = wg_dispatch_.w1_;
     auto const w2 = wg_dispatch_.w2_;
+
+    auto const n0_batch_size = block_n0.batch_size_;
+    auto const n0_offset = block_n0.offset_;
+
+    auto const n2_batch_size = block_n2.batch_size_;
+    auto const n2_offset = block_n2.offset_;
 
     const sycl::range global_size{n0_batch_size, w1, n2_batch_size};
     const sycl::range local_size{w0, w1, w2};
@@ -72,32 +77,53 @@ sycl::event
 AdvX::AdaptiveWg::operator()(sycl::queue &Q, double *fdist_dev,
                        const Solver &solver) {
 
-    // std::cout << "operator()" << std::endl;
 
-    for (size_t i0_batch = 0; i0_batch < batchs_dispatch_d0_.n_batch_ - 1;
-         ++i0_batch) {
 
-        size_t n0_offset = (i0_batch * max_batchs_x_);
+    auto const w0 = wg_dispatch_.w0_;
+    auto const w1 = wg_dispatch_.w1_;
+    auto const w2 = wg_dispatch_.w2_;
+    // print_range("local_range", {w0, w1, w2});
 
-        // std::cout << "n0_offset" << n0_offset << std::endl;
+    BlockingDispatch1D bdispatch_d0;
+    BlockingDispatch1D bdispatch_d2;
 
-        for (size_t i2_batch = 0; i2_batch < batchs_dispatch_d2_.n_batch_ - 1;
-            ++i2_batch) {
+    bdispatch_d0.batch_size_ = max_batchs_x_;
+    bdispatch_d2.batch_size_ = max_batchs_yz_;
 
-            size_t n2_offset = (i2_batch * max_batchs_yz_);
+    for (size_t i0_batch = 0; i0_batch < bconf_d0_.n_batch_ - 1; ++i0_batch) {
 
-            // std::cout << "n2_offset" << n2_offset << std::endl;
+        bdispatch_d0.set_offset(i0_batch);
 
-            actual_advection(Q, fdist_dev, solver, max_batchs_x_, n0_offset,
-                             max_batchs_yz_, n2_offset)
+        if (bconf_d2_.n_batch_ == 1) {
+            actual_advection(Q, fdist_dev, solver, bdispatch_d0,
+                             bconf_d2_.last_dispatch_)
                 .wait();
+        } else {
+            for (size_t i2_batch = 0; i2_batch < bconf_d2_.n_batch_ - 1;
+                 ++i2_batch) {
+                bdispatch_d2.set_offset(i2_batch);
+                actual_advection(Q, fdist_dev, solver, bdispatch_d0,
+                                 bdispatch_d2)
+                    .wait();
             }
-    }
+        }
 
-    // std::cout << "last iteration"<<std::endl;
+        // for (size_t i2_batch = 0; i2_batch < bconf_d2_.n_batch_ - 1;
+        //      ++i2_batch) {
+
+        //     bdispatch_d2.set_offset(i2_batch);
+        //     // std::cout << "n2_offset" << n2_offset << std::endl;
+
+        //     std::cout << "Batch i0_batch=" << i0_batch
+        //               << " Offset=" << bdispatch_d0.offset_
+        //               << " Size=" << bdispatch_d0.batch_size_ << std::endl;
+        //     actual_advection(Q, fdist_dev, solver, bdispatch_d0, bdispatch_d2)
+        //         .wait();
+        // }
+
+        //TODO add last batch_d0 dim!!!!
+    }
     // return the last advection with the rest
-    return actual_advection(
-        Q, fdist_dev, solver, batchs_dispatch_d0_.last_batch_size_,
-        batchs_dispatch_d0_.last_offset_, batchs_dispatch_d2_.last_batch_size_,
-        batchs_dispatch_d2_.last_offset_);
+    return actual_advection(Q, fdist_dev, solver, bconf_d0_.last_dispatch_,
+                            bconf_d2_.last_dispatch_);
 }
