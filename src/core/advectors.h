@@ -60,10 +60,17 @@ class NDRange : public IAdvectorX {
 class AdaptiveWg : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
 
-    WgDispatch wg_dispatch_;
+    AdaptiveWgDispatch wg_dispatch_;
     BlockingConfig1D bconf_d0_;
     BlockingConfig1D bconf_d2_;
 
+    /* We should be able to query max_batchs to the API. 
+              |    x    |   y/z   |
+        CUDA:| 2**31-1 | 2**16-1 |
+        HIP :| 2**32-1 | 2**32-1 |
+        L0  :| 2**32-1 | 2**32-1 | (compile with -fno-sycl-query-fit-in-int)
+        CPU : a lot
+    */
     // const size_t max_batchs_x_ = 2147483648-1;
     // const size_t max_batchs_yz_ = 65536-1;
     const size_t max_batchs_x_ = 100;
@@ -71,6 +78,8 @@ class AdaptiveWg : public IAdvectorX {
 
     sycl::event actual_advection(sycl::queue &Q, double *fdist_dev,
                                    const Solver &solver,
+                                   const sycl::range<3> &global_size,
+                                   const sycl::range<3> &local_size,
                                    const BlockingDispatch1D &block_n0,
                                    const BlockingDispatch1D &block_n2);
 
@@ -86,13 +95,6 @@ class AdaptiveWg : public IAdvectorX {
         const auto n1 = solver.params.n1;
         const auto n2 = solver.params.n2;
 
-        /* We should be able to query max_batchs to the API. 
-                 |    x    |   y/z   |
-            CUDA:| 2**31-1 | 2**16-1 |
-            HIP :| 2**32-1 | 2**32-1 |
-            L0  :| 2**32-1 | 2**32-1 | (compile with -fno-sycl-query-fit-in-int)
-            CPU : a lot
-        */
         bconf_d0_ = init_1d_blocking(n0, max_batchs_x_);
         bconf_d2_ = init_1d_blocking(n2, max_batchs_yz_);
 
@@ -101,8 +103,12 @@ class AdaptiveWg : public IAdvectorX {
             q.get_device().get_info<sycl::info::device::local_mem_size>() /
             sizeof(double);
 
-        wg_dispatch_ = set_wg_size(solver.params.pref_wg_size,
-                                   max_elem_local_mem, n0, n1, n2);
+        auto ideal_wg_dispatch = compute_ideal_wg_size(
+            solver.params.pref_wg_size, max_elem_local_mem, n0, n1, n2);
+
+        // Precompute adaptive work-group sizes
+        wg_dispatch_ = compute_adaptive_wg_dispatch(ideal_wg_dispatch,
+                                                    bconf_d0_, bconf_d2_);
 
         std::cout << "--------------------------------"    << std::endl;
         std::cout << "n_batch0       : " << bconf_d0_.n_batch_ << std::endl;
@@ -132,12 +138,9 @@ class HybridMem : public IAdvectorX {
 
     sycl::event actual_advection(sycl::queue &Q, double *fdist_dev,
                                    const Solver &solver,
-                                   const size_t &n0_batch_size,
-                                   const size_t &n0_offset,
-                                   const size_t &n2_batch_size,
-                                   const size_t &n2_offset,
-                                   const size_t k_global,
-                                   const size_t k_local);
+                                   const BlockingDispatch1D &block_n0,
+                                   const BlockingDispatch1D &block_n2,
+                                   const KernelDispatch &k_dispatch);
 };
 
 // // =============================================================================
