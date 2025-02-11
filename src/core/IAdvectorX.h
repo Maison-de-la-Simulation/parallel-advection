@@ -2,7 +2,6 @@
 
 #include <Solver.h>
 #include <cstddef>
-#include <hipSYCL/sycl/libkernel/range.hpp>
 #include <sycl/sycl.hpp>
 
 class IAdvectorX {
