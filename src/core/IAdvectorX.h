@@ -136,15 +136,21 @@ adjust_wg_dispatch(const WgDispatch &ideal_wg,
 
     // Ajuster w0 pour qu'il divise global_size.get(0)
     size_t new_w0 = std::min(ideal_wg.w0_, block_d0.batch_size_);
-    if (global_size0 % new_w0 != 0) {
-        new_w0 = global_size0 / (global_size0 / new_w0);
+    while (global_size0 % new_w0 != 0) {
+        new_w0 -= 1;
     }
+    // if (global_size0 % new_w0 != 0) {
+        // new_w0 = global_size0 / (global_size0 / new_w0);
+    // }
 
     // Ajuster w2 pour qu'il divise global_size.get(2)
     size_t new_w2 = std::min(ideal_wg.w2_, block_d2.batch_size_);
-    if (global_size2 % new_w2 != 0) {
-        new_w2 = global_size2 / (global_size2 / new_w2);
+    while (global_size2 % new_w2 != 0) {
+        new_w2 -= 1;
     }
+    // if (global_size2 % new_w2 != 0) {
+    //     new_w2 = global_size2 / (global_size2 / new_w2);
+    // }
 
     // Ajuster w1 pour conserver le nombre total de work-items
     size_t total_wg_items = ideal_wg.w0_ * ideal_wg.w1_ * ideal_wg.w2_;
