@@ -65,16 +65,15 @@ class AdaptiveWg : public IAdvectorX {
     BlockingConfig1D bconf_d2_;
 
     /* We should be able to query max_batchs to the API. 
-              |    x    |   y/z   |
+             |    x    |   y/z   |
         CUDA:| 2**31-1 | 2**16-1 |
         HIP :| 2**32-1 | 2**32-1 |
         L0  :| 2**32-1 | 2**32-1 | (compile with -fno-sycl-query-fit-in-int)
         CPU : a lot
     */
-    const size_t max_batchs_x_ = 2147483648-1;
+    // const size_t max_batchs_x_ = 2147483648-1;
+    const size_t max_batchs_x_ = 65536-1;
     const size_t max_batchs_yz_ = 65536-1;
-    // const size_t max_batchs_x_ = 100;
-    // const size_t max_batchs_yz_ = 100;
 
     sycl::event actual_advection(sycl::queue &Q, double *fdist_dev,
                                    const Solver &solver,
@@ -104,28 +103,11 @@ class AdaptiveWg : public IAdvectorX {
             sizeof(double);
 
         auto ideal_wg_dispatch = compute_ideal_wg_size(
-            solver.params.pref_wg_size, max_elem_local_mem, n0, n1, n2);
+            solver.params.pref_wg_size, n0, n1, n2);
 
         // Precompute adaptive work-group sizes
-        wg_dispatch_ = compute_adaptive_wg_dispatch(ideal_wg_dispatch,
-                                                    bconf_d0_, bconf_d2_);
-
-        // std::cout << "--------------------------------"    << std::endl;
-        // std::cout << "n_batch0       : " << bconf_d0_.n_batch_ << std::endl;
-        // std::cout << "last_n0_offset : " << bconf_d0_.last_dispatch_.offset_ << std::endl;
-        // std::cout << "last_batch_size_0 : " << bconf_d0_.last_dispatch_.batch_size_ << std::endl;
-        
-        // std::cout << std::endl;
-        
-        // std::cout << "n_batch2       : " << bconf_d2_.n_batch_ << std::endl;
-        // std::cout << "last_n2_offset : " << bconf_d2_.last_dispatch_.offset_ << std::endl;
-        // std::cout << "last_batch_size_2 : " << bconf_d2_.last_dispatch_.batch_size_ << std::endl;
-
-        // std::cout << std::endl;
-
-        // std::cout << "max_elems_alloc: " << max_elem_local_mem << std::endl;
-        // std::cout << "--------------------------------"    << std::endl;
-    
+        wg_dispatch_ = compute_adaptive_wg_dispatch(
+            ideal_wg_dispatch, bconf_d0_, bconf_d2_, n1, max_elem_local_mem);
     }
 };
 

@@ -79,7 +79,7 @@ dispatch_kernels(const size_t n_kernels, const size_t p) noexcept {
 
 
 [[nodiscard]] inline WgDispatch
-compute_ideal_wg_size(const size_t pref_wg_size, const size_t max_elem_mem,
+compute_ideal_wg_size(const size_t pref_wg_size,
                       const size_t n0, const size_t n1,
                       const size_t n2) noexcept {
     WgDispatch dispatch;
@@ -104,15 +104,6 @@ compute_ideal_wg_size(const size_t pref_wg_size, const size_t max_elem_mem,
         }
     }
 
-/*TODO: do we need to check if w0*n1>max_mem ?? because if w0 has a lot of
-elements it means that there are fewer elements on n2 and n1 than pref_w? so
-it's not possible to exceed memory in that case right? */
-    if (w2 * n1 >= max_elem_mem) {
-        w2 = std::floor(max_elem_mem / n1);
-        w1 = std::floor(pref_wg_size / w2);
-        w0 = 1;
-    }
-
     return dispatch;
 }   // set_wg_size
 
@@ -128,32 +119,37 @@ print_range(std::string_view name, sycl::range<3> r, bool lvl = 0) {
 [[nodiscard]] inline WgDispatch
 adjust_wg_dispatch(const WgDispatch &ideal_wg,
                    const BlockingDispatch1D &block_d0,
-                   const BlockingDispatch1D &block_d2) {
+                   const BlockingDispatch1D &block_d2,
+                   const size_t alloc_size,
+                   const size_t max_elem_mem) {
     WgDispatch adjusted_wg = ideal_wg;
+    size_t total_wg_items = ideal_wg.w0_ * ideal_wg.w1_ * ideal_wg.w2_;
 
+    /*TODO: do we need to check if w0*n1>max_mem ?? because if w0 has a lot of
+    elements it means that there are fewer elements on n2 and n1 than pref_w? so
+    it's not possible to exceed memory in that case right? */
+    /* Adjust based on maximum memory available*/
+    if (adjusted_wg.w2_ * alloc_size >= max_elem_mem) {
+        adjusted_wg.w2_ = std::floor(max_elem_mem / alloc_size);
+        adjusted_wg.w1_ = std::floor(total_wg_items / adjusted_wg.w2_);
+        adjusted_wg.w0_ = 1;
+    }
+
+    /* Adjust based on sizes and divisible ranges */
     auto const& global_size0 = block_d0.batch_size_;
     auto const& global_size2 = block_d2.batch_size_;
 
-    // Ajuster w0 pour qu'il divise global_size.get(0)
     size_t new_w0 = std::min(ideal_wg.w0_, block_d0.batch_size_);
     while (global_size0 % new_w0 != 0) {
         new_w0 -= 1;
     }
-    // if (global_size0 % new_w0 != 0) {
-        // new_w0 = global_size0 / (global_size0 / new_w0);
-    // }
 
-    // Ajuster w2 pour qu'il divise global_size.get(2)
     size_t new_w2 = std::min(ideal_wg.w2_, block_d2.batch_size_);
     while (global_size2 % new_w2 != 0) {
         new_w2 -= 1;
     }
-    // if (global_size2 % new_w2 != 0) {
-    //     new_w2 = global_size2 / (global_size2 / new_w2);
-    // }
 
     // Ajuster w1 pour conserver le nombre total de work-items
-    size_t total_wg_items = ideal_wg.w0_ * ideal_wg.w1_ * ideal_wg.w2_;
     size_t new_w1 = total_wg_items / (new_w0 * new_w2);
 
     adjusted_wg.w0_ = new_w0;
@@ -170,26 +166,31 @@ adjust_wg_dispatch(const WgDispatch &ideal_wg,
 [[nodiscard]] inline AdaptiveWgDispatch
 compute_adaptive_wg_dispatch(const WgDispatch &preferred_wg,
                              const BlockingConfig1D &config_d0,
-                             const BlockingConfig1D &config_d2) {
+                             const BlockingConfig1D &config_d2,
+                             const size_t alloc_size,
+                             const size_t max_elem_mem) {
 
     AdaptiveWgDispatch adaptive;
 
     // Compute work-group sizes for normal batches
-    adaptive.normal_dispatch_ =
-        adjust_wg_dispatch(preferred_wg, {config_d0.max_batch_size_, 0},
-                           {config_d2.max_batch_size_, 0});
+    adaptive.normal_dispatch_ = adjust_wg_dispatch(
+        preferred_wg, {config_d0.max_batch_size_, 0},
+        {config_d2.max_batch_size_, 0}, alloc_size, max_elem_mem);
 
     // Compute for last batch in d0
     adaptive.last_dispatch_d0_ = adjust_wg_dispatch(
-        preferred_wg, config_d0.last_dispatch_, {config_d2.max_batch_size_, 0});
+        preferred_wg, config_d0.last_dispatch_, {config_d2.max_batch_size_, 0},
+        alloc_size, max_elem_mem);
 
     // Compute for last batch in d2
-    adaptive.last_dispatch_d2_ = adjust_wg_dispatch(
-        preferred_wg, {config_d0.max_batch_size_, 0}, config_d2.last_dispatch_);
+    adaptive.last_dispatch_d2_ =
+        adjust_wg_dispatch(preferred_wg, {config_d0.max_batch_size_, 0},
+                           config_d2.last_dispatch_, alloc_size, max_elem_mem);
 
     // Compute for last batch in both d0 and d2
-    adaptive.last_dispatch_d0_d2_ = adjust_wg_dispatch(
-        preferred_wg, config_d0.last_dispatch_, config_d2.last_dispatch_);
+    adaptive.last_dispatch_d0_d2_ =
+        adjust_wg_dispatch(preferred_wg, config_d0.last_dispatch_,
+                           config_d2.last_dispatch_, alloc_size, max_elem_mem);
 
     return adaptive;
 }
