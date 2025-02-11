@@ -1,13 +1,13 @@
 #include "IAdvectorX.h"
 #include "advectors.h"
 
-void
-print_range(std::string_view name, sycl::range<3> r, bool lvl = 0) {
-    if (lvl == 0)
-        std::cout << "--------------------------------" << std::endl;
-    std::cout << name << " : {" << r.get(0) << "," << r.get(1) << ","
-              << r.get(2) << "}" << std::endl;
-}
+// void
+// print_range(std::string_view name, sycl::range<3> r, bool lvl = 0) {
+//     if (lvl == 0)
+//         std::cout << "--------------------------------" << std::endl;
+//     std::cout << name << " : {" << r.get(0) << "," << r.get(1) << ","
+//               << r.get(2) << "}" << std::endl;
+// }
 
 // ==========================================
 // ==========================================
@@ -103,13 +103,13 @@ AdvX::AdaptiveWg::operator()(sycl::queue &Q, double *fdist_dev,
                 last_i2 ? bconf_d2_.last_dispatch_ : blocks_d2;
 
             // Select the correct work-group dispatch
-            WgDispatch wg = wg_dispatch_.normal_dispatch;
+            WgDispatch wg = wg_dispatch_.normal_dispatch_;
             if (last_i0 && last_i2) {
-                wg = wg_dispatch_.last_dispatch_d0_d2;
+                wg = wg_dispatch_.last_dispatch_d0_d2_;
             } else if (last_i0) {
-                wg = wg_dispatch_.last_dispatch_d0;
+                wg = wg_dispatch_.last_dispatch_d0_;
             } else if (last_i2) {
-                wg = wg_dispatch_.last_dispatch_d2;
+                wg = wg_dispatch_.last_dispatch_d2_;
             }
 
             // Compute global size based on batch sizes
