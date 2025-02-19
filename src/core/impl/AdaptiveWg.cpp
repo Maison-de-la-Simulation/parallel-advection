@@ -29,7 +29,7 @@ AdvX::AdaptiveWg::submit_local_kernel(sycl::queue &Q, double *fdist_dev,
      TODO: Bug when last batch has a rest not divisible */
     wg_dispatch_.set_num_work_groups(b0_size, b2_size, 1, 1, w0, w2);
 
-     const sycl::range<3> global_size(g0 * w0, w1, g2 * w2);
+    const sycl::range<3> global_size(g0 * w0, w1, g2 * w2);
     const auto local_size = local_size_.range();
 
     std::cout << "in submit local kernel" << std::endl;
@@ -50,12 +50,23 @@ AdvX::AdaptiveWg::submit_local_kernel(sycl::queue &Q, double *fdist_dev,
                 auto scratch_slice = std::experimental::submdspan(
                     scr, local_i0, local_i2, std::experimental::full_extent);
 
-                for (size_t ii0 = 0; ii0 < seq_size0; ii0++) {
-                    const auto global_i0 =
-                        b0_offset + itm.get_global_id(0) + (ii0 * w0 * g0);
-                    for (size_t ii2 = 0; ii2 < seq_size2; ii2++) {
-                        const auto global_i2 =
-                            b2_offset + itm.get_global_id(2) + (ii2 * w2 * g2);
+                // for (size_t ii0 = 0; ii0 < seq_size0; ii0++) {
+                const auto start_idx0 = b0_offset + itm.get_global_id(0);
+                const auto stop_idx0 = start_idx0 + b0_size;
+                for (size_t global_i0 = start_idx0; global_i0 < stop_idx0;
+                     global_i0 += g0 * w0) {
+                    // const auto global_i0 =
+                    //     b0_offset + itm.get_global_id(0) + (ii0 * w0 * g0);
+
+                    const auto start_idx2 = b2_offset + itm.get_global_id(2);
+                    const auto stop_idx2 = start_idx2 + b2_size;
+                    for (size_t global_i2 = start_idx2;
+                         global_i2 < stop_idx2;
+                         global_i2 += g2 * w2) {
+                        // for (size_t ii2 = 0; ii2 < seq_size2; ii2++) {
+                        // const auto global_i2 =
+                        //     b2_offset + itm.get_global_id(2) + (ii2 * w2
+                        //     * g2);
 
                         auto data_slice = std::experimental::submdspan(
                             fdist, global_i0, std::experimental::full_extent,
