@@ -68,9 +68,9 @@ class AdaptiveWg : public IAdvectorX {
     WorkGroupDispatch wg_dispatch_;
 
     sycl::event submit_local_kernel(sycl::queue &Q, double *fdist_dev,
-                                    const Solver &solver, const size_t &b0_size,
+                                    const Solver &solver, const size_t b0_size,
                                     const size_t b0_offset,
-                                    const size_t &b2_size,
+                                    const size_t b2_size,
                                     const size_t b2_offset);
 
   public:
