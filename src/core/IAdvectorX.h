@@ -112,16 +112,16 @@ struct BatchConfig1D {
         return batch_size_ * ibatch;
     }
 
-    [[nodiscard]]
-    inline size_t start_index(const size_t &ibatch) const {
-        return offset(ibatch);
-    }
+    // [[nodiscard]]
+    // inline size_t start_index(const size_t &ibatch) const {
+    //     return offset(ibatch);
+    // }
 
-    [[nodiscard]]
-    inline size_t stop_index(const size_t &ibatch) const {
-        return ibatch == n_batch_ - 1 ? offset(ibatch) + last_batch_size_
-                                      : offset(ibatch) + batch_size_;
-    }
+    // [[nodiscard]]
+    // inline size_t stop_index(const size_t &ibatch) const {
+    //     return ibatch == n_batch_ - 1 ? offset(ibatch) + last_batch_size_
+    //                                   : offset(ibatch) + batch_size_;
+    // }
 };
 
 [[nodiscard]] inline BatchConfig1D
