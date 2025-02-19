@@ -10,13 +10,8 @@ ADVParams::ADVParams(ADVParamsNonCopyable &other){
   gpu = other.gpu;
   outputSolution = other.outputSolution;
 
-  // loc_wg_size_0 = other.loc_wg_size_0;
-  // loc_wg_size_1 = other.loc_wg_size_1;
-  // loc_wg_size_2 = other.loc_wg_size_2;
-  
-  // glob_wg_size_0 = other.glob_wg_size_0;
-  // glob_wg_size_1 = other.glob_wg_size_1;
-  // glob_wg_size_2 = other.glob_wg_size_2;
+  seq_size0 = other.seq_size0;
+  seq_size2 = other.seq_size2;
 
   pref_wg_size = other.pref_wg_size;
 
@@ -43,13 +38,9 @@ ADVParamsNonCopyable::ADVParamsNonCopyable(ADVParams &other){
   gpu = other.gpu;
   outputSolution = other.outputSolution;
 
-  // loc_wg_size_0 = other.loc_wg_size_0;
-  // loc_wg_size_1 = other.loc_wg_size_1;
-  // loc_wg_size_2 = other.loc_wg_size_2;
-  
-  // glob_wg_size_0 = other.glob_wg_size_0;
-  // glob_wg_size_1 = other.glob_wg_size_1;
-  // glob_wg_size_2 = other.glob_wg_size_2;
+  seq_size0 = other.seq_size0;
+  seq_size2 = other.seq_size2;
+
   pref_wg_size = other.pref_wg_size;
 
   dt = other.dt;
@@ -84,14 +75,9 @@ void ADVParamsNonCopyable::setup(const ConfigMap& configMap)
   kernelImpl = configMap.getString("run", "kernelImpl", "BasicRange");
   
   pref_wg_size = configMap.getInteger("run", "pref_wg_size", 128);
-
-  // glob_wg_size_0 = configMap.getInteger("run", "globWorkGroupSize0", 1);
-  // glob_wg_size_1 = configMap.getInteger("run", "globWorkGroupSize1", 128);
-  // glob_wg_size_2 = configMap.getInteger("run", "globWorkGroupSize2", 1);
   
-  // loc_wg_size_0 = configMap.getInteger("run", "locWorkGroupSize0", 1);
-  // loc_wg_size_1 = configMap.getInteger("run", "locWorkGroupSize1", 128);
-  // loc_wg_size_2 = configMap.getInteger("run", "locWorkGroupSize2", 1);
+  seq_size0 = configMap.getInteger("run", "seq_size0", 1);
+  seq_size2 = configMap.getInteger("run", "seq_size2", 1);
 
   // discretization parameters
   dt  = configMap.getFloat("discretization", "dt" , 0.0001);
@@ -123,17 +109,14 @@ void ADVParamsNonCopyable::print()
   std::cout << "Runtime parameters:" << std::endl;
   std::cout << "##########################" << std::endl;
   std::cout << "kernelImpl  : " << kernelImpl << std::endl;
-  // std::cout << "globWgSize0 : " << glob_wg_size_0    << std::endl;
-  // std::cout << "globWgSize1 : " << glob_wg_size_1    << std::endl;
-  // std::cout << "globWgSize2 : " << glob_wg_size_2    << std::endl;
-  // std::cout << "locWgSize0  : " << loc_wg_size_0    << std::endl;
-  // std::cout << "locWgSize1  : " << loc_wg_size_1    << std::endl;
-  std::cout << "pref_wg_size: " << pref_wg_size    << std::endl;
   std::cout << "gpu         : " << gpu    << std::endl;
   std::cout << "maxIter     : " << maxIter    << std::endl;
   std::cout << "n0 (nvx)    : " << n0    << std::endl;
   std::cout << "n1 (nx)     : " << n1    << std::endl;
   std::cout << "n2          : " << n2    << std::endl;
+  std::cout << "pref_wg_size: " << pref_wg_size    << std::endl;
+  std::cout << "seq_size0   : " << seq_size0    << std::endl;
+  std::cout << "seq_size2   : " << seq_size2    << std::endl;
   std::cout << "percent_loc : " << percent_loc << std::endl;
   std::cout << "dt          : " << dt    << std::endl;
   std::cout << "dx          : " << dx    << std::endl;

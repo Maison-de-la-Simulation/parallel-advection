@@ -33,15 +33,10 @@ struct ADVParams {
 
   // Sizes of the SYCL work groups
   size_t pref_wg_size = 128;
-  // size_t glob_wg_size_1 = 128;
-  // size_t glob_wg_size_2 = 1;
-  // size_t glob_wg_size_0 = 1;
   
-  // size_t loc_wg_size_1 = 128;
-  // size_t loc_wg_size_2 = 1;
-  // size_t loc_wg_size_0 = 1;
-
-
+  //Number of elements in dim0 and dim2 that a single work-item will process
+  size_t seq_size0;
+  size_t seq_size2;
 
   // Deltas : taille physique d'une cellule discrète (en x, vx, t)
   double dt  = 0.0001;

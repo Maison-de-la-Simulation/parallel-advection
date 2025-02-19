@@ -95,6 +95,8 @@ class AdaptiveWg : public IAdvectorX {
         local_size_.set_ideal_sizes(solver.params.pref_wg_size, n0, n1, n2);
         local_size_.adjust_sizes_mem_limit(max_elem_local_mem, n1);
 
+        wg_dispatch_.s0_ = solver.params.seq_size0;
+        wg_dispatch_.s2_ = solver.params.seq_size2;
 
         std::cout << "--------------------------------"    << std::endl;
         std::cout << "n_batch0        : " << dispatch_dim0_.n_batch_<< std::endl;
