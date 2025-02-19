@@ -97,6 +97,9 @@ class AdaptiveWg : public IAdvectorX {
 
         wg_dispatch_.s0_ = solver.params.seq_size0;
         wg_dispatch_.s2_ = solver.params.seq_size2;
+        wg_dispatch_.set_num_work_groups(n0, n2, dispatch_dim0_.n_batch_,
+                                         dispatch_dim2_.n_batch_,
+                                         local_size_.w0_, local_size_.w2_);
 
         std::cout << "--------------------------------"    << std::endl;
         std::cout << "n_batch0        : " << dispatch_dim0_.n_batch_<< std::endl;
