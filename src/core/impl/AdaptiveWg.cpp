@@ -23,9 +23,13 @@ AdvX::AdaptiveWg::submit_local_kernel(sycl::queue &Q, double *fdist_dev,
     auto const seq_size2 = wg_dispatch_.s2_;
     auto const g0 = wg_dispatch_.g0_;
     auto const g2 = wg_dispatch_.g2_;
-    // wg_dispatch_.set_num_work_groups(n0, n2, dispatch_dim0_.n_batch_,
-    //  dispatch_dim2_.n_batch_, w0, w2);
-    const sycl::range<3> global_size(g0 * w0, w1, g2 * w2);
+
+    /* When last batch, weird behavior: the b0_size can be really small and wg
+     needs to be adapted.
+     TODO: Bug when last batch has a rest not divisible */
+    wg_dispatch_.set_num_work_groups(b0_size, b2_size, 1, 1, w0, w2);
+
+     const sycl::range<3> global_size(g0 * w0, w1, g2 * w2);
     const auto local_size = local_size_.range();
 
     std::cout << "in submit local kernel" << std::endl;
@@ -45,13 +49,6 @@ AdvX::AdaptiveWg::submit_local_kernel(sycl::queue &Q, double *fdist_dev,
                 const auto local_i2 = itm.get_local_id(2);
                 auto scratch_slice = std::experimental::submdspan(
                     scr, local_i0, local_i2, std::experimental::full_extent);
-
-                if (itm.get_global_id(0) == 0 && itm.get_global_id(1) == 0 &&
-                    itm.get_global_id(2) ==
-                        0) {   // Print only once per workgroup
-                    printf("seq_size0: %d, seq_size2: %d\n", seq_size0,
-                           seq_size2);
-                }
 
                 for (size_t ii0 = 0; ii0 < seq_size0; ii0++) {
                     const auto global_i0 =

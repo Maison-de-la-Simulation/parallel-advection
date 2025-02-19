@@ -59,7 +59,7 @@ class NDRange : public IAdvectorX {
 class AdaptiveWg : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
 
-    const size_t max_batchs_x_ = 65536 - 1;
+    const size_t max_batchs_x_  = 65536 - 1;
     const size_t max_batchs_yz_ = 65536 - 1;
 
     BatchConfig1D dispatch_dim0_;
