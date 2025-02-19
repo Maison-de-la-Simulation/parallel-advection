@@ -5,8 +5,8 @@ target_sources(core
   IAdvectorX.h
   impl/BasicRange.cpp
   impl/NDRange.cpp
-  impl/Hierarchical.cpp
   impl/AdaptiveWg.cpp
+  impl/Hierarchical.cpp
   # impl/HybridMem.cpp
   )
 

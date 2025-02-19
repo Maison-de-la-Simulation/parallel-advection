@@ -29,7 +29,7 @@ AdvX::NDRange::operator()(sycl::queue &Q,
 
                 sycl::group_barrier(itm.get_group());
 
-                fdist(i0, i1, i2) = slice_ftmp[i1];
+                slice(i1) = slice_ftmp[i1];
             }   // end lambda in parallel_for
         );      // end parallel_for nd_range
     });         // end Q.submit

@@ -56,31 +56,22 @@ class NDRange : public IAdvectorX {
                            const Solver &solver) override;
 };
 
-// =============================================================================
 class AdaptiveWg : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
 
-    AdaptiveWgDispatch wg_dispatch_;
-    BlockingConfig1D bconf_d0_;
-    BlockingConfig1D bconf_d2_;
+    const size_t max_batchs_x_ = 65536 - 1;
+    const size_t max_batchs_yz_ = 65536 - 1;
 
-    /* We should be able to query max_batchs to the API. 
-             |    x    |   y/z   |
-        CUDA:| 2**31-1 | 2**16-1 |
-        HIP :| 2**32-1 | 2**32-1 |
-        L0  :| 2**32-1 | 2**32-1 | (compile with -fno-sycl-query-fit-in-int)
-        CPU : a lot
-    */
-    // const size_t max_batchs_x_ = 2147483648-1;
-    const size_t max_batchs_x_ = 65536-1;
-    const size_t max_batchs_yz_ = 65536-1;
+    BatchConfig1D dispatch_dim0_;
+    BatchConfig1D dispatch_dim2_;
+    WorkItemDispatch local_size_;
+    WorkGroupDispatch wg_dispatch_;
 
-    sycl::event actual_advection(sycl::queue &Q, double *fdist_dev,
-                                   const Solver &solver,
-                                   const sycl::range<3> &global_size,
-                                   const sycl::range<3> &local_size,
-                                   const BlockingDispatch1D &block_n0,
-                                   const BlockingDispatch1D &block_n2);
+    sycl::event submit_local_kernel(sycl::queue &Q, double *fdist_dev,
+                                    const Solver &solver, const size_t &b0_size,
+                                    const size_t b0_offset,
+                                    const size_t &b2_size,
+                                    const size_t b2_offset);
 
   public:
     sycl::event operator()(sycl::queue &Q, double *fdist_dev,
@@ -88,28 +79,88 @@ class AdaptiveWg : public IAdvectorX {
 
     AdaptiveWg() = delete;
 
-
-    AdaptiveWg(const Solver &solver, sycl::queue q){
+    AdaptiveWg(const Solver &solver, sycl::queue q) {
         const auto n0 = solver.params.n0;
         const auto n1 = solver.params.n1;
         const auto n2 = solver.params.n2;
 
-        bconf_d0_ = init_1d_blocking(n0, max_batchs_x_);
-        bconf_d2_ = init_1d_blocking(n2, max_batchs_yz_);
+        dispatch_dim0_ = init_1d_blocking(n0, max_batchs_x_);
+        dispatch_dim2_ = init_1d_blocking(n2, max_batchs_yz_);
 
-        //SYCL query returns the size in bytes
+        // SYCL query returns the size in bytes
         auto max_elem_local_mem =
             q.get_device().get_info<sycl::info::device::local_mem_size>() /
             sizeof(double);
 
-        auto ideal_wg_dispatch = compute_ideal_wg_size(
-            solver.params.pref_wg_size, n0, n1, n2);
+        local_size_.set_ideal_sizes(solver.params.pref_wg_size, n0, n1, n2);
+        local_size_.adjust_sizes_mem_limit(max_elem_local_mem, n1);
 
-        // Precompute adaptive work-group sizes
-        wg_dispatch_ = compute_adaptive_wg_dispatch(
-            ideal_wg_dispatch, bconf_d0_, bconf_d2_, n1, max_elem_local_mem);
+
+        std::cout << "--------------------------------"    << std::endl;
+        std::cout << "n_batch0        : " << dispatch_dim0_.n_batch_<< std::endl;
+        std::cout << "n_batch2        : " << dispatch_dim2_.n_batch_<< std::endl;
+        std::cout << "g0_: " << wg_dispatch_.g0_ << std::endl;
+        std::cout << "g2_: " << wg_dispatch_.g2_ << std::endl;
+        std::cout << "s0_: " << wg_dispatch_.s0_ << std::endl;
+        std::cout << "s2_: " << wg_dispatch_.s2_ << std::endl;
+        std::cout << "--------------------------------"    << std::endl;
     }
 };
+
+// //
+// =============================================================================
+// class AdaptiveWg : public IAdvectorX {
+//     using IAdvectorX::IAdvectorX;
+
+//     AdaptiveWgDispatch wg_dispatch_;
+//     BlockingConfig1D bconf_d0_;
+//     BlockingConfig1D bconf_d2_;
+
+//     /* We should be able to query max_batchs to the API.
+//              |    x    |   y/z   |
+//         CUDA:| 2**31-1 | 2**16-1 |
+//         HIP :| 2**32-1 | 2**32-1 |
+//         L0  :| 2**32-1 | 2**32-1 | (compile with -fno-sycl-query-fit-in-int)
+//         CPU : a lot
+//     */
+//     // const size_t max_batchs_x_ = 2147483648-1;
+//     const size_t max_batchs_x_ = 65536-1;
+//     const size_t max_batchs_yz_ = 65536-1;
+
+//     sycl::event actual_advection(sycl::queue &Q, double *fdist_dev,
+//                                    const Solver &solver,
+//                                    const sycl::range<3> &global_size,
+//                                    const sycl::range<3> &local_size,
+//                                    const BlockingDispatch1D &block_n0,
+//                                    const BlockingDispatch1D &block_n2);
+
+//   public:
+//     sycl::event operator()(sycl::queue &Q, double *fdist_dev,
+//                            const Solver &solver) override;
+
+//     AdaptiveWg() = delete;
+
+//     AdaptiveWg(const Solver &solver, sycl::queue q){
+//         const auto n0 = solver.params.n0;
+//         const auto n1 = solver.params.n1;
+//         const auto n2 = solver.params.n2;
+
+//         bconf_d0_ = init_1d_blocking(n0, max_batchs_x_);
+//         bconf_d2_ = init_1d_blocking(n2, max_batchs_yz_);
+
+//         //SYCL query returns the size in bytes
+//         auto max_elem_local_mem =
+//             q.get_device().get_info<sycl::info::device::local_mem_size>() /
+//             sizeof(double);
+
+//         auto ideal_wg_dispatch = compute_ideal_wg_size(
+//             solver.params.pref_wg_size, n0, n1, n2);
+
+//         // Precompute adaptive work-group sizes
+//         wg_dispatch_ = compute_adaptive_wg_dispatch(
+//             ideal_wg_dispatch, bconf_d0_, bconf_d2_, n1, max_elem_local_mem);
+//     }
+// };
 
 // =============================================================================
 // class HybridMem : public IAdvectorX {
@@ -125,14 +176,15 @@ class AdaptiveWg : public IAdvectorX {
 //                                    const KernelDispatch &k_dispatch);
 // };
 
-// // =============================================================================
+// //
+// =============================================================================
 // class HybridMem : public IAdvectorX {
 //     using IAdvectorX::IAdvectorX;
 //     sycl::event actual_advection(sycl::queue &Q, double *fdist_dev,
 //                                  const Solver &solver,
 //                                  const size_t &ny_batch_size,
-//                                  const size_t &ny_offset, const size_t k_global,
-//                                  const size_t k_local);
+//                                  const size_t &ny_offset, const size_t
+//                                  k_global, const size_t k_local);
 
 //     void init_batchs(const Solver &s) {
 //         /* Compute number of batchs */
@@ -142,8 +194,8 @@ class AdaptiveWg : public IAdvectorX {
 //         auto div_is_int = div == floor_div;
 //         n_batch_ = div_is_int ? div : floor_div + 1;
 
-//         last_n0_size_ = div_is_int ? MAX_N0_BATCHS_ : (s.p.n0 % MAX_N0_BATCHS_);
-//         last_n0_offset_ = MAX_N0_BATCHS_ * (n_batch_ - 1);
+//         last_n0_size_ = div_is_int ? MAX_N0_BATCHS_ : (s.p.n0 %
+//         MAX_N0_BATCHS_); last_n0_offset_ = MAX_N0_BATCHS_ * (n_batch_ - 1);
 //     }
 
 //     /* Initiate how many local/global kernels will be running*/
@@ -200,7 +252,8 @@ class AdaptiveWg : public IAdvectorX {
 
 //     HybridMem() = delete;
 
-//     // TODO: gérer le cas ou percent_loc est 1 ou 0 (on fait tou dans la local
+//     // TODO: gérer le cas ou percent_loc est 1 ou 0 (on fait tou dans la
+//     local
 //     // mem ou tout dnas la global)
 //     HybridMem(const Solver &solver, const sycl::queue &q) : q_(q) {
 //         init_batchs(solver);
@@ -245,13 +298,13 @@ class AdaptiveWg : public IAdvectorX {
 //         if (k_global_ > 0) {
 //             scratchG_ = sycl::malloc_device<double>(
 //                 k_global_ * solver.p.n1 * solver.p.n2, q);
-//             std::cout << "Allocated " << k_global_ << "*" << solver.p.n1 << "*"
+//             std::cout << "Allocated " << k_global_ << "*" << solver.p.n1 <<
+//             "*"
 //                       << solver.p.n2 << "bytes in memory for scartchG"
 //                       << std::endl;
 //         } else {
 //             scratchG_ = nullptr;
 //         }
-
 
 //         std::cout << "--------------------------------"    << std::endl;
 //         std::cout << "n_batch        : " << n_batch_        << std::endl;
