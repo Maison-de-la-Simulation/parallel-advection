@@ -9,9 +9,12 @@ inline sycl::event
 submit_local_kernel(sycl::queue &Q, double *fdist_dev, const Solver &solver,
                     const size_t b0_size, const size_t b0_offset,
                     const size_t b2_size, const size_t b2_offset,
-                    const size_t w0, const size_t w1, const size_t w2,
+                    const size_t orig_w0, const size_t w1, const size_t orig_w2,
                     WorkGroupDispatch wg_dispatch, const size_t n0,
                     const size_t n1, const size_t n2) {
+
+    const auto w0 = sycl::min(orig_w0, b0_size);
+    const auto w2 = sycl::min(orig_w2, b2_size);
 
     wg_dispatch.set_num_work_groups(b0_size, b2_size, 1, 1, w0, w2);
     auto const seq_size0 = wg_dispatch.s0_;
@@ -70,7 +73,7 @@ submit_local_kernel(sycl::queue &Q, double *fdist_dev, const Solver &solver,
                         for (int ii1 = i1; ii1 < n1; ii1 += w1) {
                             data_slice(ii1) = scratch_slice(ii1);
                         }
-                        // sycl::group_barrier(itm.get_group());
+                        sycl::group_barrier(itm.get_group());
                     }   // end for ii2
                     // sycl::group_barrier(itm.get_group());
                 }   // end for ii0
