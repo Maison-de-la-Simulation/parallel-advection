@@ -29,8 +29,23 @@ struct WorkGroupDispatch {
                                     const size_t &n_batchs0,
                                     const size_t &n_batchs2, const size_t &w0,
                                     const size_t &w2) {
-        g0_ = std::ceil(n0 / n_batchs0 / s0_ / w0);
-        g2_ = std::ceil(n2 / n_batchs2 / s2_ / w2);
+        if(s0_ > n0 || s2_ > n2){
+            throw std::invalid_argument(
+                "s0_ > n0 || s2_ > n2. Sequential size "
+                "cannot be larger than dimension size.");
+        }
+        if(s0_*w0 > n0 || s2_*w2 > n2){
+            std::cout << "s0 = " << s0_ << std::endl;
+            std::cout << "w0 = " << w0  << std::endl;
+            std::cout << "s2 = " << s2_ << std::endl;
+            std::cout << "w2 = " << w2  << std::endl;
+            throw std::invalid_argument(
+                "s0_*w0 > n0 || s2_*w2 > n2. A single work-group cannot "
+                "process more than dimension size.");
+        }
+
+        g0_ = n0 / n_batchs0 / s0_ / w0;
+        g2_ = n2 / n_batchs2 / s2_ / w2;
     }
 };
 
