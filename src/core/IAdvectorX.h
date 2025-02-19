@@ -91,10 +91,12 @@ struct WorkItemDispatch {
 of elements it means that there are fewer elements on n2 and n1 than pref_w? so
 it's not possible to exceed memory in that case right? */
         /* Adjust based on maximum memory available*/
+        auto total_wi = size();
         if (w2_ * alloc_size >= max_elems_alloc) {
             w2_ = std::floor(max_elems_alloc / alloc_size);
-            w1_ = std::floor(size() / w2_);
             w0_ = 1;
+            // Ajuster w1 pour conserver le nombre total de work-items
+            w1_ = total_wi / w2_*w0_;
         }
     }
 
