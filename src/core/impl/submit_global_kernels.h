@@ -6,7 +6,7 @@
 // ==========================================
 // ==========================================
 inline sycl::event
-submit_local_kernel(sycl::queue &Q, double *fdist_dev, double *scratch,
+submit_global_kernel(sycl::queue &Q, double *fdist_dev, double *scratch,
                     const Solver &solver, const size_t b0_size,
                     const size_t b0_offset, const size_t b2_size,
                     const size_t b2_offset, const size_t orig_w0,

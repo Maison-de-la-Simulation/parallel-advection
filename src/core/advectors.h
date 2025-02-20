@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstddef>
 #include <experimental/mdspan>
+#include <limits>
 
 using real_t = double;
 
@@ -100,6 +101,7 @@ class AdaptiveWg : public IAdvectorX {
 
         wg_dispatch_.s0_ = solver.params.seq_size0;
         wg_dispatch_.s2_ = solver.params.seq_size2;
+        //TODO: this line is overriden inside the kernel!!! useless
         wg_dispatch_.set_num_work_groups(n0, n2, dispatch_dim0_.n_batch_,
                                          dispatch_dim2_.n_batch_,
                                          local_size_.w0_, local_size_.w2_);
@@ -113,6 +115,8 @@ class AdaptiveWg : public IAdvectorX {
         std::cout << "g2_: " << wg_dispatch_.g2_ << std::endl;
         std::cout << "s0_: " << wg_dispatch_.s0_ << std::endl;
         std::cout << "s2_: " << wg_dispatch_.s2_ << std::endl;
+
+        print_range("local_size", local_size_.range());
         std::cout << "--------------------------------" << std::endl;
     }
 };
@@ -121,6 +125,9 @@ class HybridKernels : public AdaptiveWg {
     // Only split kernels in dim0. Too complicated for nothing to split in 2dim
     KernelDispatch kernel_dispatch_;
     KernelDispatch last_kernel_dispatch_;
+
+    WorkItemDispatch local_size_global_kernels_;
+    WorkGroupDispatch wg_dispatch_global_kernels_;
 
     double *global_scratch_;
 
@@ -134,13 +141,28 @@ class HybridKernels : public AdaptiveWg {
 
     HybridKernels(const Solver &solver, sycl::queue q)
         : AdaptiveWg(solver, q), q_(q) {
-
+        auto const &n0 = solver.params.n0;
+        auto const &n1 = solver.params.n1;
+        auto const &n2 = solver.params.n2;
         auto const &p = solver.params.percent_loc;
-
         // setup hybrid kernel dispatch
         kernel_dispatch_ = init_kernel_splitting(p, dispatch_dim0_.batch_size_);
         last_kernel_dispatch_ =
             init_kernel_splitting(p, dispatch_dim0_.last_batch_size_);
+
+        // Compute local_size for global memory kernels
+        local_size_global_kernels_.set_ideal_sizes(solver.params.pref_wg_size,
+                                                   n0, n1, n2);
+        local_size_global_kernels_.adjust_sizes_mem_limit(
+            std::numeric_limits<int>::max(), n1);
+
+        //TODO: add different seq_size parameters for k_global and k_local?
+        wg_dispatch_global_kernels_.s0_ = solver.params.seq_size0;
+        wg_dispatch_global_kernels_.s2_ = solver.params.seq_size2;
+        //TODO: this line is overriden inside the kernel!!! useless
+        wg_dispatch_global_kernels_.set_num_work_groups(
+            n0, n2, dispatch_dim0_.n_batch_, dispatch_dim2_.n_batch_,
+            local_size_global_kernels_.w0_, local_size_global_kernels_.w2_);
 
         // malloc global scratch
         auto max_k_global = std::max(kernel_dispatch_.k_global_,
@@ -155,6 +177,8 @@ class HybridKernels : public AdaptiveWg {
         } else {
             global_scratch_ = nullptr;
         }
+
+        print_range("local_size_global_k", local_size_global_kernels_.range());
 
         std::cout << "(k_local, k_global) = (" << kernel_dispatch_.k_local_ << ", "
                   << kernel_dispatch_.k_global_ << ")" << std::endl;
