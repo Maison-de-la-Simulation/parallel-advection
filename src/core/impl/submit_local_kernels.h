@@ -25,9 +25,9 @@ submit_local_kernel(sycl::queue &Q, double *fdist_dev, const Solver &solver,
     const sycl::range<3> global_size(g0 * w0, w1, g2 * w2);
     const sycl::range<3> local_size(w0, w1, w2);
 
-    std::cout << "in submit local kernel" << std::endl;
-    print_range("global_size", global_size);
-    print_range("local_size", local_size, 1);
+    // std::cout << "in submit local kernel" << std::endl;
+    // print_range("global_size", global_size);
+    // print_range("local_size", local_size, 1);
 
     return Q.submit([&](sycl::handler &cgh) {
         sycl::local_accessor<double, 3> scratch(sycl::range(w0, w2, n1), cgh);
