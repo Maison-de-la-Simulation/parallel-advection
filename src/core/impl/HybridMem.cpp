@@ -38,8 +38,8 @@ AdvX::HybridKernels::operator()(sycl::queue &Q, double *fdist_dev,
                     solver.params.n1, solver.params.n2);
 
             if (k_global > 0)
-                last_event_global = submit_local_kernel(
-                    Q, fdist_dev, /* global_scratch_,*/ solver, k_global,
+                last_event_global = submit_global_kernel(
+                    Q, fdist_dev, global_scratch_, solver, k_global,
                     offset_d0 + k_local, batch_size_d2, offset_d2,
                     local_size_global_kernels_.w0_,
                     local_size_global_kernels_.w1_,
