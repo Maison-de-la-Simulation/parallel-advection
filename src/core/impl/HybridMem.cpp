@@ -1,4 +1,3 @@
-#include "distribute_batchs.h"
 #include "impl/submit_global_kernels.h"
 #include "submit_local_kernels.h"
 
