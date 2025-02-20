@@ -30,8 +30,8 @@ kernel_impl_factory(const sycl::queue &q, const ADVParamsNonCopyable &params,
         return sref::make_unique<AdvX::Hierarchical>();
     case str2int("AdaptiveWg"):
         return sref::make_unique<AdvX::AdaptiveWg>(params, q);
-    // case str2int("HybridMem"):
-    //     return sref::make_unique<AdvX::HybridMem>(params, q);
+    case str2int("HybridKernels"):
+        return sref::make_unique<AdvX::HybridKernels>(params, q);
     default:
         auto str = kernel_name + " is not a valid kernel name.\n" + error_str;
         throw std::runtime_error(str);
