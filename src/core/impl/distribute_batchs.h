@@ -29,15 +29,15 @@ distribute_batchs(sycl::queue &Q, double *fdist_dev, const Solver &solver,
             auto &batch_size_d2 = last_i2 ? dispatch_d2.last_batch_size_
                                           : dispatch_d2.batch_size_;
 
-            // Expand the variadic template to call each provided kernel
-            // submission function
+            // call each provided kernel submission function
             std::array<sycl::event, sizeof...(Functors)> events = {
                 submit_kernels(Q, fdist_dev, solver, batch_size_d0, offset_d0,
                                batch_size_d2, offset_d2, orig_w0, w1, orig_w2,
                                wg_dispatch, n0, n1, n2)...};
 
-            // Choose the last event as the return event (assumes the last
-            // kernel is longest)
+            // Choose the last event as the return event
+            // TODO: assumes the last kernel is longest. change that to largest
+            // number of batchs
             last_event = events.back();
 
             if (!(last_i0 && last_i2)) {

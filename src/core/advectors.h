@@ -120,7 +120,7 @@ class AdaptiveWg : public IAdvectorX {
     }
 };
 
-class HybridKernels : public AdaptiveWg {
+class HybridMem : public AdaptiveWg {
     // Only split kernels in dim0. Too complicated for nothing to split in 2dim
     KernelDispatch kernel_dispatch_;
     KernelDispatch last_kernel_dispatch_;
@@ -136,9 +136,9 @@ class HybridKernels : public AdaptiveWg {
     sycl::event operator()(sycl::queue &Q, double *fdist_dev,
                            const Solver &solver) override;
 
-    HybridKernels() = delete;
+    HybridMem() = delete;
 
-    HybridKernels(const Solver &solver, sycl::queue q)
+    HybridMem(const Solver &solver, sycl::queue q)
         : AdaptiveWg(solver, q), q_(q) {
         auto const &n0 = solver.params.n0;
         auto const &n1 = solver.params.n1;
@@ -187,7 +187,7 @@ class HybridKernels : public AdaptiveWg {
         std::cout << "--------------------------------" << std::endl;
     }
 
-    ~HybridKernels() {
+    ~HybridMem() {
         if (global_scratch_ != nullptr)
             sycl::free(global_scratch_, q_);
     }

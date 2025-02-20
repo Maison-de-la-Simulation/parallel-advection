@@ -3,7 +3,7 @@
 #include "submit_local_kernels.h"
 
 sycl::event
-AdvX::HybridKernels::operator()(sycl::queue &Q, double *fdist_dev,
+AdvX::HybridMem::operator()(sycl::queue &Q, double *fdist_dev,
                                 const Solver &solver) {
     return distribute_batchs(
         Q, fdist_dev, solver, dispatch_dim0_, dispatch_dim2_, local_size_.w0_,
