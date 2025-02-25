@@ -73,7 +73,7 @@ submit_local_kernel(sycl::queue &Q, double *fdist_dev, const Solver &solver,
                         for (int ii1 = i1; ii1 < n1; ii1 += w1) {
                             data_slice(ii1) = scratch_slice(ii1);
                         }
-                        sycl::group_barrier(itm.get_group());
+                        // sycl::group_barrier(itm.get_group());
                     }   // end for ii2
                     // sycl::group_barrier(itm.get_group());
                 }   // end for ii0
