@@ -6,7 +6,7 @@
 // ==========================================
 // ==========================================
 inline sycl::event
-submit_global_kernel(sycl::queue &Q, double *fdist_dev, double *global_scratch,
+old_submit_global_kernel(sycl::queue &Q, double *fdist_dev, double *global_scratch,
                      const Solver &solver, const size_t b0_size,
                      const size_t b0_offset, const size_t b2_size,
                      const size_t b2_offset, const size_t orig_w0,
@@ -29,6 +29,7 @@ submit_global_kernel(sycl::queue &Q, double *fdist_dev, double *global_scratch,
     double* scratch = global_scratch;
 
     return Q.submit([&](sycl::handler &cgh) {
+        
         cgh.parallel_for(
             sycl::nd_range<3>{global_size, local_size},
             [=](auto itm) {

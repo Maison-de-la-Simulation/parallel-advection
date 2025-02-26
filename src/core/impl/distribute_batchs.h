@@ -40,6 +40,7 @@ distribute_batchs(sycl::queue &Q, double *fdist_dev, const Solver &solver,
             // number of batchs
             last_event = events.back();
 
+            /* TODO: here do not sync? check overlapping of compute */
             if (!(last_i0 && last_i2)) {
                 for (auto &evt : events) {
                     evt.wait();

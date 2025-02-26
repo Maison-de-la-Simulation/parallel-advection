@@ -1,6 +1,5 @@
 #include "distribute_batchs.h"
-#include "impl/submit_global_kernels.h"
-#include "submit_local_kernels.h"
+#include "submit_kernels.h"
 
 sycl::event
 AdvX::HybridMem::operator()(sycl::queue &Q, double *fdist_dev,
@@ -13,7 +12,7 @@ AdvX::HybridMem::operator()(sycl::queue &Q, double *fdist_dev,
             size_t batch_size_d0, size_t offset_d0, size_t batch_size_d2,
             size_t offset_d2, size_t w0, size_t w1, size_t w2,
             WorkGroupDispatch wg_dispatch, size_t n0, size_t n1, size_t n2) {
-            return submit_local_kernel(
+            return submit_local_kernels(
                 Q, fdist_dev, solver, kernel_dispatch_.k_local_, offset_d0,
                 batch_size_d2, offset_d2, local_size_.w0_, local_size_.w1_,
                 local_size_.w2_, wg_dispatch, n0, n1, n2);
@@ -22,12 +21,12 @@ AdvX::HybridMem::operator()(sycl::queue &Q, double *fdist_dev,
             size_t batch_size_d0, size_t offset_d0, size_t batch_size_d2,
             size_t offset_d2, size_t w0, size_t w1, size_t w2,
             WorkGroupDispatch wg_dispatch, size_t n0, size_t n1, size_t n2) {
-            return submit_global_kernel(
-                Q, fdist_dev, global_scratch_, solver,
+            return submit_global_kernels(
+                Q, fdist_dev, solver,
                 kernel_dispatch_.k_global_,
                 offset_d0 + kernel_dispatch_.k_local_, batch_size_d2, offset_d2,
                 local_size_global_kernels_.w0_, local_size_global_kernels_.w1_,
                 local_size_global_kernels_.w2_, wg_dispatch_global_kernels_, n0,
-                n1, n2);
+                n1, n2, global_scratch_);
         });
 }
