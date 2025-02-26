@@ -8,44 +8,51 @@ template <MemorySpace MemType> struct MemAllocator;
 
 using local_acc = sycl::local_accessor<double, 3>;
 
+template <MemorySpace MemType>
+static inline size_t compute_index(const sycl::nd_item<3> &itm, int dim);
+
 // ==========================================
 // ==========================================
 /* Local memory functions */
 template <> struct MemAllocator<MemorySpace::Local> {
-    [[nodiscard]] static inline auto allocate(sycl::range<3> range,
-                                              sycl::handler &cgh) {
-        return local_acc(range, cgh);
-    }
+    local_acc acc_;
 
-    [[nodiscard]] static inline size_t
-    compute_index(const sycl::nd_item<3> &itm, int dim) {
-        return itm.get_local_id(dim);
-    }
-
-    [[nodiscard]] static inline auto
-    get_pointer(local_acc scratch) {
-        return scratch.get_pointer();
-    }
+    [[nodiscard]] MemAllocator(sycl::range<3> range, sycl::handler &cgh)
+        : acc_(range, cgh) {}
+    [[nodiscard]] inline auto get_pointer() const { return acc_.get_pointer(); }
 };
+
+template <>
+inline size_t compute_index<MemorySpace::Local>(const sycl::nd_item<3> &itm, int dim) {
+    return itm.get_local_id(dim);
+}
 
 // ==========================================
 // ==========================================
 /* Global memory functions */
 template <> struct MemAllocator<MemorySpace::Global> {
-    [[nodiscard]] static inline double *allocate(double *scratch_ptr) {
-        return scratch_ptr;   // No allocation needed for global memory
-    }
+    // MemAllocator(size_t size, sycl::queue &Q) {
+    //     m_ptr = sycl::malloc_device<data_t>(size, Q);
+    //     Q.wait();
+    //   }
+    double *ptr_;
 
-    [[nodiscard]] static inline size_t
-    compute_index(const sycl::nd_item<3> &itm, int dim) {
+    [[nodiscard]] MemAllocator(double *ptr) : ptr_(ptr){};
+
+    [[nodiscard]] inline size_t compute_index(const sycl::nd_item<3> &itm,
+                                              int dim) {
         return itm.get_global_id(dim);
     }
 
-    [[nodiscard]] static inline auto get_pointer(double *scratch) {
-        return scratch;
-    }
+    [[nodiscard]] inline auto get_pointer() const { return ptr_; }
 };
+template <>
+inline size_t compute_index<MemorySpace::Global>(const sycl::nd_item<3> &itm, int dim) {
+    return itm.get_global_id(dim);
+}
 
+// ==========================================
+// ==========================================
 template <MemorySpace MemType>
 inline sycl::event
 submit_kernels(sycl::queue &Q, double *fdist_dev, const Solver &solver,
@@ -77,13 +84,22 @@ submit_kernels(sycl::queue &Q, double *fdist_dev, const Solver &solver,
     }
 
     return Q.submit([&](sycl::handler &cgh) {
-        auto scratch = [&]() {
+        // auto scratch = [&]() {
+        //     if constexpr (MemType == MemorySpace::Local) {
+        //         return MemAllocator<MemType>::allocate(
+        //             local_size, cgh); /* TODO: bug here, the global_buffer
+        //             has
+        //                                  not the same size*/
+        //     } else {
+        //         return MemAllocator<MemType>::allocate(global_scratch);
+        //     }
+        // }();
+
+        auto mallocator = [&]() {
             if constexpr (MemType == MemorySpace::Local) {
-                return MemAllocator<MemType>::allocate(
-                    local_size, cgh); /* TODO: bug here, the global_buffer has
-                                         not the same size*/
+                return MemAllocator<MemType>({16, 16, 16}, cgh);
             } else {
-                return MemAllocator<MemType>::allocate(global_scratch);
+                return MemAllocator<MemType>(global_scratch);
             }
         }();
 
@@ -91,14 +107,14 @@ submit_kernels(sycl::queue &Q, double *fdist_dev, const Solver &solver,
             sycl::nd_range<3>{global_size, local_size},
             [=](auto itm) {
                 mdspan3d_t fdist(fdist_dev, n0, n1, n2);
-                mdspan3d_t scr(MemAllocator<MemType>::get_pointer(scratch), w0,
-                               w2, n1); /* TODO: bug here this is not the size
-                                          for global memory kernels*/
+                mdspan3d_t scr(mallocator.get_pointer(), w0, w2,
+                               n1); /* TODO: bug here this is not the size
+                                      for global memory kernels*/
                 const auto i1 = itm.get_local_id(1);
                 const auto local_i0 =
-                    MemAllocator<MemType>::compute_index(itm, 0);
+                    compute_index<MemType>(itm, 0);
                 const auto local_i2 =
-                    MemAllocator<MemType>::compute_index(itm, 2);
+                    compute_index<MemType>(itm, 2);
                 auto scratch_slice = std::experimental::submdspan(
                     scr, local_i0, local_i2, std::experimental::full_extent);
 
