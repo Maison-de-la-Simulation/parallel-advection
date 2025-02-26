@@ -39,10 +39,6 @@ compute_index<MemorySpace::Local>(const sycl::nd_item<3> &itm, int dim) {
 // ==========================================
 /* Global memory functions */
 template <> struct MemAllocator<MemorySpace::Global> {
-    // MemAllocator(size_t size, sycl::queue &Q) {
-    //     m_ptr = sycl::malloc_device<data_t>(size, Q);
-    //     Q.wait();
-    //   }
     double *ptr_;
     extents_t extents_;
 
@@ -109,12 +105,12 @@ submit_kernels(sycl::queue &Q, double *fdist_dev, const Solver &solver,
             sycl::nd_range<3>{global_size, local_size},
             [=](auto itm) {
                 mdspan3d_t fdist(fdist_dev, n0, n1, n2);
-                mdspan3d_t scr(mallocator.get_pointer(),
-                               mallocator.extents_); /* TODO: bug here this is
-            not the size for global memory kernels*/
+                mdspan3d_t scr(mallocator.get_pointer(), mallocator.extents_);
+
                 const auto i1 = itm.get_local_id(1);
                 const auto local_i0 = compute_index<MemType>(itm, 0);
                 const auto local_i2 = compute_index<MemType>(itm, 2);
+
                 auto scratch_slice = std::experimental::submdspan(
                     scr, local_i0, local_i2, std::experimental::full_extent);
 
@@ -136,12 +132,12 @@ submit_kernels(sycl::queue &Q, double *fdist_dev, const Solver &solver,
                             scratch_slice(ii1) =
                                 solver(data_slice, global_i0, ii1, global_i2);
                         }
+
                         sycl::group_barrier(itm.get_group());
 
                         for (int ii1 = i1; ii1 < n1; ii1 += w1) {
                             data_slice(ii1) = scratch_slice(ii1);
                         }
-                        // sycl::group_barrier(itm.get_group());
                     }   // end for ii2
                 }   // end for ii0
             }   // end lambda in parallel_for
@@ -149,7 +145,7 @@ submit_kernels(sycl::queue &Q, double *fdist_dev, const Solver &solver,
     });      // end Q.submit
 }
 
-// ** Wrappers to Ensure Correct Function Calls **
+// Wrappers
 inline sycl::event
 submit_local_kernels(sycl::queue &Q, double *fdist_dev, const Solver &solver,
                      const size_t b0_size, const size_t b0_offset,
