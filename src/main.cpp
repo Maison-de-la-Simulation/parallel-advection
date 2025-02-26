@@ -18,9 +18,9 @@ advection(sycl::queue &Q, double* fidst_dev,
     auto start = std::chrono::high_resolution_clock::now();
     // Time loop
     for (size_t t = 0; t < maxIter; ++t) {
-        advector(Q, fidst_dev, solver).wait();
+        advector(Q, fidst_dev, solver);
+        Q.wait();
     }   // end for t < T
-    Q.wait_and_throw();
     auto end = std::chrono::high_resolution_clock::now();
 
     return (end - start);

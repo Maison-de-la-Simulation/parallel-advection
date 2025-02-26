@@ -35,17 +35,7 @@ distribute_batchs(sycl::queue &Q, double *fdist_dev, const Solver &solver,
                                batch_size_d2, offset_d2, orig_w0, w1, orig_w2,
                                wg_dispatch, n0, n1, n2)...};
 
-            // Choose the last event as the return event
-            // TODO: assumes the last kernel is longest. change that to largest
-            // number of batchs
             last_event = events.back();
-
-            /* TODO: here do not sync? check overlapping of compute */
-            if (!(last_i0 && last_i2)) {
-                for (auto &evt : events) {
-                    evt.wait();
-                }
-            }
         }
     }
 
