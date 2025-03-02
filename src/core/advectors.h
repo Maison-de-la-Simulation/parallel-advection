@@ -105,18 +105,18 @@ class AdaptiveWg : public IAdvectorX {
                                          dispatch_dim2_.n_batch_,
                                          local_size_.w0_, local_size_.w2_);
 
-        std::cout << "--------------------------------" << std::endl;
-        std::cout << "n_batch0        : " << dispatch_dim0_.n_batch_
-                  << std::endl;
-        std::cout << "n_batch2        : " << dispatch_dim2_.n_batch_
-                  << std::endl;
-        std::cout << "g0_: " << wg_dispatch_.g0_ << std::endl;
-        std::cout << "g2_: " << wg_dispatch_.g2_ << std::endl;
-        std::cout << "s0_: " << wg_dispatch_.s0_ << std::endl;
-        std::cout << "s2_: " << wg_dispatch_.s2_ << std::endl;
+        // std::cout << "--------------------------------" << std::endl;
+        // std::cout << "n_batch0        : " << dispatch_dim0_.n_batch_
+        //           << std::endl;
+        // std::cout << "n_batch2        : " << dispatch_dim2_.n_batch_
+        //           << std::endl;
+        // std::cout << "g0_: " << wg_dispatch_.g0_ << std::endl;
+        // std::cout << "g2_: " << wg_dispatch_.g2_ << std::endl;
+        // std::cout << "s0_: " << wg_dispatch_.s0_ << std::endl;
+        // std::cout << "s2_: " << wg_dispatch_.s2_ << std::endl;
 
-        print_range("local_size", local_size_.range());
-        std::cout << "--------------------------------" << std::endl;
+        // print_range("local_size", local_size_.range());
+        // std::cout << "--------------------------------" << std::endl;
     }
 };
 
@@ -170,21 +170,21 @@ class HybridMem : public AdaptiveWg {
             global_scratch_ = sycl::malloc_device<double>(
                 max_k_global * solver.params.n1 * solver.params.n2, q_);
 
-            std::cout << "Allocated " << max_k_global << "*" << solver.params.n1
-                      << "*" << solver.params.n2
-                      << "elems in memory for scartchG" << std::endl;
+            // std::cout << "Allocated " << max_k_global << "*" << solver.params.n1
+            //           << "*" << solver.params.n2
+            //           << "elems in memory for scartchG" << std::endl;
         } else {
             global_scratch_ = nullptr;
         }
 
-        print_range("local_size_global_k", local_size_global_kernels_.range());
+        // print_range("local_size_global_k", local_size_global_kernels_.range());
 
-        std::cout << "(k_local, k_global) = (" << kernel_dispatch_.k_local_ << ", "
-                  << kernel_dispatch_.k_global_ << ")" << std::endl;
-        std::cout << "(last_k_local, last_k_global) = ("
-                  << last_kernel_dispatch_.k_local_ << ", "
-                  << last_kernel_dispatch_.k_global_ << ")" << std::endl;
-        std::cout << "--------------------------------" << std::endl;
+        // std::cout << "(k_local, k_global) = (" << kernel_dispatch_.k_local_ << ", "
+        //           << kernel_dispatch_.k_global_ << ")" << std::endl;
+        // std::cout << "(last_k_local, last_k_global) = ("
+        //           << last_kernel_dispatch_.k_local_ << ", "
+        //           << last_kernel_dispatch_.k_global_ << ")" << std::endl;
+        // std::cout << "--------------------------------" << std::endl;
     }
 
     ~HybridMem() {
