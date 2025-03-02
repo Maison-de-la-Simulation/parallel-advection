@@ -46,6 +46,8 @@ BM_HybridMem_p(benchmark::State &state) {
             Q.wait();
         } catch (const sycl::exception &e) {
             state.SkipWithError(e.what());
+        } catch (const std::exception &e) {
+            state.SkipWithError(e.what());
             break;
         }
     }
