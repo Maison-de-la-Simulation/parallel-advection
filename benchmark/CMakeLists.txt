@@ -23,9 +23,9 @@ adv1d::core
 adv1d::tools)
 
 if(SYCL_IS_ACPP)
-    add_sycl_to_target(TARGET main-bench)
+    add_sycl_to_target(TARGET bkm-bench)
 else()
-    target_link_libraries(main-bench PUBLIC dpcpp_opt)
+    target_link_libraries(bkm-bench PUBLIC dpcpp_opt)
 endif()
 
 
