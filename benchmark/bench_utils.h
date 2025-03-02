@@ -17,10 +17,10 @@ enum AdvImpl : int {
 
 using bm_vec_t = std::vector<int64_t>;
 
-static bm_vec_t N0_RANGE = {8192};
+static bm_vec_t N0_RANGE = {1024};
 static bm_vec_t N1_RANGE = {16, 1024, 6100};
-static bm_vec_t N2_RANGE = {128};
-static bm_vec_t PERCENT_LOC = {1, 10, 50, 80, 99};
+static bm_vec_t N2_RANGE = {16};
+static bm_vec_t PERCENT_LOC = {10, 20, 30, 40, 50, 60, 70, 80, 90};
 static bm_vec_t SEQ_SIZE0 = {1};
 static bm_vec_t SEQ_SIZE2 = {1};
 

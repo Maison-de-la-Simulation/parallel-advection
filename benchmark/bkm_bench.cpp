@@ -73,7 +73,7 @@ BENCHMARK(BM_HybridMem_p)
         N0_RANGE,        /*n0*/
         N1_RANGE,            /*n1*/
         N2_RANGE,        /*n2*/
-        {WG_SIZE_NVI, 512},         /*w*/
+        {128, 512, 1024},         /*w*/
         PERCENT_LOC,
         SEQ_SIZE0,
         SEQ_SIZE2,
