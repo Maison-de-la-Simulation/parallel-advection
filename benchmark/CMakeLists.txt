@@ -1,17 +1,17 @@
-add_executable(main-bench main_bench.cpp)
+# add_executable(main-bench main_bench.cpp)
 
-target_link_libraries(main-bench PUBLIC
-benchmark::benchmark
-dpcpp_opt
-adv1d::config
-adv1d::core
-adv1d::tools)
+# target_link_libraries(main-bench PUBLIC
+# benchmark::benchmark
+# dpcpp_opt
+# adv1d::config
+# adv1d::core
+# adv1d::tools)
 
-if(SYCL_IS_ACPP)
-    add_sycl_to_target(TARGET main-bench)
-else()
-    target_link_libraries(main-bench PUBLIC dpcpp_opt)
-endif()
+# if(SYCL_IS_ACPP)
+#     add_sycl_to_target(TARGET main-bench)
+# else()
+#     target_link_libraries(main-bench PUBLIC dpcpp_opt)
+# endif()
 #
 add_executable(bkm-bench bkm_bench.cpp)
 
