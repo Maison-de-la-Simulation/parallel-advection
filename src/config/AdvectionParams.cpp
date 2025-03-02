@@ -10,6 +10,7 @@ ADVParams::ADVParams(ADVParamsNonCopyable &other){
   gpu = other.gpu;
   outputSolution = other.outputSolution;
 
+  percent_loc = other.percent_loc;
   seq_size0 = other.seq_size0;
   seq_size2 = other.seq_size2;
 
@@ -38,6 +39,7 @@ ADVParamsNonCopyable::ADVParamsNonCopyable(ADVParams &other){
   gpu = other.gpu;
   outputSolution = other.outputSolution;
 
+  percent_loc = other.percent_loc;
   seq_size0 = other.seq_size0;
   seq_size2 = other.seq_size2;
 
