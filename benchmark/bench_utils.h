@@ -6,46 +6,7 @@
 #include <cstdint>
 #include <init.h>
 #include <sycl/sycl.hpp>
-
-enum AdvImpl : int {
-    BR3D,           // 0
-    HIER,           // 1
-    NDRA,           // 2
-    ADAPTWG,        // 3
-    HYBRID          // 4
-};
-
-using bm_vec_t = std::vector<int64_t>;
-
-static bm_vec_t N0_RANGE = {1024};
-static bm_vec_t N1_RANGE = {16, 1024, 6100};
-static bm_vec_t N2_RANGE = {16};
-static bm_vec_t PERCENT_LOC = {10, 20, 30, 40, 50, 60, 70, 80, 90};
-static bm_vec_t SEQ_SIZE0 = {1};
-static bm_vec_t SEQ_SIZE2 = {1};
-
-static std::vector<bm_vec_t> EXP_RANGE{
-    {1<<17, 1<<14, 1},     //n1 trop grand pour local mem, acces coal
-    {1<<10, 1<<11, 1<<10}, //n1 trop grand (WI per WG) mais rentre en local mem
-    {1<<10, 1<<14, 1<<7},  //n1 trop grand pour fit en local +acces non coal.
-    {1<<27, 1<<4,  1},     //n1 trop petit, acces coalescent en dim 1
-    {1<<20, 1<<4,  1<<7},  //n1 trop petit et acces non coalescent
-    {1<<21, 1<<10, 1},     //cas parfait: elements contigus
-    {1<<14, 1<<10, 1<<7},  //elements espacés en memoire de plus de SIMD_Size
-    // {0,1<<10,1<<6+1},   //non aligné et pas power of two
-    {1    , 1<<10, 1<<21}, //un seul batch en d0
-    {1<<11, 1<<10, 1<<10}, //profil equilibre
-};
-
-static int64_t WG_SIZE_NVI = 128;
-static int64_t WG_SIZE_AMD = 256;
-static int64_t WG_SIZE_PVC = 1024;
-
-static bm_vec_t WG_SIZES_RANGE = {1, 4, 8, 64, 128, 256, 512, 1024};
-
-static bm_vec_t IMPL_RANGE = {AdvImpl::BR3D, AdvImpl::HIER, AdvImpl::NDRA,
-                              AdvImpl::ADAPTWG, AdvImpl::HYBRID};
-
+#include "bench_config.h"
 
 // =============================================
 // =============================================
@@ -56,9 +17,10 @@ struct BenchParams {
 
     BenchParams() = delete;
     BenchParams(benchmark::State &state)
-        : gpu(state.range(0)), n0(state.range(1)), n1(state.range(2)),
-          n2(state.range(3)), w(state.range(4)), percent_loc(state.range(5)),
-          s0(state.range(6)), s2(state.range(7)) {
+        : gpu(state.range(0)),
+          n0(-1), n1(-1), n2(-1),
+          w(state.range(3)),
+          s0(state.range(4)), s2(state.range(5)) {
         
             init_params();
           }
