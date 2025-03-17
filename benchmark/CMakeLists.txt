@@ -13,9 +13,9 @@
 #     target_link_libraries(main-bench PUBLIC dpcpp_opt)
 # endif()
 #
-add_executable(bkm-bench bkm_bench.cpp)
+add_executable(paper-bench paper-bench.cpp)
 
-target_link_libraries(bkm-bench PUBLIC
+target_link_libraries(paper-bench PUBLIC
 benchmark::benchmark
 dpcpp_opt
 adv1d::config
@@ -23,9 +23,9 @@ adv1d::core
 adv1d::tools)
 
 if(SYCL_IS_ACPP)
-    add_sycl_to_target(TARGET bkm-bench)
+    add_sycl_to_target(TARGET paper-bench)
 else()
-    target_link_libraries(bkm-bench PUBLIC dpcpp_opt)
+    target_link_libraries(paper-bench PUBLIC dpcpp_opt)
 endif()
 
 
