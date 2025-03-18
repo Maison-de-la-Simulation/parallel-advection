@@ -32,11 +32,12 @@ add_subdirectory(src)
 add_subdirectory(thirdparty/mdspan)
 
 ################################################################################
-if("${ADVECTION_BUILD_BENCHMARKS}")
+if("${benchmark_DIR}")
     find_package(benchmark REQUIRED)
+    message(STATUS "Package benchmark found, building advection benchmarks")
     add_subdirectory(benchmark)
 else()
-    message(STATUS "Skipping benchmark build, use ADVECTION_BUILD_BENCHMARKS=ON to build benchmarks.")
+    message(STATUS "Skipping benchmark build, use -Dbenchmark_DIR to build benchmarks.")
 endif()
 
 ################################################################################
