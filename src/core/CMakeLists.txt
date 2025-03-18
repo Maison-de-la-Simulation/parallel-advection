@@ -6,8 +6,8 @@ target_sources(core
   impl/BasicRange.cpp
   impl/NDRange.cpp
   impl/AdaptiveWg.cpp
-  impl/Hierarchical.cpp
-  impl/HybridMem.cpp
+  # impl/Hierarchical.cpp
+  # impl/HybridMem.cpp
   )
 
 target_include_directories(core

@@ -9,9 +9,7 @@ str2int(const char *str, int h = 0) noexcept {
 }
 
 static constexpr auto error_str =
-    "Should be: {Sequential, BasicRange, "
-    "Hierarchical, NDRange, "
-    "Scoped, StreamY, StraddledMalloc, Exp1...}";
+    "Should be: {BasicRange3D, NDRange, AdaptiveWg}";
 
 // // ==========================================
 // // ==========================================
@@ -26,12 +24,12 @@ kernel_impl_factory(const sycl::queue &q, const ADVParamsNonCopyable &params,
                                                    params.n2);
     case str2int("NDRange"):
         return sref::make_unique<AdvX::NDRange>();
-    case str2int("Hierarchical"):
-        return sref::make_unique<AdvX::Hierarchical>();
+    // case str2int("Hierarchical"):
+    //     return sref::make_unique<AdvX::Hierarchical>();
     case str2int("AdaptiveWg"):
         return sref::make_unique<AdvX::AdaptiveWg>(params, q);
-    case str2int("HybridMem"):
-        return sref::make_unique<AdvX::HybridMem>(params, q);
+    // case str2int("HybridMem"):
+    //     return sref::make_unique<AdvX::HybridMem>(params, q);
     default:
         auto str = kernel_name + " is not a valid kernel name.\n" + error_str;
         throw std::runtime_error(str);
