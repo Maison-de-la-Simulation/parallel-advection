@@ -20,4 +20,3 @@ LOGS/
 *.ipynb
 .cache
 pp-evolution*.pdf
-*setenv*
