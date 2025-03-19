@@ -23,8 +23,7 @@ static int64_t WG_SIZE_PVC = 1024;
 
 static bm_vec_t WG_SIZES_RANGE = {1, 4, 8, 64, 128, 256, 512, 1024};
 
-static bm_vec_t IMPL_RANGE = {AdvImpl::BR3D, AdvImpl::HIER, AdvImpl::NDRA,
-                              AdvImpl::ADAPTWG};
+static bm_vec_t IMPL_RANGE = {AdvImpl::NDRA, AdvImpl::ADAPTWG};
 
 
 struct Dim3Exp {int64_t n0_, n1_, n2_;};
@@ -38,6 +37,8 @@ static expe e5{1<<21, 1<<10, 1};       //cas parfait: elements contigus
 static expe e6{1<<14, 1<<10, 1<<7};    //elements espacés en memoire de plus de SIMD_Size
 static expe e7{0,     1<<10, (1<<6)+1};//non aligné et pas power of two
 static expe e8{1,     1<<10, 1<<21};   //un seul batch en d0
+
+//WORKS:
 static expe e9{1<<11, 1<<10, 1<<10};   //profil equilibre
 
 static std::vector EXP_SIZES{e0, e1, e2, e3, e4, e5, e6, e7, e8, e9};
