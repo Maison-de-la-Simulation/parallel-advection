@@ -9,7 +9,7 @@ include(preventBuildInSource) # Prevent from build-in source tree
 include(initBuildType) # Init build type: Release, Debug, ...
 include(print_target_properties) # useful for debugging cmake
 
-if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "IntelLLVM") OR (NOT ${DPCPP_FSYCL_TARGETS} STREQUAL ""))
+if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "IntelLLVM") OR (NOT ${DPCPP_FSYCL_TARGETS} STREQUAL "") OR (NOT ${BUILD_WITH_INTEL_LLVM} STREQUAL ""))
     set(SYCL_IS_ACPP OFF)
 else()
     set(SYCL_IS_ACPP ON)
