@@ -9,17 +9,17 @@ BENCHMARK_DIR=""
 RUN_TESTS=false
 
 ONEAPI_COMPILER="icpx"
-INTELLLVM_COMPILER="clang++"
-ACPP_COMPILER="syclcc"
+DPCPP_COMPILER="clang++"
+ACPP_COMPILER="acpp"
 
 CMAKE_OPTIONS+=" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
 
 usage() {
     echo "Simple compilation script. Automatically builds the project for a combination (hw, sycl)."
     echo "For multiple devices compilation flows, please compile manually."
-    echo "Usage: $0 [--hw <mi250|a100|cpu>] [--sycl <intel-llvm|acpp|oneapi>] [--benchmark_BUILD_DIR=<directory>] [--build-tests] [--run-tests] [--debug]"
+    echo "Usage: $0 [--hw <mi250|a100|cpu|mi300>] [--sycl <dpcpp|acpp|oneapi>] [--benchmark_BUILD_DIR=<directory>] [--build-tests] [--run-tests] [--debug]"
     echo "Compilers must be present in PATH:"
-    echo "           intel-llvm : ${INTELLLVM_COMPILER}"
+    echo "           dpcpp      : ${DPCPP_COMPILER}"
     echo "           acpp       : ${ACPP_COMPILER}"
     echo "           oneapi     : ${ONEAPI_COMPILER}"
     exit 1
@@ -80,8 +80,8 @@ ERR_HW_UNKNOWN="### Error: Unsupported hardware architecture specified."
 # =================================================
 # Set right CXX compiler (must be in PATH)
 # =================================================
-if [ "$SYCL_IMPL" == "intel-llvm" ]; then
-    CMAKE_OPTIONS+=" -DCMAKE_CXX_COMPILER=${INTELLLVM_COMPILER}"
+if [ "$SYCL_IMPL" == "dpcpp" ]; then
+    CMAKE_OPTIONS+=" -DCMAKE_CXX_COMPILER=${DPCPP_COMPILER}"
 elif [ "$SYCL_IMPL" == "acpp" ]; then
     CMAKE_OPTIONS+=" -DCMAKE_CXX_COMPILER=${ACPP_COMPILER}"
 elif [ "$SYCL_IMPL" == "oneapi" ]; then
@@ -95,7 +95,7 @@ fi
 # Set CMake options based on hardware and compiler
 # =================================================
 if [ "$HARDWARE" == "mi250" ]; then
-    if [ "$SYCL_IMPL" == "intel-llvm" ]; then
+    if [ "$SYCL_IMPL" == "dpcpp" ]; then
         CMAKE_OPTIONS+=" -DDPCPP_FSYCL_TARGETS='-fsycl-targets=amd_gpu_gfx90a'"
     elif [ "$SYCL_IMPL" == "acpp" ]; then
         export ACPP_TARGETS="hip:gfx90a"
@@ -107,7 +107,7 @@ if [ "$HARDWARE" == "mi250" ]; then
     fi
 elif [ "$HARDWARE" == "a100" ]; then
     # Add options for a100 and different SYCL implementations
-    if [ "$SYCL_IMPL" == "intel-llvm" ]; then
+    if [ "$SYCL_IMPL" == "dpcpp" ]; then
         CMAKE_OPTIONS+=" -DDPCPP_FSYCL_TARGETS='-fsycl-targets=nvidia_gpu_sm_80'"
     elif [ "$SYCL_IMPL" == "acpp" ]; then
         export ACPP_TARGETS="cuda:sm_80"
@@ -119,10 +119,21 @@ elif [ "$HARDWARE" == "a100" ]; then
     fi
 elif [ "$HARDWARE" == "cpu" ]; then
     # Add options for cpu and different SYCL implementations
-    if [ "$SYCL_IMPL" == "intel-llvm" ]; then
+    if [ "$SYCL_IMPL" == "dpcpp" ]; then
         CMAKE_OPTIONS+=" -DDPCPP_FSYCL_TARGETS='-fsycl-targets=spir64_x86_64'"
     elif [ "$SYCL_IMPL" == "acpp" ]; then
         export ACPP_TARGETS="omp"
+    # elif [ "$SYCL_IMPL" == "oneapi" ]; then
+        #do nothing
+    else
+        echo $ERR_SYCL_UNKNOWN
+        usage
+    fi
+elif [ "$HARDWARE" == "mi300" ]; then
+    if [ "$SYCL_IMPL" == "dpcpp" ]; then
+        CMAKE_OPTIONS+=" -DDPCPP_FSYCL_TARGETS='-fsycl-targets=amd_gpu_gfx942'"
+    elif [ "$SYCL_IMPL" == "acpp" ]; then
+        export ACPP_TARGETS="generic"
     # elif [ "$SYCL_IMPL" == "oneapi" ]; then
         #do nothing
     else
