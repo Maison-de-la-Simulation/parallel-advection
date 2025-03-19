@@ -17,7 +17,7 @@ CMAKE_OPTIONS+=" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
 usage() {
     echo "Simple compilation script. Automatically builds the project for a combination (hw, sycl)."
     echo "For multiple devices compilation flows, please compile manually."
-    echo "Usage: $0 [--hw <mi250|a100|cpu|mi300>] [--sycl <dpcpp|acpp|oneapi>] [--benchmark_BUILD_DIR=<directory>] [--build-tests] [--run-tests] [--debug]"
+    echo "Usage: $0 [--hw <mi250|a100|cpu|mi300|pvc>] [--sycl <dpcpp|acpp|oneapi>] [--benchmark_BUILD_DIR=<directory>] [--build-tests] [--run-tests] [--debug]"
     echo "Compilers must be present in PATH:"
     echo "           dpcpp      : ${DPCPP_COMPILER}"
     echo "           acpp       : ${ACPP_COMPILER}"
@@ -123,8 +123,9 @@ elif [ "$HARDWARE" == "cpu" ]; then
         CMAKE_OPTIONS+=" -DDPCPP_FSYCL_TARGETS='-fsycl-targets=spir64_x86_64'"
     elif [ "$SYCL_IMPL" == "acpp" ]; then
         export ACPP_TARGETS="omp"
-    # elif [ "$SYCL_IMPL" == "oneapi" ]; then
-        #do nothing
+    elif [ "$SYCL_IMPL" == "oneapi" ]; then
+        # do nothing
+        CMAKE_OPTIONS+=""
     else
         echo $ERR_SYCL_UNKNOWN
         usage
@@ -134,8 +135,21 @@ elif [ "$HARDWARE" == "mi300" ]; then
         CMAKE_OPTIONS+=" -DDPCPP_FSYCL_TARGETS='-fsycl-targets=amd_gpu_gfx942'"
     elif [ "$SYCL_IMPL" == "acpp" ]; then
         export ACPP_TARGETS="generic"
-    # elif [ "$SYCL_IMPL" == "oneapi" ]; then
+    elif [ "$SYCL_IMPL" == "oneapi" ]; then
         #do nothing
+        CMAKE_OPTIONS+=""
+    else
+        echo $ERR_SYCL_UNKNOWN
+        usage
+    fi
+elif [ "$HARDWARE" == "pvc" ]; then
+    if [ "$SYCL_IMPL" == "dpcpp" ]; then
+        CMAKE_OPTIONS+=" -DBUILD_WITH_INTEL_LLVM=ON"
+    elif [ "$SYCL_IMPL" == "acpp" ]; then
+        export ACPP_TARGETS="generic"
+    elif [ "$SYCL_IMPL" == "oneapi" ]; then
+        #do nothing
+        CMAKE_OPTIONS+=""
     else
         echo $ERR_SYCL_UNKNOWN
         usage
@@ -147,8 +161,7 @@ fi
 
 # Add benchmark directory option if specified
 if [ -n "$BENCHMARK_DIR" ]; then 
-    CMAKE_OPTIONS+=" -DCMAKE_PREFIX_PATH=${BENCHMARK_DIR}" 
-    CMAKE_OPTIONS+=" -DADVECTION_BUILD_BENCHMARKS=ON" 
+    CMAKE_OPTIONS+=" -Dbenchmark_DIR=${BENCHMARK_DIR}" 
 fi
 
 # Add tests compilation if specified
