@@ -17,7 +17,7 @@ CMAKE_OPTIONS+=" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
 usage() {
     echo "Simple compilation script. Automatically builds the project for a combination (hw, sycl)."
     echo "For multiple devices compilation flows, please compile manually."
-    echo "Usage: $0 [--hw <mi250|a100|cpu|mi300|pvc>] [--sycl <dpcpp|acpp|oneapi>] [--benchmark_BUILD_DIR=<directory>] [--build-tests] [--run-tests] [--debug]"
+    echo "Usage: $0 [--hw <mi250|a100|cpu|mi300|pvc|h100>] [--sycl <dpcpp|acpp|oneapi>] [--benchmark_BUILD_DIR=<directory>] [--build-tests] [--run-tests] [--debug]"
     echo "Compilers must be present in PATH:"
     echo "           dpcpp      : ${DPCPP_COMPILER}"
     echo "           acpp       : ${ACPP_COMPILER}"
@@ -145,6 +145,18 @@ elif [ "$HARDWARE" == "mi300" ]; then
 elif [ "$HARDWARE" == "pvc" ]; then
     if [ "$SYCL_IMPL" == "dpcpp" ]; then
         CMAKE_OPTIONS+=" -DBUILD_WITH_INTEL_LLVM=ON"
+    elif [ "$SYCL_IMPL" == "acpp" ]; then
+        export ACPP_TARGETS="generic"
+    elif [ "$SYCL_IMPL" == "oneapi" ]; then
+        #do nothing
+        CMAKE_OPTIONS+=""
+    else
+        echo $ERR_SYCL_UNKNOWN
+        usage
+    fi
+elif [ "$HARDWARE" == "h100" ]; then
+    if [ "$SYCL_IMPL" == "dpcpp" ]; then
+        CMAKE_OPTIONS+=" -DDPCPP_FSYCL_TARGETS='-fsycl-targets=nvidia_gpu_sm_90'"
     elif [ "$SYCL_IMPL" == "acpp" ]; then
         export ACPP_TARGETS="generic"
     elif [ "$SYCL_IMPL" == "oneapi" ]; then
