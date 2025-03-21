@@ -77,9 +77,8 @@ BENCHMARK(BM_Advection)->Name("main-BKM-bench")
     ->ArgsProduct({
         {/*0, */1}, /*gpu*/
         IMPL_RANGE, /* impl */
-        {3,4,5},
-        // benchmark::CreateDenseRange(0, 9, 1), /*size from the array*/
-        {128},//, 512, 1024},         /*w*/
+        benchmark::CreateDenseRange(0, 9, 1), /*size from the array*/
+        {128, 1024},         /*w*/
         SEQ_SIZE0,
         SEQ_SIZE2,
     })
