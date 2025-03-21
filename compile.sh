@@ -17,7 +17,7 @@ CMAKE_OPTIONS+=" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
 usage() {
     echo "Simple compilation script. Automatically builds the project for a combination (hw, sycl)."
     echo "For multiple devices compilation flows, please compile manually."
-    echo "Usage: $0 [--hw <mi250|a100|cpu|mi300|pvc|h100>] [--sycl <dpcpp|acpp|oneapi>] [--benchmark_BUILD_DIR=<directory>] [--build-tests] [--run-tests] [--debug]"
+    echo "Usage: $0 [--hw <mi250|a100|cpu|mi300|pvc|h100>] [--sycl <dpcpp|acpp|oneapi>] [--benchmark_DIR=<directory>] [--build-tests] [--run-tests] [--debug]"
     echo "Compilers must be present in PATH:"
     echo "           dpcpp      : ${DPCPP_COMPILER}"
     echo "           acpp       : ${ACPP_COMPILER}"
@@ -41,9 +41,9 @@ while [ "$#" -gt 0 ]; do
             SYCL_IMPL="$2"
             shift 2  # Remove --sycl and its argument from the list
             ;;
-        --benchmark_BUILD_DIR=*)
+        --benchmark_DIR=*)
             BENCHMARK_DIR="${1#*=}"
-            shift 1  # Remove --benchmark_BUILD_DIR=path from the list
+            shift 1  # Remove --benchmark_DIR=path from the list
             ;;
         --build-tests)
             BUILD_TESTS=true
