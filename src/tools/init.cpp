@@ -15,7 +15,7 @@ static constexpr auto error_str =
 // // ==========================================
 sref::unique_ref<IAdvectorX>
 kernel_impl_factory(const sycl::queue &q, const ADVParamsNonCopyable &params,
-                    Solver &s) {
+                    AdvectionSolver &s) {
     std::string kernel_name(params.kernelImpl.begin(), params.kernelImpl.end());
 
     switch (str2int(kernel_name.data())) {

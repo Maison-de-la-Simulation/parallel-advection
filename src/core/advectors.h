@@ -1,20 +1,12 @@
 #pragma once
 #include "IAdvectorX.h"
-#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <experimental/mdspan>
-#include <limits>
+#include "impl/bkma.h"
 
-using real_t = double;
 
-using mdspan3d_t =
-    std::experimental::mdspan<real_t, std::experimental::dextents<size_t, 3>,
-                              std::experimental::layout_right>;
-using mdspan2d_t =
-    std::experimental::mdspan<real_t, std::experimental::dextents<size_t, 2>,
-                              std::experimental::layout_right>;
 
 /* Contains headers for different implementations of advector interface */
 namespace AdvX {
@@ -25,7 +17,7 @@ class Sequential : public IAdvectorX {
 
   public:
     sycl::event operator()(sycl::queue &Q, double *fdist_dev,
-                           const Solver &solver) override;
+                           const AdvectionSolver &solver) override;
 };
 
 /* For BasicRange kernels we have to do it out-of-place so we need a global
@@ -39,7 +31,7 @@ class BasicRange : public IAdvectorX {
         : m_global_buff_ftmp{sycl::range<3>(nvx, n1, n2)} {}
 
     sycl::event operator()(sycl::queue &Q, double *fdist_dev,
-                           const Solver &solver) override;
+                           const AdvectionSolver &solver) override;
 };
 
 // class Hierarchical : public IAdvectorX {
@@ -55,7 +47,7 @@ class NDRange : public IAdvectorX {
 
   public:
     sycl::event operator()(sycl::queue &Q, double *fdist_dev,
-                           const Solver &solver) override;
+                           const AdvectionSolver &solver) override;
 };
 
 class AdaptiveWg : public IAdvectorX {
@@ -78,11 +70,11 @@ class AdaptiveWg : public IAdvectorX {
 
   public:
     sycl::event operator()(sycl::queue &Q, double *fdist_dev,
-                           const Solver &solver) override;
+                           const AdvectionSolver &solver) override;
 
     AdaptiveWg() = delete;
 
-    AdaptiveWg(const Solver &solver, sycl::queue q) {
+    AdaptiveWg(const AdvectionSolver &solver, sycl::queue q) {
         const auto n0 = solver.params.n0;
         const auto n1 = solver.params.n1;
         const auto n2 = solver.params.n2;

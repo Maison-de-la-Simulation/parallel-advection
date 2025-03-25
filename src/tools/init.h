@@ -7,7 +7,7 @@
 // ==========================================
 [[nodiscard]] sref::unique_ref<IAdvectorX>
 kernel_impl_factory(const sycl::queue &q, const ADVParamsNonCopyable &params,
-                    Solver &s);
+                    AdvectionSolver &s);
 
 // ==========================================
 // ==========================================

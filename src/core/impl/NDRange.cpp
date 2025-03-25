@@ -3,7 +3,7 @@
 sycl::event
 AdvX::NDRange::operator()(sycl::queue &Q,
                           double* fdist_dev,
-                          const Solver &solver) {
+                          const AdvectionSolver &solver) {
     auto const n0 = solver.params.n0;
     auto const n1 = solver.params.n1;
     auto const n2 = solver.params.n2;

@@ -11,7 +11,7 @@
 // returns duration for maxIter-1 iterations
 std::chrono::duration<double>
 advection(sycl::queue &Q, double* fidst_dev,
-          sref::unique_ref<IAdvectorX> &advector, const Solver &solver) {
+          sref::unique_ref<IAdvectorX> &advector, const AdvectionSolver &solver) {
 
     auto static const maxIter = solver.params.maxIter;
 
@@ -75,7 +75,7 @@ main(int argc, char **argv) {
     double* fdist = sycl::malloc_device<double>(n0*n1*n2, Q);
     fill_buffer(Q, fdist, params);
     
-    Solver solver(params);
+    AdvectionSolver solver(params);
     auto advector = kernel_impl_factory(Q, strParams, solver);
 
     auto elapsed_seconds = advection(Q, fdist, advector, solver);

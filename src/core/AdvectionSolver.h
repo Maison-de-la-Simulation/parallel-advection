@@ -17,11 +17,11 @@ double static constexpr loc[] = {-1. / 24, 1. / 24.,  -1. / 12.,
 // auto slice = std::experimental::submdspan(
 //     fdist, i0, std::experimental::full_extent, i2);
 
-struct Solver {
+struct AdvectionSolver {
     ADVParams params;
 
-    Solver() = delete;
-    Solver(const ADVParams &p) : params(p){};
+    AdvectionSolver() = delete;
+    AdvectionSolver(const ADVParams &p) : params(p){};
 
     // ==========================================
     // ==========================================
