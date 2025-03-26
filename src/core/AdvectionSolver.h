@@ -10,13 +10,6 @@ int static constexpr LAG_OFFSET = 2;
 double static constexpr loc[] = {-1. / 24, 1. / 24.,  -1. / 12.,
                                  1. / 12., -1. / 24., 1. / 24.};
 
-// using mdspan1D_stride_t =
-//     std::experimental::mdspan<double, std::experimental::dextents<size_t, 1>,
-//                               std::experimental::layout_stride>;
-
-// auto slice = std::experimental::submdspan(
-//     fdist, i0, std::experimental::full_extent, i2);
-
 struct AdvectionSolver {
     ADVParams params;
 

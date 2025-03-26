@@ -9,28 +9,26 @@ sum_and_normalize_conv(sycl::queue &Q, ConvSolver::span3d_t data) {
     auto n0 = data.extent(0);
     auto n1 = data.extent(1);
     auto n2 = data.extent(2);
-    sycl::range<3> r3d(n0,n1,n2);
+    sycl::range<3> r3d(n0, n1, n2);
 
     double sum = -1;
     {
         sycl::buffer<double> buff_sum(&sum, 1);
 
         Q.submit([&](sycl::handler &cgh) {
-             auto reduc_sum =
-                 sycl::reduction(buff_sum, cgh, sycl::plus<>());
+             auto reduc_sum = sycl::reduction(buff_sum, cgh, sycl::plus<>());
 
-             cgh.parallel_for(
-                 r3d, reduc_sum, [=](auto itm, auto &reduc_sum) {
-                     auto i0 = itm[0];
-                     auto i1 = itm[1];
-                     auto i2 = itm[2];
-                     auto f = data(i0, i1, i2);
+             cgh.parallel_for(r3d, reduc_sum, [=](auto itm, auto &reduc_sum) {
+                 auto i0 = itm[0];
+                 auto i1 = itm[1];
+                 auto i2 = itm[2];
+                 auto f = data(i0, i1, i2);
 
-                     reduc_sum += f;
-                 });
+                 reduc_sum += f;
+             });
          }).wait();
     }
-    sum /= (n0*n1*n2);
+    sum /= (n0 * n1 * n2);
 
     return sum;
 }
@@ -106,7 +104,7 @@ main(int argc, char **argv) {
                                  wi_dispatch.w2_,   // size_t w2
                                  wg_dispatch,       // WorkGroupDispatch wg_disp
                                  MemorySpace::Local};
-    
+
     auto error = sum_and_normalize_conv(Q, data);
     std::cout << std::endl;
     std::cout << "Normalized Array before: " << error << std::endl;

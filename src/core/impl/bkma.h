@@ -252,7 +252,6 @@ submit_kernels(sycl::queue &Q, mdspan3d_t data, const MySolver &solver,
         cgh.parallel_for(
             sycl::nd_range<3>{global_size, local_size},
             [=](auto itm) {
-                // mdspan3d_t fdist(data, n0, n1, n2);
                 mdspan3d_t scr(mallocator.get_pointer(), mallocator.extents_);
 
                 const auto i1 = itm.get_local_id(1);

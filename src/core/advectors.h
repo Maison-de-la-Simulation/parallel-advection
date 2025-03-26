@@ -12,16 +12,7 @@
 namespace AdvX {
 using buff3d = sycl::buffer<double, 3>;
 
-class Sequential : public IAdvectorX {
-    using IAdvectorX::IAdvectorX;   // Inheriting constructor
-
-  public:
-    sycl::event operator()(sycl::queue &Q, double *fdist_dev,
-                           const AdvectionSolver &solver) override;
-};
-
-/* For BasicRange kernels we have to do it out-of-place so we need a global
-buffer that is the same size as the fdistrib buffer */
+//==============================================================================
 class BasicRange : public IAdvectorX {
   protected:
     buff3d m_global_buff_ftmp;
@@ -34,14 +25,7 @@ class BasicRange : public IAdvectorX {
                            const AdvectionSolver &solver) override;
 };
 
-// class Hierarchical : public IAdvectorX {
-//     using IAdvectorX::IAdvectorX;
-
-//   public:
-//     sycl::event operator()(sycl::queue &Q, double *fdist_dev,
-//                            const Solver &solver) override;
-// };
-
+//==============================================================================
 class NDRange : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
 
@@ -50,6 +34,7 @@ class NDRange : public IAdvectorX {
                            const AdvectionSolver &solver) override;
 };
 
+//==============================================================================
 class AdaptiveWg : public IAdvectorX {
   protected:
     using IAdvectorX::IAdvectorX;
@@ -92,23 +77,12 @@ class AdaptiveWg : public IAdvectorX {
 
         wg_dispatch_.s0_ = solver.params.seq_size0;
         wg_dispatch_.s2_ = solver.params.seq_size2;
+
         //TODO: this line is overriden inside the kernel!!! useless
         wg_dispatch_.set_num_work_groups(n0, n2, dispatch_dim0_.n_batch_,
                                          dispatch_dim2_.n_batch_,
                                          local_size_.w0_, local_size_.w2_);
 
-        // std::cout << "--------------------------------" << std::endl;
-        // std::cout << "n_batch0        : " << dispatch_dim0_.n_batch_
-        //           << std::endl;
-        // std::cout << "n_batch2        : " << dispatch_dim2_.n_batch_
-        //           << std::endl;
-        // std::cout << "g0_: " << wg_dispatch_.g0_ << std::endl;
-        // std::cout << "g2_: " << wg_dispatch_.g2_ << std::endl;
-        // std::cout << "s0_: " << wg_dispatch_.s0_ << std::endl;
-        // std::cout << "s2_: " << wg_dispatch_.s2_ << std::endl;
-
-        // print_range("local_size", local_size_.range());
-        // std::cout << "--------------------------------" << std::endl;
     }
 };
 }   // namespace AdvX
