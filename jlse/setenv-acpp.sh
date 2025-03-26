@@ -12,7 +12,7 @@ spack load llvm
 
 export CMAKE_PREFIX_PATH=/home/ac.amillan/install/acpp-full
 export ACPP_TARGETS=generic
-export PATH=$PATH:/home/ac.amillan/install/acpp-full/bin/acpp
+export PATH=$PATH:/home/ac.amillan/install/acpp-full/bin
 export benchmark_DIR=/home/ac.amillan/source/parallel-advection/thirdparty/benchmark/build
 
 echo "Please export ACPP_VISIBILITY_MASK=cuda;hip;omp depending on the vendor"
