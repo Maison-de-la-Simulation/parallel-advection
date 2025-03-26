@@ -93,6 +93,11 @@ main(int argc, char **argv) {
 
     WorkItemDispatch wi_dispatch;
     wi_dispatch.set_ideal_sizes(512, n0, n1, n2);
+    auto max_elem_local_mem =
+        Q.get_device().get_info<sycl::info::device::local_mem_size>() /
+        sizeof(double);
+    wi_dispatch.adjust_sizes_mem_limit(max_elem_local_mem, n1);
+
     WorkGroupDispatch wg_dispatch;
     wg_dispatch.set_num_work_groups(n0, n2, 1, 1, wi_dispatch.w0_,
                                     wi_dispatch.w2_);
