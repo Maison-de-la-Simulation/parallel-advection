@@ -43,13 +43,13 @@ fill_buffer(sycl::queue &q, double* fdist_dev,
             const ADVParams &params) {
     const auto n0=params.n0, n1=params.n1, n2=params.n2;
 
-    sycl::range r1d(n0*n1*n2);
+    sycl::range r3d(n0,n1,n2);
     q.submit([&](sycl::handler &cgh) {
-         cgh.parallel_for(r1d, [=](sycl::id<1> i) {
+         cgh.parallel_for(r3d, [=](auto i) {
              mdspan3d_t fdist(fdist_dev, n0, n1, n2);
-             const size_t i0 = i % n0;
-             const size_t i1 = (i / n0) % n1;
-             const size_t i2 = (i / (n0 * n1)) % n2;
+             const size_t i0 = i[0];
+             const size_t i1 = i[1];
+             const size_t i2 = i[2];
 
              double x = params.minRealX + i1 * params.dx;
              fdist(i0, i1, i2) = sycl::sin(4 * x * M_PI);

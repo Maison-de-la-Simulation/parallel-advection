@@ -106,7 +106,6 @@ if [ "$HARDWARE" == "mi250" ]; then
         usage
     fi
 elif [ "$HARDWARE" == "a100" ]; then
-    # Add options for a100 and different SYCL implementations
     if [ "$SYCL_IMPL" == "dpcpp" ]; then
         CMAKE_OPTIONS+=" -DDPCPP_FSYCL_TARGETS='-fsycl-targets=nvidia_gpu_sm_80'"
     elif [ "$SYCL_IMPL" == "acpp" ]; then
@@ -118,7 +117,6 @@ elif [ "$HARDWARE" == "a100" ]; then
         usage
     fi
 elif [ "$HARDWARE" == "cpu" ]; then
-    # Add options for cpu and different SYCL implementations
     if [ "$SYCL_IMPL" == "dpcpp" ]; then
         CMAKE_OPTIONS+=" -DDPCPP_FSYCL_TARGETS='-fsycl-targets=spir64_x86_64'"
     elif [ "$SYCL_IMPL" == "acpp" ]; then
@@ -171,25 +169,23 @@ else
     usage
 fi
 
-# Add benchmark directory option if specified
 if [ -n "$BENCHMARK_DIR" ]; then 
     CMAKE_OPTIONS+=" -Dbenchmark_DIR=${BENCHMARK_DIR}" 
 fi
 
-# Add tests compilation if specified
 if $BUILD_TESTS; then
     CMAKE_OPTIONS+=" -DADVECTION_BUILD_TESTS=ON"
-fi
-
-# Add tests compilation if specified
-if $BUILD_DEBUG; then
-    CMAKE_OPTIONS+=" -DCMAKE_BUILD_TYPE=Debug"
 fi
 
 # =================================================
 # Configure
 # =================================================
 BUILD_DIR=build_${SYCL_IMPL}_${HARDWARE}
+
+if $BUILD_DEBUG; then
+    CMAKE_OPTIONS+=" -DCMAKE_BUILD_TYPE=Debug"
+    BUILD_DIR+="_debug"
+fi
 
 # Check if the build directory exists
 if [ -d "${BUILD_DIR}" ]; then

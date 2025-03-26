@@ -75,6 +75,7 @@ struct AdvectionSolver {
     // ==========================================
     /* The _solve_ function of the algorithm presented */
     template <class ArrayLike1D>
+    inline __attribute__((always_inline))
     double operator()(const ArrayLike1D data, const size_t &i0,
                       const size_t &i1, const size_t &i2) const {
 

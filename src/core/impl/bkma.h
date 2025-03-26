@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <sycl/sycl.hpp>
 
-using real_t = double;
+using real_t = double; // tab[C]
 
 using mdspan3d_t =
     std::experimental::mdspan<real_t, std::experimental::dextents<size_t, 3>,
@@ -237,14 +237,6 @@ submit_kernels(sycl::queue &Q, mdspan3d_t data, const MySolver &solver,
     auto n0 = data.extent(0);
     auto n1 = data.extent(1);
     auto n2 = data.extent(2);
-    // print_range("global_size", global_size);
-    // print_range("local_size", local_size, 1);
-    // /* Debug */
-    // if constexpr (MemType == MemorySpace::Local) {
-    //     std::cout << "in submit local kernel" << std::endl;
-    // } else {
-    //     std::cout << "in submit global kernel" << std::endl;
-    // }
 
     return Q.submit([&](sycl::handler &cgh) {
         auto mallocator = [&]() {
@@ -336,6 +328,7 @@ bkma_run(sycl::queue &Q, mdspan3d_t data, const MySolver &solver,
                 last_i2 ? optim_params.dispatch_d2.last_batch_size_
                         : optim_params.dispatch_d2.batch_size_;
 
+            last_event.wait();
             switch (optim_params.mem_space) {
             case MemorySpace::Local: {
                 last_event = submit_kernels<MemorySpace::Local>(
@@ -352,18 +345,10 @@ bkma_run(sycl::queue &Q, mdspan3d_t data, const MySolver &solver,
             } break;
 
             default: {
-                std::abort();
+                throw std::invalid_argument("Unknown MemorySpace");
             }
             }
 
-            // call each provided kernel submission function
-            // std::array<sycl::event, sizeof...(Functors)> events = {
-            //     submit_kernels(Q, fdist_dev, solver, batch_size_d0,
-            //     offset_d0,
-            //                    batch_size_d2, offset_d2, orig_w0, w1,
-            //                    orig_w2, wg_dispatch, n0, n1, n2)...};
-
-            // last_event = events.back();
         }
     }
 

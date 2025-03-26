@@ -71,8 +71,8 @@ main(int argc, char **argv) {
     
     /* Buffer for the distribution function containing the probabilities of
     having a particle at a particular speed and position, plus a fictive dim */
-    // sycl::buffer<double, 3> buff_fdistrib(sycl::range<3>(n0, n1, n2));
     double* fdist = sycl::malloc_device<double>(n0*n1*n2, Q);
+    Q.wait();
     fill_buffer(Q, fdist, params);
     
     AdvectionSolver solver(params);
@@ -82,11 +82,6 @@ main(int argc, char **argv) {
 
     std::cout << "\nRESULTS_VALIDATION:" << std::endl;
     validate_result(Q, fdist, params);
-
-    // if(params.outputSolution){
-    //     export_result_to_file(buff_fdistrib, params);
-    //     export_error_to_file(buff_fdistrib, params);
-    // }
 
     std::cout << "PERF_DIAGS:" << std::endl;
     std::cout << "elapsed_time: " << elapsed_seconds.count() << " s\n";
