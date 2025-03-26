@@ -74,7 +74,7 @@ main(int argc, char **argv) {
          auto i0 = itm[0];
          auto i1 = itm[1];
          auto i2 = itm[2];
-         data(i0, i1, i2) = 1.0;
+         data(i0, i1, i2) = (i0+i1+i2)%10;
      }).wait();
 
     double *d_weight =
