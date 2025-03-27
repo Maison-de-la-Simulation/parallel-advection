@@ -3,8 +3,8 @@ import torch
 import time
 
 # Device selection
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"Using device: {device}")
+device = torch.device("cuda" if torch.cuda.is_available() else "xpu" if torch.xpu.is_available() else "cpu")
+print(f"Using device: {device}: {torch.cuda.get_device_name(device)}")
 
 # Parameters
 n0 = 16384
@@ -43,7 +43,7 @@ def sum_and_normalize(data):
 
 # Compute initial sum and normalization
 error_before = sum_and_normalize(data)
-print(f"Normalized Array before: {error_before}")
+print(f"Normalized Array before: {error_before:.1f}")
 
 # Run convolution
 start_time = time.time()
@@ -52,7 +52,7 @@ elapsed_time = time.time() - start_time
 
 # Compute final sum and normalization
 error_after = sum_and_normalize(output)
-print(f"Normalized Array after: {error_after}")
+print(f"Normalized Array after: {error_after:.1f}")
 
 # Performance metrics
 gcells = (n0 * n1 * n2) / elapsed_time / 1e9

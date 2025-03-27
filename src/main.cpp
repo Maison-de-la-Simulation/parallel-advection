@@ -58,13 +58,14 @@ main(int argc, char **argv) {
     /* Display infos on current device */
     std::cout << "Using device: "
               << Q.get_device().get_info<sycl::info::device::name>() << "\n";
-
-    const auto n0 = 16384;   // n
-    const auto n1 = 1024;    // l
-    const auto n2 = 1;       // n
-    const auto k = 3;
+              
     const auto channel_out = 1;
     const auto channel_in = 1;
+
+    const auto n0 = 16384;             // n
+    const auto n1 = 512*channel_in;    // l*ic
+    const auto n2 = 1;                 // n
+    const auto k = 3;
 
     ConvSolver::span3d_t data(sycl::malloc_device<double>(n0 * n1 * n2, Q), n0,
                               n1, n2);
