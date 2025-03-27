@@ -10,7 +10,7 @@ print(f"Using device: {device}")
 n0 = 16384
 n1 = 1024
 n2 = 1
-k = 1  # Kernel size
+k = 3  # Kernel size
 channel_out = 1
 channel_in = 1
 

@@ -62,7 +62,7 @@ main(int argc, char **argv) {
     const auto n0 = 16384;   // n
     const auto n1 = 1024;    // l
     const auto n2 = 1;       // n
-    const auto k = 1;
+    const auto k = 3;
     const auto channel_out = 1;
     const auto channel_in = 1;
 
