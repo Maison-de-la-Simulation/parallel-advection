@@ -10,11 +10,11 @@ print(f"Using device: {device}: {torch.cuda.get_device_name(device)}")
 
 # Parameters
 
-channel_in  = 1
+channel_in  = 3
 channel_out = channel_in
 length = 512
 
-n0 = 512
+n0 = 16384
 n1 = length*channel_out
 n2 = 1
 k = 5

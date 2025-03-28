@@ -22,10 +22,13 @@ struct Conv1DParams {
     int channels;
 };
 
-static std::vector<Conv1DParams> configs = {{16384, 128, 3, 16},
-                                            {16384, 256, 5, 32},
-                                            {16384, 512, 7, 64},
-                                            {16384, 1024, 11, 128}};
+static std::vector<Conv1DParams> configs = {{16384, 512, 3, 1},
+                                            {1024, 512, 3, 1},
+                                            // {1024, 512, 3, 1},
+                                            // {32768, 128, 3, 9},
+                                            {16384, 256, 5, 6},
+                                            {16384, 512, 5, 3},
+                                            {16384, 1024, 11, 1}};
 
 // ==========================================
 double
@@ -92,9 +95,9 @@ BM_Conv1d(benchmark::State &state) {
     const size_t k = conv_params.kernel_size;
     const size_t length = conv_params.input_length;
 
-    const size_t n0 = conv_params.batch_size;
+    const size_t n0 = conv_params.batch_size/1024;
     const size_t n1 = length * c_in;
-    const size_t n2 = 1;   // TODO: try to split batch_size into n0 and n1
+    const size_t n2 = 1024;   // TODO: try to split batch_size into n0 and n1
     /* App setup */
     span3d_t data(sycl_alloc(n0 * n1 * n2, q), n0, n1, n2);
     span3d_t weights(sycl_alloc(k * c_out * c_in, q), k, c_in, c_out);
@@ -160,6 +163,7 @@ BM_Conv1d(benchmark::State &state) {
 // ==========================================
 BENCHMARK(BM_Conv1d)
     ->Name("main-BKM-bench")
+    ->Iterations(1)
     ->ArgsProduct({benchmark::CreateDenseRange(0, configs.size(), 1)})
     ->UseRealTime()
     ->Unit(benchmark::kMillisecond);
