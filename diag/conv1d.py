@@ -14,20 +14,22 @@ channel_in  = 3
 channel_out = channel_in
 length = 512
 
-n0 = 16384
+n0 = 512
 n1 = length*channel_out
-n2 = 1
+n2 = 512
 batch_size=n0*n2
 
 k = 1
 
-i0, i1, i2 = torch.meshgrid(
-    torch.arange(batch_size, device=device, dtype=real_t),
-    torch.arange(channel_in, device=device, dtype=real_t),
-    torch.arange(length, device=device, dtype=real_t),
-    indexing="ij",
-)
-data = (i0 + i1 + i2) % 10
+# i0, i1, i2 = torch.meshgrid(
+#     torch.arange(batch_size, device=device, dtype=real_t),
+#     torch.arange(channel_in, device=device, dtype=real_t),
+#     torch.arange(length, device=device, dtype=real_t),
+#     indexing="ij",
+# )
+# data = (i0 + i1 + i2) % 10
+data = torch.full((batch_size, channel_in, length), 7.3, dtype=real_t, device=device)
+
 print(f"Is data contiguous: {data.is_contiguous()}")
 
 # Weight and bias initialization

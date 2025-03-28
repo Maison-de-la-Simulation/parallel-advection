@@ -63,9 +63,9 @@ main(int argc, char **argv) {
     const auto channel_out = channel_in;
     const auto length = 512;
 
-    const auto n0 = 16384;              // n
+    const auto n0 = 512;              // n
     const auto n1 = length*channel_out;  // l*oc
-    const auto n2 = 1;                  // n
+    const auto n2 = 512;                  // n
     const auto k = 1;
 
     ConvSolver::span3d_t data(sycl::malloc_device<double>(n0 * n1 * n2, Q), n0,
@@ -79,8 +79,9 @@ main(int argc, char **argv) {
          auto i0 = itm[0];
          auto i1 = itm[1];
          auto i2 = itm[2];
-         data(i0, i1, i2) = (i0+i1+i2)%10;
-         warmup_data(i0, i1, i2) = 1.0;
+        //  data(i0, i1, i2) = (i0+i1+i2)%10;
+         data(i0, i1, i2) = 7.3;
+        //  warmup_data(i0, i1, i2) = 1.0;
      }).wait();
 
     double *d_weight =
