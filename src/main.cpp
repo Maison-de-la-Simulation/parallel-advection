@@ -59,16 +59,20 @@ main(int argc, char **argv) {
     std::cout << "Using device: "
               << Q.get_device().get_info<sycl::info::device::name>() << "\n";
               
-    const auto channel_out = 1;
-    const auto channel_in = 1;
+    const auto channel_in  = 3;
+    const auto channel_out = channel_in;
+    const auto length = 512;
 
-    const auto n0 = 16384;             // n
-    const auto n1 = 512*channel_in;    // l*ic
-    const auto n2 = 1;                 // n
-    const auto k = 3;
+    const auto n0 = 16384;              // n
+    const auto n1 = length*channel_out;  // l*oc
+    const auto n2 = 1;                  // n
+    const auto k = 1;
 
     ConvSolver::span3d_t data(sycl::malloc_device<double>(n0 * n1 * n2, Q), n0,
                               n1, n2);
+
+    ConvSolver::span3d_t warmup_data(
+        sycl::malloc_device<double>(n0 * n1 * n2, Q), n0, n1, n2);
     Q.wait();
 
     Q.parallel_for(sycl::range<3>(n0, n1, n2), [=](auto itm) {
@@ -76,6 +80,7 @@ main(int argc, char **argv) {
          auto i1 = itm[1];
          auto i2 = itm[2];
          data(i0, i1, i2) = (i0+i1+i2)%10;
+         warmup_data(i0, i1, i2) = 1.0;
      }).wait();
 
     double *d_weight =
@@ -89,8 +94,8 @@ main(int argc, char **argv) {
          d_bias[itm] = 1.0;
      }).wait();
 
-    ConvSolver solver{ConvSolver::span1d_t(d_weight, k),
-                      ConvSolver::span0d_t(d_bias), k, channel_in};
+    ConvSolver solver{ConvSolver::span3d_t(d_weight, k, channel_in, channel_out),
+                      ConvSolver::span1d_t(d_bias, channel_out), k, channel_in, length};
 
     WorkItemDispatch wi_dispatch;
     wi_dispatch.set_ideal_sizes(512, n0, n1, n2);
@@ -114,6 +119,10 @@ main(int argc, char **argv) {
     auto error = sum_and_normalize_conv(Q, data);
     std::cout << std::endl;
     std::cout << "Normalized Array before: " << error << std::endl;
+
+    /* Warmup to JIT model */
+    for (int i = 0; i < 3; ++i)
+        bkma_run(Q, warmup_data, solver, optim_params).wait();
 
     auto start = std::chrono::high_resolution_clock::now();
     bkma_run(Q, data, solver, optim_params).wait();

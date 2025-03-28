@@ -2,36 +2,40 @@
 import torch
 import time
 
+real_t = torch.float64
+
 # Device selection
 device = torch.device("cuda" if torch.cuda.is_available() else "xpu" if torch.xpu.is_available() else "cpu")
 print(f"Using device: {device}: {torch.cuda.get_device_name(device)}")
 
 # Parameters
-n0 = 16384
-n1 = 1024
-n2 = 1
-k = 3  # Kernel size
-channel_out = 1
-channel_in = 1
 
-batch_size=n0
-l=n1
+channel_in  = 3
+channel_out = channel_in
+length = 512
+
+n0 = 16384
+n1 = length*channel_out
+n2 = 1
+batch_size=n0*n2
+
+k = 1
 
 i0, i1, i2 = torch.meshgrid(
-    torch.arange(batch_size, device=device, dtype=torch.float64),
-    torch.arange(channel_in, device=device, dtype=torch.float64),
-    torch.arange(l, device=device, dtype=torch.float64),
+    torch.arange(batch_size, device=device, dtype=real_t),
+    torch.arange(channel_in, device=device, dtype=real_t),
+    torch.arange(length, device=device, dtype=real_t),
     indexing="ij",
 )
 data = (i0 + i1 + i2) % 10
 print(f"Is data contiguous: {data.is_contiguous()}")
 
 # Weight and bias initialization
-weight = torch.full((channel_out, channel_in, k), 1.5, dtype=torch.float64, device=device)
-bias = torch.full((channel_out,), 1.0, dtype=torch.float64, device=device)
+weight = torch.full((channel_out, channel_in, k), 1.5, dtype=real_t, device=device)
+bias = torch.full((channel_out,), 1.0, dtype=real_t, device=device)
 
 # Conv1D layer
-conv1d = torch.nn.Conv1d(in_channels=channel_in, out_channels=channel_out, kernel_size=k, bias=True, dtype=torch.float64).to(device)
+conv1d = torch.nn.Conv1d(in_channels=channel_in, out_channels=channel_out, kernel_size=k, bias=True, dtype=real_t).to(device)
 conv1d.weight.data = weight
 conv1d.bias.data = bias
 
@@ -45,10 +49,17 @@ def sum_and_normalize(data):
 error_before = sum_and_normalize(data)
 print(f"Normalized Array before: {error_before:.1f}")
 
+for _ in range(3):
+    _ = conv1d_scripted(data)
+    
+start = torch.cuda.Event(enable_timing=True)
+end = torch.cuda.Event(enable_timing=True)
 # Run convolution
-start_time = time.time()
+start.record()
 output = conv1d_scripted(data)  # Use pre-compiled model
-elapsed_time = time.time() - start_time
+torch.cuda.synchronize()
+end.record()
+elapsed_time = start.elapsed_time(end)/1000
 
 # Compute final sum and normalization
 error_after = sum_and_normalize(output)
