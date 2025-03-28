@@ -1,8 +1,8 @@
-#include "../src/core/ConvSolver.h"
-#include "../src/core/impl/bkma.h"
-#include "bench_utils.h"
+#include "../src/core/ConvSolver.hpp"
+#include "../src/core/impl/bkma.hpp"
+#include "bench_utils.hpp"
 #include <benchmark/benchmark.h>
-#include "../src/types.h"
+#include "../src/types.hpp"
 
 static constexpr auto __WG_SIZE = 1024;
 static constexpr real_t __INIT_VALUE = 7.3;

@@ -26,7 +26,7 @@ BM_Advector(benchmark::State &state) {
 
     /* SYCL setup */
     auto Q = createSyclQueue(p.gpu, state);
-    sycl::buffer<double, 3> fdist(sycl::range<3>(p.n0, p.n1));
+    auto fdist = sycl::malloc_device<real_t>(p.n0*p.n1*p.n2, Q);
 
     /* Physics setup */
     fill_buffer(Q, fdist, p);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AdvectionParams.h"
+#include "AdvectionParams.hpp"
 #include <sycl/sycl.hpp>
 
 /* Lagrange variables, order, number of points, offset from the current point */

@@ -1,7 +1,7 @@
 #pragma once
-#include <AdvectionParams.h>
+#include <AdvectionParams.hpp>
 #include <sycl/sycl.hpp>
-#include "types.h"
+#include "types.hpp"
 
 // ==========================================
 // ==========================================

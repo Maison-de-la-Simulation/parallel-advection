@@ -1,4 +1,4 @@
-#include "advectors.h"
+#include "advectors.hpp"
 
 sycl::event
 AdvX::NDRange::operator()(sycl::queue &Q,

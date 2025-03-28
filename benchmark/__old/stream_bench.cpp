@@ -25,7 +25,7 @@ BM_STREAM(benchmark::State &state){
 
     /* SYCL setup */
     auto Q = createSyclQueue(p.gpu, state);
-    sycl::buffer<double, 1> fdist(sycl::range<1>(p.n0*p.n1*p.n2));
+    auto fdist = sycl::malloc_device<real_t>(p.n0*p.n1*p.n2, Q);
 
     /* Fill buffer with zeroes */
     Q.submit([&](sycl::handler &cgh) {

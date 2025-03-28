@@ -1,8 +1,8 @@
 #pragma once
-#include "unique_ref.h"
+#include "unique_ref.hpp"
 #include <sycl/sycl.hpp>
-#include <advectors.h>
-#include "types.h"
+#include <advectors.hpp>
+#include "types.hpp"
 
 // ==========================================
 // ==========================================

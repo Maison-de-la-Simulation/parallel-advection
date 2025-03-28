@@ -1,11 +1,11 @@
-#include <AdvectionParams.h>
-#include <advectors.h>
+#include <AdvectionParams.hpp>
+#include <advectors.hpp>
 #include <sycl/sycl.hpp>
 #include <iostream>
 
-#include "tools/init.h"
-#include "tools/validation.h"
-#include "types.h"
+#include "tools/init.hpp"
+#include "tools/validation.hpp"
+#include "types.hpp"
 
 // ==========================================
 // ==========================================

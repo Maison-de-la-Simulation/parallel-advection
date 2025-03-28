@@ -1,6 +1,6 @@
 #pragma once
-#include "IAdvectorX.h"
-#include "impl/bkma.h"
+#include "IAdvectorX.hpp"
+#include "impl/bkma.hpp"
 #include <cassert>
 #include <cmath>
 #include <cstddef>

@@ -1,13 +1,13 @@
 #pragma once
 
-#include <AdvectionParams.h>
-#include <advectors.h>
+#include <AdvectionParams.hpp>
+#include <advectors.hpp>
 #include <benchmark/benchmark.h>
 #include <cstdint>
-#include <init.h>
+#include <init.hpp>
 #include <sycl/sycl.hpp>
-#include "bench_config.h"
-#include "../src/types.h"
+#include "bench_config.hpp"
+#include "../src/types.hpp"
 
 // =============================================
 // =============================================

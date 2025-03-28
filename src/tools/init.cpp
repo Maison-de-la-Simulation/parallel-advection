@@ -1,6 +1,6 @@
-#include "init.h"
-#include "unique_ref.h"
-#include <advectors.h>
+#include "init.hpp"
+#include "unique_ref.hpp"
+#include <advectors.hpp>
 
 // To switch case on a str
 [[nodiscard]] constexpr unsigned int

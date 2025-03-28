@@ -2,7 +2,7 @@
 
 #include <sycl/sycl.hpp>
 #include <experimental/mdspan>
-#include "../types.h"
+#include "../types.hpp"
 
 struct ConvSolver {
     span3d_t weight_span_;

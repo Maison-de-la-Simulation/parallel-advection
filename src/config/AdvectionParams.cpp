@@ -1,4 +1,4 @@
-#include "AdvectionParams.h"
+#include "AdvectionParams.hpp"
 #include <iostream>
 
 ADVParams::ADVParams(ADVParamsNonCopyable &other){

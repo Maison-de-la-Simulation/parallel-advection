@@ -4,7 +4,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <sycl/sycl.hpp>
-#include "types.h"
+#include "types.hpp"
 
 // ==========================================
 // ==========================================

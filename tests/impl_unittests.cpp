@@ -1,8 +1,8 @@
-#include "advectors.h"
-#include "validation.h"
+#include "advectors.hpp"
+#include "validation.hpp"
 #include "gtest/gtest.h"
-#include <AdvectionParams.h>
-#include <init.h>
+#include <AdvectionParams.hpp>
+#include <init.hpp>
 #include <sycl/sycl.hpp>
 
 static constexpr double EPS = 1e-6;

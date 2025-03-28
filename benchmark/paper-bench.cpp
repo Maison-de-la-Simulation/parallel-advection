@@ -1,8 +1,8 @@
-#include "bench_config.h"
-#include "bench_utils.h"
+#include "bench_config.hpp"
+#include "bench_utils.hpp"
 #include <benchmark/benchmark.h>
-#include <validation.h>
-#include "../src/types.h"
+#include <validation.hpp>
+#include "../src/types.hpp"
 
 
 // ==========================================
