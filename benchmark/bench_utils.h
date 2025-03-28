@@ -73,7 +73,7 @@ createSyclQueue(const bool run_on_gpu, benchmark::State &state) {
 // =============================================
 // =============================================
 [[nodiscard]] inline sref::unique_ref<IAdvectorX>
-advectorFactory(const sycl::queue &q, ADVParams &p, Solver &s,
+advectorFactory(const sycl::queue &q, ADVParams &p, AdvectionSolver &s,
                 const AdvImpl kernel_id, benchmark::State &state) {
     ADVParamsNonCopyable params(p);
 
