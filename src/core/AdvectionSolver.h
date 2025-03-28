@@ -16,6 +16,7 @@ struct AdvectionSolver {
     AdvectionSolver() = delete;
     AdvectionSolver(const ADVParams &p) : params(p){};
 
+    auto inline constexpr window() const {return 1;}
     // ==========================================
     // ==========================================
     /* Computes the real position of x or speed of vx based on discretization */

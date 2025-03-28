@@ -33,6 +33,7 @@ struct ConvSolver {
     static constexpr size_t stride_  = 1;
     static constexpr size_t padding_ = 0;
 
+    auto inline window() const {return kernel_size_;}
     // ==========================================
     // ==========================================
     /* The _solve_ function of the algorithm presented */
@@ -44,18 +45,14 @@ struct ConvSolver {
                       const size_t &) const {
         size_t out_channels = in_channels_; //constraint
 
-        // array(oc, i_l)
-        // i1 = oc*input_length_ + i_l;
         auto oc = i1/input_length_;
-        // i_l = i1%input_length_;
         auto i_l = i1 - oc*input_length_;
-        
 
         real_t sum = bias_span_(oc);
         for (int ic = 0; ic < in_channels_; ++ic) {
             for (int k = 0; k < kernel_size_; ++k) {
                 // int input_idx = i1 * stride_ + k - padding_;
-                int input_idx = i_l + k;
+                int input_idx = i_l - k;
 
                 if (input_idx < scr.extent(0)) {
                     sum += scr(input_idx) * weight_span_(k, ic, oc);

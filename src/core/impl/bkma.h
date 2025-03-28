@@ -238,10 +238,13 @@ submit_kernels(sycl::queue &Q, mdspan3d_t data, const MySolver &solver,
     auto n1 = data.extent(1);
     auto n2 = data.extent(2);
 
+    const auto window = solver.window();
+    const auto nw = n1 - (window-1);
+
     return Q.submit([&](sycl::handler &cgh) {
         auto mallocator = [&]() {
             if constexpr (MemType == MemorySpace::Local) {
-                sycl::range<3> acc_range(w0, w2, n1);
+                sycl::range<3> acc_range(w0, w2, nw);
                 return MemAllocator<MemType>(acc_range, cgh);
             } else {
                 extents_t ext(b0_size, n2, n1);
@@ -276,14 +279,16 @@ submit_kernels(sycl::queue &Q, mdspan3d_t data, const MySolver &solver,
                             global_i2);
 
                         for (int ii1 = i1; ii1 < n1; ii1 += w1) {
-                            scratch_slice(ii1) =
-                                solver(data_slice, global_i0, ii1, global_i2);
+                            auto const iw = ii1 - (window - 1);
+                            if(iw >= 0)
+                                scratch_slice(iw) = solver(
+                                    data_slice, global_i0, ii1, global_i2);
                         }
 
                         sycl::group_barrier(itm.get_group());
 
-                        for (int ii1 = i1; ii1 < n1; ii1 += w1) {
-                            data_slice(ii1) = scratch_slice(ii1);
+                        for (int iw = i1; iw < nw; iw += w1) {
+                            data_slice(iw) = scratch_slice(iw);
                         }
                     }   // end for ii2
                 }   // end for ii0
@@ -340,7 +345,7 @@ bkma_run(sycl::queue &Q, mdspan3d_t data, const MySolver &solver,
                 last_event = submit_kernels<MemorySpace::Global>(
                     Q, data, solver, batch_size_d0, offset_d0,
                     batch_size_d2, offset_d2, optim_params.w0, optim_params.w1,
-                    optim_params.w2, optim_params.wg_dispatch);
+                    optim_params.w2, optim_params.wg_dispatch/*TODO: add global write pointer*/);
             } break;
 
             default: {

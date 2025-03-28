@@ -10,17 +10,16 @@ print(f"Using device: {device}: {torch.cuda.get_device_name(device)}")
 
 # Parameters
 
-channel_in  = 3
+channel_in  = 1
 channel_out = channel_in
 length = 512
 
 n0 = 512
 n1 = length*channel_out
-n2 = 512
+n2 = 1
+k = 5
+
 batch_size=n0*n2
-
-k = 1
-
 # i0, i1, i2 = torch.meshgrid(
 #     torch.arange(batch_size, device=device, dtype=real_t),
 #     torch.arange(channel_in, device=device, dtype=real_t),
@@ -70,6 +69,9 @@ print(f"Normalized Array after: {error_after:.1f}")
 # Performance metrics
 gcells = (n0 * n1 * n2) / elapsed_time / 1e9
 throughput = gcells * data.element_size() * 2
+
+print(f"Input shape: {data.shape}")
+print(f"Output shape: {output.shape}")
 
 print("\nPERF_DIAGS:")
 print(f"elapsed_time: {elapsed_time:.6f} s")
