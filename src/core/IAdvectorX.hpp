@@ -2,7 +2,7 @@
 
 #include <AdvectionSolver.hpp>
 #include <sycl/sycl.hpp>
-#include "../types.hpp"
+#include <types.hpp>
 
 // ==========================================
 // ==========================================

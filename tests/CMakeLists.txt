@@ -8,7 +8,11 @@ target_link_libraries(advection-tests PUBLIC
     GTest::gtest_main
     adv1d::config
     adv1d::core
-    adv1d::tools
+)
+
+target_include_directories(advection-tests
+  PUBLIC
+  ${CMAKE_SOURCE_DIR}/src/tools
 )
 
 if(SYCL_IS_ACPP)

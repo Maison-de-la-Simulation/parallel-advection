@@ -2,7 +2,7 @@
 #include "bench_utils.hpp"
 #include <benchmark/benchmark.h>
 #include <validation.hpp>
-#include "../src/types.hpp"
+#include <types.hpp>
 
 
 // ==========================================

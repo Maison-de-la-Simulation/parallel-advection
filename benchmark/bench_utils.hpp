@@ -6,8 +6,8 @@
 #include <cstdint>
 #include <init.hpp>
 #include <sycl/sycl.hpp>
+#include <types.hpp>
 #include "bench_config.hpp"
-#include "../src/types.hpp"
 
 // =============================================
 // =============================================

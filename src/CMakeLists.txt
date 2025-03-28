@@ -1,14 +1,17 @@
 add_subdirectory(config)
 add_subdirectory(core)
-add_subdirectory(tools)
 
 add_executable(advection main.cpp)
 
 target_link_libraries(advection
 PUBLIC
-adv1d::config
-adv1d::core
-adv1d::tools)
+adv1d::config)
+
+target_include_directories(advection
+  PUBLIC
+  ${CMAKE_SOURCE_DIR}/src/tools
+  ${CMAKE_SOURCE_DIR}/src/core
+)
 
 if(SYCL_IS_ACPP)
     add_sycl_to_target(TARGET advection)

@@ -1,9 +1,9 @@
 #include <iostream>
 #include <sycl/sycl.hpp>
 
-#include "core/ConvSolver.hpp"
-#include "core/impl/bkma.hpp"
-#include "types.hpp"
+#include <ConvSolver.hpp>
+#include <impl/bkma.hpp>
+#include <types.hpp>
 
 real_t
 sum_and_normalize_conv(sycl::queue &Q, span3d_t data, size_t nw) {
