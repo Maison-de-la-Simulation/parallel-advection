@@ -48,7 +48,7 @@ def sum_and_normalize(data):
 
 # Compute initial sum and normalization
 error_before = sum_and_normalize(data)
-print(f"Normalized Array before: {error_before:.1f}")
+print(f"Normalized Array before: {error_before:.3f}")
 
 for _ in range(3):
     _ = conv1d_scripted(data)
@@ -64,7 +64,7 @@ elapsed_time = start.elapsed_time(end)/1000
 
 # Compute final sum and normalization
 error_after = sum_and_normalize(output)
-print(f"Normalized Array after: {error_after:.1f}")
+print(f"Normalized Array after: {error_after:.3f}")
 
 # Performance metrics
 gcells = (n0 * n1 * n2) / elapsed_time / 1e9

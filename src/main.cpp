@@ -5,11 +5,10 @@
 #include "core/impl/bkma.h"
 
 double
-sum_and_normalize_conv(sycl::queue &Q, ConvSolver::span3d_t data) {
+sum_and_normalize_conv(sycl::queue &Q, ConvSolver::span3d_t data, size_t nw) {
     auto n0 = data.extent(0);
-    auto n1 = data.extent(1);
     auto n2 = data.extent(2);
-    sycl::range<3> r3d(n0, n1, n2);
+    sycl::range<3> r3d(n0, nw, n2);
 
     double sum = -1;
     {
@@ -28,9 +27,14 @@ sum_and_normalize_conv(sycl::queue &Q, ConvSolver::span3d_t data) {
              });
          }).wait();
     }
-    sum /= (n0 * n1 * n2);
+    sum /= (n0 * nw * n2);
 
     return sum;
+}
+
+inline int
+compute_output_size(int Lin, int kernel_size) {
+    return Lin - (kernel_size - 1);
 }
 
 // ==========================================
@@ -59,14 +63,14 @@ main(int argc, char **argv) {
     std::cout << "Using device: "
               << Q.get_device().get_info<sycl::info::device::name>() << "\n";
               
-    const auto channel_in  = 3;
+    const auto channel_in  = 1;
     const auto channel_out = channel_in;
     const auto length = 512;
 
     const auto n0 = 512;              // n
     const auto n1 = length*channel_out;  // l*oc
-    const auto n2 = 512;                  // n
-    const auto k = 1;
+    const auto n2 = 1;                  // n
+    const auto k = 5;
 
     ConvSolver::span3d_t data(sycl::malloc_device<double>(n0 * n1 * n2, Q), n0,
                               n1, n2);
@@ -117,7 +121,7 @@ main(int argc, char **argv) {
                                  wg_dispatch,       // WorkGroupDispatch wg_disp
                                  MemorySpace::Local};
 
-    auto error = sum_and_normalize_conv(Q, data);
+    auto error = sum_and_normalize_conv(Q, data, n1);
     std::cout << std::endl;
     std::cout << "Normalized Array before: " << error << std::endl;
 
@@ -130,7 +134,7 @@ main(int argc, char **argv) {
     auto end = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<double> elapsed_seconds = end - start;
 
-    auto err = sum_and_normalize_conv(Q, data);
+    auto err = sum_and_normalize_conv(Q, data, compute_output_size(length, k));
     std::cout << "Normalized Array after: " << err << std::endl;
     std::cout << std::endl;
 
