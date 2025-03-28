@@ -20,12 +20,11 @@ kernel_impl_factory(const sycl::queue &q, const ADVParamsNonCopyable &params,
 
     switch (str2int(kernel_name.data())) {
     case str2int("BasicRange"):
-        return sref::make_unique<AdvX::BasicRange>(params.n1, params.n0,
-                                                   params.n2);
+        return sref::make_unique<AdvX::BasicRange>(s, q);
     case str2int("NDRange"):
         return sref::make_unique<AdvX::NDRange>();
     case str2int("AdaptiveWg"):
-        return sref::make_unique<AdvX::AdaptiveWg>(params, q);
+        return sref::make_unique<AdvX::AdaptiveWg>(s, q);
     default:
         auto str = kernel_name + " is not a valid kernel name.\n" + error_str;
         throw std::runtime_error(str);
