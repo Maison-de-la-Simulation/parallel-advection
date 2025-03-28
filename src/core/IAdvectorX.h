@@ -3,7 +3,6 @@
 #include <AdvectionSolver.h>
 #include <sycl/sycl.hpp>
 
-
 // ==========================================
 // ==========================================
 class IAdvectorX {

@@ -10,8 +10,6 @@ AdvX::BasicRange::operator()(sycl::queue &Q, double *fdist_dev,
     sycl::range r3d(n0, n1, n2);
 
     Q.submit([&](sycl::handler &cgh) {
-        // auto fdist = buff_fdistrib.get_access<sycl::access::mode::read>(cgh);
-
         /* Using the preallocated global buffer */
         sycl::accessor ftmp(m_global_buff_ftmp, cgh, sycl::write_only,
                             sycl::no_init);

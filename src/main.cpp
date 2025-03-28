@@ -10,7 +10,7 @@ sum_and_normalize_conv(sycl::queue &Q, ConvSolver::span3d_t data, size_t nw) {
     auto n2 = data.extent(2);
     sycl::range<3> r3d(n0, nw, n2);
 
-    double sum = -1;
+    double sum = 0;
     {
         sycl::buffer<double> buff_sum(&sum, 1);
 
@@ -62,15 +62,15 @@ main(int argc, char **argv) {
     /* Display infos on current device */
     std::cout << "Using device: "
               << Q.get_device().get_info<sycl::info::device::name>() << "\n";
-              
-    const auto channel_in  = 1;
-    const auto channel_out = channel_in;
-    const auto length = 512;
 
-    const auto n0 = 512;              // n
-    const auto n1 = length*channel_out;  // l*oc
-    const auto n2 = 1;                  // n
-    const auto k = 5;
+    const auto channel_in = 3;
+    const auto channel_out = channel_in;
+    const auto length = 1024;
+
+    const auto n0 = 512;                    // n
+    const auto n1 = length * channel_out;   // l*oc
+    const auto n2 = 512;                    // n
+    const auto k = 9;
 
     ConvSolver::span3d_t data(sycl::malloc_device<double>(n0 * n1 * n2, Q), n0,
                               n1, n2);
@@ -83,9 +83,9 @@ main(int argc, char **argv) {
          auto i0 = itm[0];
          auto i1 = itm[1];
          auto i2 = itm[2];
-        //  data(i0, i1, i2) = (i0+i1+i2)%10;
+         //  data(i0, i1, i2) = (i0+i1+i2)%10;
          data(i0, i1, i2) = 7.3;
-        //  warmup_data(i0, i1, i2) = 1.0;
+         //  warmup_data(i0, i1, i2) = 1.0;
      }).wait();
 
     double *d_weight =
@@ -99,11 +99,12 @@ main(int argc, char **argv) {
          d_bias[itm] = 1.0;
      }).wait();
 
-    ConvSolver solver{ConvSolver::span3d_t(d_weight, k, channel_in, channel_out),
-                      ConvSolver::span1d_t(d_bias, channel_out), k, channel_in, length};
+    ConvSolver solver{
+        ConvSolver::span3d_t(d_weight, k, channel_in, channel_out),
+        ConvSolver::span1d_t(d_bias, channel_out), k, channel_in, length};
 
     WorkItemDispatch wi_dispatch;
-    wi_dispatch.set_ideal_sizes(512, n0, n1, n2);
+    wi_dispatch.set_ideal_sizes(1024, n0, n1, n2);
     auto max_elem_local_mem =
         Q.get_device().get_info<sycl::info::device::local_mem_size>() /
         sizeof(double);

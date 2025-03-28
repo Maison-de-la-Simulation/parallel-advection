@@ -125,8 +125,6 @@ broadcast_parameters(std::string filename) {
 
     // all other MPI task need to allocate buffer
     if (myRank > 0) {
-        // printf("I'm rank %d allocating buffer of size
-        // %d\n",myRank,buffer_size);
         buffer = new char[buffer_size];
     }
 

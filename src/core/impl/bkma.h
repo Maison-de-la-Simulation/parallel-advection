@@ -87,7 +87,7 @@ struct WorkItemDispatch {
                 w2_ = n2;
             } else {
                 // Not enough n1*n2 to fill up work group, we use more from n0
-                w0_ = sycl::floor(static_cast<float>(pref_wg_size / n1 * n2));
+                w0_ = pref_wg_size / n1 * n2;
                 w1_ = n1;
                 w2_ = n2;
             }
@@ -104,7 +104,7 @@ struct WorkItemDispatch {
         /* Adjust based on maximum memory available*/
         auto total_wi = size();
         if (w2_ * alloc_size >= max_elems_alloc) {
-            w2_ = sycl::floor(static_cast<float>(max_elems_alloc / alloc_size));
+            w2_ = max_elems_alloc / alloc_size;
             w0_ = 1;
             // Ajuster w1 pour conserver le nombre total de work-items
             w1_ = total_wi / w2_ * w0_;
@@ -134,7 +134,7 @@ init_1d_blocking(const size_t n, const size_t max_batchs) noexcept {
 
     /* Compute number of batchs */
     float div = static_cast<float>(n) / static_cast<float>(max_batchs);
-    auto floor_div = sycl::floor(static_cast<float>(div));
+    auto floor_div = sycl::floor(div);
     auto div_is_int = div == floor_div;
     bconf.n_batch_ = div_is_int ? div : floor_div + 1;
 
@@ -146,8 +146,8 @@ init_1d_blocking(const size_t n, const size_t max_batchs) noexcept {
 [[nodiscard]] inline KernelDispatch
 dispatch_kernels(const size_t n_kernels, const size_t p) noexcept {
     KernelDispatch kd;
-    auto div = n_kernels * p;
-    kd.k_local_ = sycl::floor(static_cast<float>(div));
+    float div = n_kernels * p;
+    kd.k_local_ = sycl::floor(div);
     kd.k_global_ = n_kernels - kd.k_local_;
 
     return kd;

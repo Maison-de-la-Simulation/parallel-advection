@@ -13,9 +13,6 @@ struct ADVParams {
   // Running on the GPU (false = CPU)
   bool gpu = false;
 
-  //The implementation of the kernel, correspond to core/impl cpp files
-  // std::string kernelImpl;
-
   //The percentage of n0 rows to compute in local memory
   float percent_loc = 1.0;
 
@@ -73,9 +70,3 @@ struct ADVParamsNonCopyable : ADVParams {
   void print();
 
 };
-
-
-// #ifdef SYCL_DEVICE_COPYABLE 
-// template<>
-// struct sycl::is_device_copyable<ADVParams> : std::true_type {};
-// #endif
