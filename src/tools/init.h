@@ -2,6 +2,7 @@
 #include "unique_ref.h"
 #include <sycl/sycl.hpp>
 #include <advectors.h>
+#include "types.h"
 
 // ==========================================
 // ==========================================
@@ -11,5 +12,5 @@ kernel_impl_factory(const sycl::queue &q, const ADVParamsNonCopyable &params,
 
 // ==========================================
 // ==========================================
-void fill_buffer(sycl::queue &q, double* fidst_dev,
+void fill_buffer(sycl::queue &q, real_t* fidst_dev,
                         const ADVParams &params);

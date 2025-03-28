@@ -1,30 +1,10 @@
 #pragma once
 
-
 #include <sycl/sycl.hpp>
 #include <experimental/mdspan>
-
+#include "../types.h"
 
 struct ConvSolver {
-    using real_t = double;
-
-    using span0d_t =
-        std::experimental::mdspan<real_t,
-                                  std::experimental::dextents<size_t, 0>,
-                                  std::experimental::layout_right>;
-    using span1d_t =
-        std::experimental::mdspan<real_t,
-                                  std::experimental::dextents<size_t, 1>,
-                                  std::experimental::layout_right>;
-    using span2d_t =
-        std::experimental::mdspan<real_t,
-                                  std::experimental::dextents<size_t, 2>,
-                                  std::experimental::layout_right>;
-    using span3d_t =
-        std::experimental::mdspan<real_t,
-                                  std::experimental::dextents<size_t, 3>,
-                                  std::experimental::layout_right>;
-
     span3d_t weight_span_;
     span1d_t bias_span_;
     size_t kernel_size_;

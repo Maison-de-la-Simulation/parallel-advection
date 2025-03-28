@@ -2,16 +2,14 @@
 #include "../src/core/impl/bkma.h"
 #include "bench_utils.h"
 #include <benchmark/benchmark.h>
+#include "../src/types.h"
 
 static constexpr auto __WG_SIZE = 1024;
-static constexpr double __INIT_VALUE = 7.3;
-
-using span3d_t = ConvSolver::span3d_t;
-using span1d_t = ConvSolver::span1d_t;
+static constexpr real_t __INIT_VALUE = 7.3;
 
 auto
 sycl_alloc(size_t size, sycl::queue &q) {
-    return sycl::malloc_device<double>(size, q);
+    return sycl::malloc_device<real_t>(size, q);
 }
 
 // ==========================================
@@ -31,15 +29,15 @@ static std::vector<Conv1DParams> configs = {{16384, 512, 3, 1},
                                             {16384, 1024, 11, 1}};
 
 // ==========================================
-double
-sum_and_normalize_conv(sycl::queue &Q, ConvSolver::span3d_t data, size_t nw) {
+real_t
+sum_and_normalize_conv(sycl::queue &Q, span3d_t data, size_t nw) {
     auto n0 = data.extent(0);
     auto n2 = data.extent(2);
     sycl::range<3> r3d(n0, nw, n2);
 
-    double sum = -1;
+    real_t sum = -1;
     {
-        sycl::buffer<double> buff_sum(&sum, 1);
+        sycl::buffer<real_t> buff_sum(&sum, 1);
 
         Q.submit([&](sycl::handler &cgh) {
              auto reduc_sum = sycl::reduction(buff_sum, cgh, sycl::plus<>());
@@ -74,7 +72,7 @@ create_bkma_params(sycl::queue &q, const size_t n0, const size_t n1,
     wi_dispatch.set_ideal_sizes(w, n0, n1, n2);
     auto max_elem_local_mem =
         q.get_device().get_info<sycl::info::device::local_mem_size>() /
-        sizeof(double);
+        sizeof(real_t);
     wi_dispatch.adjust_sizes_mem_limit(max_elem_local_mem, n1);
 
     WorkGroupDispatch wg_dispatch;
@@ -134,7 +132,7 @@ BM_Conv1d(benchmark::State &state) {
     auto n_iters = state.iterations();
 
     state.SetItemsProcessed(n_iters * n0 * n1 * n2);
-    state.SetBytesProcessed(n_iters * n0 * n1 * n2 * sizeof(double));
+    state.SetBytesProcessed(n_iters * n0 * n1 * n2 * sizeof(real_t));
 
     auto result =
         sum_and_normalize_conv(q, data, compute_output_size(length, k));

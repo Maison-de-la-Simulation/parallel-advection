@@ -13,7 +13,7 @@ namespace AdvX {
 class BasicRange : public IAdvectorX {
   protected:
     sycl::queue q_;
-    double *ftmp_;
+    real_t *ftmp_;
 
   public:
     BasicRange(const AdvectionSolver &solver, sycl::queue q) {
@@ -21,7 +21,7 @@ class BasicRange : public IAdvectorX {
         const auto n1 = solver.params.n1;
         const auto n2 = solver.params.n2;
 
-        ftmp_ = sycl::malloc_device<double>(n0 * n1 * n2, q_);
+        ftmp_ = sycl::malloc_device<real_t>(n0 * n1 * n2, q_);
         q_.wait();
     }
 
@@ -30,7 +30,7 @@ class BasicRange : public IAdvectorX {
         q_.wait();
     }
 
-    sycl::event operator()(sycl::queue &Q, double *fdist_dev,
+    sycl::event operator()(sycl::queue &Q, real_t *fdist_dev,
                            const AdvectionSolver &solver) override;
 };
 
@@ -39,7 +39,7 @@ class NDRange : public IAdvectorX {
     using IAdvectorX::IAdvectorX;
 
   public:
-    sycl::event operator()(sycl::queue &Q, double *fdist_dev,
+    sycl::event operator()(sycl::queue &Q, real_t *fdist_dev,
                            const AdvectionSolver &solver) override;
 };
 
@@ -63,7 +63,7 @@ class AdaptiveWg : public IAdvectorX {
     WorkGroupDispatch wg_dispatch_;
 
   public:
-    sycl::event operator()(sycl::queue &Q, double *fdist_dev,
+    sycl::event operator()(sycl::queue &Q, real_t *fdist_dev,
                            const AdvectionSolver &solver) override;
 
     AdaptiveWg() = delete;
@@ -79,7 +79,7 @@ class AdaptiveWg : public IAdvectorX {
         // SYCL query returns the size in bytes
         auto max_elem_local_mem =
             q.get_device().get_info<sycl::info::device::local_mem_size>() /
-            sizeof(double);
+            sizeof(real_t);
 
         local_size_.set_ideal_sizes(solver.params.pref_wg_size, n0, n1, n2);
         local_size_.adjust_sizes_mem_limit(max_elem_local_mem, n1);

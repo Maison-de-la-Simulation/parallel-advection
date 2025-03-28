@@ -2,6 +2,7 @@
 #include "bench_utils.h"
 #include <benchmark/benchmark.h>
 #include <validation.h>
+#include "../src/types.h"
 
 
 // ==========================================
@@ -19,7 +20,7 @@ BM_Advection(benchmark::State &state) {
     /* SYCL setup */
     auto Q = createSyclQueue(params.gpu, state);
     auto data =
-        sycl::malloc_device<double>(params.n0 * params.n1 * params.n2, Q);
+        sycl::malloc_device<real_t>(params.n0 * params.n1 * params.n2, Q);
 
     /* Advector setup */
     Solver solver(params);
@@ -59,7 +60,7 @@ BM_Advection(benchmark::State &state) {
 
     state.SetItemsProcessed(params.maxIter * params.n0 * params.n1 * params.n2);
     state.SetBytesProcessed(params.maxIter * params.n0 * params.n1 * params.n2 *
-                            sizeof(double));
+                            sizeof(real_t));
     auto err = validate_result(Q, data, params, false);
 
     // if (err > 10e-6) {

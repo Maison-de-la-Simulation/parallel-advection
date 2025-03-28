@@ -4,15 +4,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <sycl/sycl.hpp>
-
-using real_t = double; // tab[C]
-
-using mdspan3d_t =
-    std::experimental::mdspan<real_t, std::experimental::dextents<size_t, 3>,
-                              std::experimental::layout_right>;
-using mdspan2d_t =
-    std::experimental::mdspan<real_t, std::experimental::dextents<size_t, 2>,
-                              std::experimental::layout_right>;
+#include "types.h"
 
 // ==========================================
 // ==========================================
@@ -161,12 +153,6 @@ enum class MemorySpace { Local, Global };
 
 template <MemorySpace MemType> struct MemAllocator;
 
-using local_acc = sycl::local_accessor<double, 3>;
-using extents_t =
-    std::experimental::extents<std::size_t, std::experimental::dynamic_extent,
-                               std::experimental::dynamic_extent,
-                               std::experimental::dynamic_extent>;
-
 template <MemorySpace MemType>
 static inline size_t compute_index(const sycl::nd_item<3> &itm, int dim);
 
@@ -193,10 +179,10 @@ compute_index<MemorySpace::Local>(const sycl::nd_item<3> &itm, int dim) {
 // ==========================================
 /* Global memory functions */
 template <> struct MemAllocator<MemorySpace::Global> {
-    double *ptr_;
+    real_t *ptr_;
     extents_t extents_;
 
-    [[nodiscard]] MemAllocator(double *ptr, extents_t extents)
+    [[nodiscard]] MemAllocator(real_t *ptr, extents_t extents)
         : ptr_(ptr), extents_(extents){};
 
     [[nodiscard]] inline size_t compute_index(const sycl::nd_item<3> &itm,
@@ -216,11 +202,11 @@ compute_index<MemorySpace::Global>(const sycl::nd_item<3> &itm, int dim) {
 // ==========================================
 template <MemorySpace MemType, class MySolver>
 inline sycl::event
-submit_kernels(sycl::queue &Q, mdspan3d_t data, const MySolver &solver,
+submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
                const size_t b0_size, const size_t b0_offset,
                const size_t b2_size, const size_t b2_offset,
                const size_t orig_w0, const size_t w1, const size_t orig_w2,
-               WorkGroupDispatch wg_dispatch, double *global_scratch = nullptr) {
+               WorkGroupDispatch wg_dispatch, real_t *global_scratch = nullptr) {
 
     const auto w0 = sycl::min(orig_w0, b0_size);
     const auto w2 = sycl::min(orig_w2, b2_size);
@@ -255,7 +241,7 @@ submit_kernels(sycl::queue &Q, mdspan3d_t data, const MySolver &solver,
         cgh.parallel_for(
             sycl::nd_range<3>{global_size, local_size},
             [=](auto itm) {
-                mdspan3d_t scr(mallocator.get_pointer(), mallocator.extents_);
+                span3d_t scr(mallocator.get_pointer(), mallocator.extents_);
 
                 const auto i1 = itm.get_local_id(1);
                 const auto local_i0 = compute_index<MemType>(itm, 0);
@@ -309,7 +295,7 @@ struct BkmaOptimParams {
 
 template <class MySolver>
 inline sycl::event
-bkma_run(sycl::queue &Q, mdspan3d_t data, const MySolver &solver,
+bkma_run(sycl::queue &Q, span3d_t data, const MySolver &solver,
          BkmaOptimParams optim_params) {
 
     sycl::event last_event;

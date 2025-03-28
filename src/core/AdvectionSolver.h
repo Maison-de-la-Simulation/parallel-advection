@@ -7,7 +7,7 @@
 int static constexpr LAG_ORDER = 5;
 int static constexpr LAG_PTS = 6;
 int static constexpr LAG_OFFSET = 2;
-double static constexpr loc[] = {-1. / 24, 1. / 24.,  -1. / 12.,
+real_t static constexpr loc[] = {-1. / 24, 1. / 24.,  -1. / 12.,
                                  1. / 12., -1. / 24., 1. / 24.};
 
 struct AdvectionSolver {
@@ -20,8 +20,8 @@ struct AdvectionSolver {
     // ==========================================
     // ==========================================
     /* Computes the real position of x or speed of vx based on discretization */
-    [[nodiscard]] static inline __attribute__((always_inline)) double
-    coord(const int i, const double &minValue, const double &delta) noexcept {
+    [[nodiscard]] static inline __attribute__((always_inline)) real_t
+    coord(const int i, const real_t &minValue, const real_t &delta) noexcept {
         return minValue + i * delta;
     }
 
@@ -29,13 +29,13 @@ struct AdvectionSolver {
     // ==========================================
     /* Computes the coefficient for semi lagrangian interp of order 5 */
     [[nodiscard]] static inline
-        __attribute__((always_inline)) std::array<double, LAG_PTS>
-        lag_basis(double px) noexcept {
-        std::array<double, LAG_PTS> coef;
+        __attribute__((always_inline)) std::array<real_t, LAG_PTS>
+        lag_basis(real_t px) noexcept {
+        std::array<real_t, LAG_PTS> coef;
 
-        const double pxm2 = px - 2.;
-        const double sqrpxm2 = pxm2 * pxm2;
-        const double pxm2_01 = pxm2 * (pxm2 - 1.);
+        const real_t pxm2 = px - 2.;
+        const real_t sqrpxm2 = pxm2 * pxm2;
+        const real_t pxm2_01 = pxm2 * (pxm2 - 1.);
 
         coef[0] = loc[0] * pxm2_01 * (pxm2 + 1.) * (pxm2 - 2.) * (pxm2 - 1.);
         coef[1] = loc[1] * pxm2_01 * (pxm2 - 2.) * (5 * sqrpxm2 + pxm2 - 8.);
@@ -53,12 +53,12 @@ struct AdvectionSolver {
     // ==========================================
     // ==========================================
     /* Computes the covered distance by x during dt. returns the feet coord */
-    [[nodiscard]] inline __attribute__((always_inline)) double
+    [[nodiscard]] inline __attribute__((always_inline)) real_t
     displ(const int i1, const int i0) const noexcept {
-        double const x = coord(i1, params.minRealX, params.dx);
-        double const vx = coord(i0, params.minRealVx, params.dvx);
+        real_t const x = coord(i1, params.minRealX, params.dx);
+        real_t const vx = coord(i0, params.minRealVx, params.dvx);
 
-        double const displx = params.dt * vx;
+        real_t const displx = params.dt * vx;
 
         return params.minRealX +
                sycl::fmod(params.realWidthX + x - displx - params.minRealX,
@@ -70,16 +70,16 @@ struct AdvectionSolver {
     /* The _solve_ function of the algorithm presented */
     template <class ArrayLike1D>
     inline __attribute__((always_inline))
-    double operator()(const ArrayLike1D data, const size_t &i0,
+    real_t operator()(const ArrayLike1D data, const size_t &i0,
                       const size_t &i1, const size_t &i2) const {
 
-        double const xFootCoord = displ(i1, i0);
+        real_t const xFootCoord = displ(i1, i0);
 
         // index of the cell to the left of footCoord
         const int leftNode =
             sycl::floor((xFootCoord - params.minRealX) * params.inv_dx);
 
-        const double d_prev1 =
+        const real_t d_prev1 =
             LAG_OFFSET +
             params.inv_dx *
                 (xFootCoord - coord(leftNode, params.minRealX, params.dx));
@@ -88,7 +88,7 @@ struct AdvectionSolver {
 
         const int ipos1 = leftNode - LAG_OFFSET;
 
-        double value = 0.;
+        real_t value = 0.;
         for (int k = 0; k <= LAG_ORDER; k++) {
             int id1_ipos = (params.n1 + ipos1 + k) % params.n1;
 

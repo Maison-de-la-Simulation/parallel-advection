@@ -1,5 +1,6 @@
 #pragma once
 #include "ConfigMap.h"
+#include "types.h"
 
 struct ADVParamsNonCopyable;
 
@@ -36,20 +37,20 @@ struct ADVParams {
   size_t seq_size2;
 
   // Deltas : taille physique d'une cellule discrète (en x, vx, t)
-  double dt  = 0.0001;
-  double dx;
-  double dvx;
+  real_t dt  = 0.0001;
+  real_t dx;
+  real_t dvx;
 
-  double inv_dx; // precompute inverse of dx
+  real_t inv_dx; // precompute inverse of dx
 
   // Min/max physical values of x (i.e., x[0] and x[-1])
-  double minRealX   = 0;
-  double maxRealX   = 1;
-  double realWidthX = 1;
+  real_t minRealX   = 0;
+  real_t maxRealX   = 1;
+  real_t realWidthX = 1;
 
   // Min/max physical value of Vx
-  double minRealVx = 0;
-  double maxRealVx = 1;
+  real_t minRealVx = 0;
+  real_t maxRealVx = 1;
 
   //! update physical values
   void update_deltas();

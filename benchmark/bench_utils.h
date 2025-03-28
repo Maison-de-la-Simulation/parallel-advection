@@ -7,6 +7,7 @@
 #include <init.h>
 #include <sycl/sycl.hpp>
 #include "bench_config.h"
+#include "../src/types.h"
 
 // =============================================
 // =============================================

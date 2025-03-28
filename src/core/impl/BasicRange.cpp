@@ -1,7 +1,7 @@
 #include "advectors.h"
 
 sycl::event
-AdvX::BasicRange::operator()(sycl::queue &Q, double *fdist_dev,
+AdvX::BasicRange::operator()(sycl::queue &Q, real_t *fdist_dev,
                              const AdvectionSolver &solver) {
     auto const n0 = solver.params.n0;
     auto const n1 = solver.params.n1;
@@ -11,10 +11,10 @@ AdvX::BasicRange::operator()(sycl::queue &Q, double *fdist_dev,
 
     Q.submit([&](sycl::handler &cgh) {
         /* Using the preallocated global buffer */
-        mdspan3d_t ftmp(ftmp_, n0, n1, n2);
+        span3d_t ftmp(ftmp_, n0, n1, n2);
 
         cgh.parallel_for(r3d, [=](sycl::id<3> itm) {
-            mdspan3d_t fdist(fdist_dev, n0, n1, n2);
+            span3d_t fdist(fdist_dev, n0, n1, n2);
             const int i1 = itm[1];
             const int i0 = itm[0];
             const int i2 = itm[2];
@@ -29,9 +29,9 @@ AdvX::BasicRange::operator()(sycl::queue &Q, double *fdist_dev,
     Q.wait();
     //copy
     return Q.submit([&](sycl::handler &cgh) {
-        mdspan3d_t ftmp(ftmp_, n0, n1, n2);
+        span3d_t ftmp(ftmp_, n0, n1, n2);
         cgh.parallel_for(r3d, [=](sycl::id<3> itm) {
-            mdspan3d_t fdist(fdist_dev, n0, n1, n2);
+            span3d_t fdist(fdist_dev, n0, n1, n2);
             const int i1 = itm[1];
             const int i0 = itm[0];
             const int i2 = itm[2];

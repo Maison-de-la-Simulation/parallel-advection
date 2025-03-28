@@ -4,8 +4,8 @@
 
 // ==========================================
 // ==========================================
-double
-validate_result(sycl::queue &Q, double *fdist_dev, const ADVParams &params,
+real_t
+validate_result(sycl::queue &Q, real_t *fdist_dev, const ADVParams &params,
                 bool do_print) {
 
     auto const dx = params.dx;
@@ -17,15 +17,15 @@ validate_result(sycl::queue &Q, double *fdist_dev, const ADVParams &params,
 
     sycl::range const r2d(params.n0, params.n1);
 
-    std::vector<double> all_l1_errors(params.n2);
+    std::vector<real_t> all_l1_errors(params.n2);
     for (size_t i2 = 0; i2 < params.n2; i2++) {
 
-        double errorL1 = 0.0;
+        real_t errorL1 = 0.0;
 
-        std::vector<double> errorsL1(params.n2);
+        std::vector<real_t> errorsL1(params.n2);
         {
 
-            sycl::buffer<double> errorl1_buff(&errorL1, 1);
+            sycl::buffer<real_t> errorl1_buff(&errorL1, 1);
 
             Q.submit([&](sycl::handler &cgh) {
 
@@ -36,20 +36,20 @@ validate_result(sycl::queue &Q, double *fdist_dev, const ADVParams &params,
                  sycl::accessor errorl1_acc(errorl1_buff, cgh,
                                             sycl::read_write);
                  auto errorl1_reduc =
-                     sycl::reduction(errorl1_acc, sycl::plus<double>());
+                     sycl::reduction(errorl1_acc, sycl::plus<real_t>());
 #endif
 
                  cgh.parallel_for(
                      r2d, errorl1_reduc, [=](auto itm, auto &errorl1_reduc) {
-                         mdspan3d_t fdist(fdist_dev, params.n0, params.n1,
+                         span3d_t fdist(fdist_dev, params.n0, params.n1,
                                           params.n2);
                          auto i1 = itm[1];
                          auto i0 = itm[0];
                          auto f = fdist(i0, i1, i2);
 
-                         double const x = minRealX + i1 * dx;
-                         double const v = minRealVx + i0 * dvx;
-                         double const t = maxIter * dt;
+                         real_t const x = minRealX + i1 * dx;
+                         real_t const v = minRealVx + i0 * dvx;
+                         real_t const t = maxIter * dt;
 
                          auto value = sycl::sin(4 * M_PI * (x - v * t));
 

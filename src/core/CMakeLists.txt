@@ -11,6 +11,7 @@ target_sources(core
 target_include_directories(core
   PUBLIC #need public to include "advectors.h" in impl/*
   ${CMAKE_SOURCE_DIR}/src/core
+  ${CMAKE_SOURCE_DIR}/src
 )
 
 target_link_libraries(core PUBLIC adv1d::tools adv1d::config mdspan)

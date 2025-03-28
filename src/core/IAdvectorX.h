@@ -2,6 +2,7 @@
 
 #include <AdvectionSolver.h>
 #include <sycl/sycl.hpp>
+#include "../types.h"
 
 // ==========================================
 // ==========================================
@@ -9,7 +10,7 @@ class IAdvectorX {
   public:
     virtual ~IAdvectorX() = default;
 
-    virtual sycl::event operator()(sycl::queue &Q, double *fdist_dev,
+    virtual sycl::event operator()(sycl::queue &Q, real_t *fdist_dev,
                                    const AdvectionSolver &solver) = 0;
 };
 
