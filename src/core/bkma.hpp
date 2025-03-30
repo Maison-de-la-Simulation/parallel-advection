@@ -90,7 +90,7 @@ struct WorkItemDispatch {
     // ==========================================
     inline void adjust_sizes_mem_limit(const size_t &max_elems_alloc,
                                        const size_t &alloc_size) {
-        /*TODO: do we need to check if w0*n1>max_mem ?? because if w0 has a lot
+        /* do we need to check if w0*n1>max_mem ?? because if w0 has a lot
         of elements it means that there are fewer elements on n2 and n1 than
         pref_w? so it's not possible to exceed memory in that case right? */
         /* Adjust based on maximum memory available*/

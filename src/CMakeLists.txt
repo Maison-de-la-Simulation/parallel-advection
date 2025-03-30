@@ -11,6 +11,7 @@ target_include_directories(advection
   PUBLIC
   ${CMAKE_SOURCE_DIR}/src/tools
   ${CMAKE_SOURCE_DIR}/src/core
+  ${CMAKE_SOURCE_DIR}/src/solvers
 )
 
 if(SYCL_IS_ACPP)

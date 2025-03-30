@@ -2,17 +2,18 @@ add_library(core)
 
 target_sources(core
   PUBLIC
-  impl/BasicRange.cpp
-  impl/NDRange.cpp
-  impl/AdaptiveWg.cpp
+  BasicRange.cpp
+  NDRange.cpp
+  AdaptiveWg.cpp
   )
 
 target_include_directories(core
-  PUBLIC #need public to include "advectors.h" in impl/*
+  PUBLIC #need public to include "advectors.h" 
   ${CMAKE_SOURCE_DIR}/src/core
   ${CMAKE_SOURCE_DIR}/src
   ${CMAKE_SOURCE_DIR}/src/tools
   ${CMAKE_SOURCE_DIR}/src/config
+  ${CMAKE_SOURCE_DIR}/src/solvers
 )
 
 target_link_libraries(core PUBLIC adv1d::config mdspan)

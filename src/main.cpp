@@ -2,7 +2,7 @@
 #include <sycl/sycl.hpp>
 
 #include <ConvSolver.hpp>
-#include <impl/bkma.hpp>
+#include <bkma.hpp>
 #include <types.hpp>
 
 real_t

@@ -1,5 +1,5 @@
 #include <ConvSolver.hpp>
-#include <impl/bkma.hpp>
+#include <bkma.hpp>
 #include "bench_utils.hpp"
 #include <benchmark/benchmark.h>
 #include <types.hpp>

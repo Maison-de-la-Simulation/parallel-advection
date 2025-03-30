@@ -1,6 +1,6 @@
 #pragma once
 #include "IAdvectorX.hpp"
-#include "impl/bkma.hpp"
+#include "bkma.hpp"
 #include <cassert>
 #include <cmath>
 #include <cstddef>
@@ -88,9 +88,9 @@ class AdaptiveWg : public IAdvectorX {
         wg_dispatch_.s2_ = solver.params.seq_size2;
 
         // TODO: this line is overriden inside the kernel!!! useless
-        wg_dispatch_.set_num_work_groups(n0, n2, dispatch_dim0_.n_batch_,
-                                         dispatch_dim2_.n_batch_,
-                                         local_size_.w0_, local_size_.w2_);
+        // wg_dispatch_.set_num_work_groups(n0, n2, dispatch_dim0_.n_batch_,
+        //                                  dispatch_dim2_.n_batch_,
+        //                                  local_size_.w0_, local_size_.w2_);
     }
 };
 }   // namespace AdvX
