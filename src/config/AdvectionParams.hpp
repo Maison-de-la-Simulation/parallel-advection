@@ -63,6 +63,7 @@ struct ADVParamsNonCopyable : ADVParams {
 
   //The implementation of the kernel, correspond to core/impl cpp files
   std::string kernelImpl;
+  bool inplace;
 
   //! setup / initialization
   void setup(const ConfigMap& configMap); 
