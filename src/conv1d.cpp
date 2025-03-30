@@ -2,8 +2,10 @@
 #include <sycl/sycl.hpp>
 
 #include <ConvSolver.hpp>
+#include <Conv1dParams.hpp>
 #include <bkma.hpp>
 #include <types.hpp>
+#include <init.hpp>
 
 real_t
 sum_and_normalize_conv(sycl::queue &Q, span3d_t data, size_t nw) {
@@ -33,45 +35,40 @@ sum_and_normalize_conv(sycl::queue &Q, span3d_t data, size_t nw) {
     return sum;
 }
 
-inline int
-compute_output_size(int Lin, int kernel_size) {
-    return Lin - (kernel_size - 1);
-}
+
 
 // ==========================================
 // ==========================================
 int
 main(int argc, char **argv) {
-    const auto run_on_gpu = true;
+    /* Read input parameters */
+    std::string input_file = argc > 1 ? std::string(argv[1]) : "conv1d.ini";
+    ConfigMap configMap(input_file);
+    Conv1dParamsNonCopyable strParams;
+    strParams.setup(configMap);
 
-    sycl::device d;
-    if (run_on_gpu)
-        try {
-            d = sycl::device{sycl::gpu_selector_v};
-        } catch (const sycl::exception e) {
-            std::cout
-                << "GPU was requested but none is available, running kernels "
-                   "on the CPU\n"
-                << std::endl;
-            d = sycl::device{sycl::cpu_selector_v};
-        }
-    else
-        d = sycl::device{sycl::cpu_selector_v};
+    const bool run_on_gpu = strParams.gpu;
+    auto device = pick_device(run_on_gpu);
+    strParams.gpu = device.is_gpu() ? true : false;
 
-    sycl::queue Q{d};
+    sycl::queue Q{device};
 
     /* Display infos on current device */
     std::cout << "Using device: "
               << Q.get_device().get_info<sycl::info::device::name>() << "\n";
 
-    const auto channel_in = 3;
-    const auto channel_out = channel_in;
-    const auto length = 1024;
+    /* Make trivially copyable params based on strParams*/
+    strParams.print();
+    Conv1dParams params(strParams);
 
-    const auto n0 = 512;                    // n
-    const auto n1 = length * channel_out;   // l*oc
-    const auto n2 = 512;                    // n
-    const auto k = 9;
+    const auto channel_in = params.channel_in;
+    const auto channel_out = params.channel_out;
+    const auto length = params.length;
+
+    const auto n0 = params.n0;                    // n
+    const auto n1 = params.n1;   // l*oc
+    const auto n2 = params.n2;                    // n
+    const auto k = params.k;
 
     span3d_t data(sycl::malloc_device<real_t>(n0 * n1 * n2, Q), n0,
                               n1, n2);
@@ -135,7 +132,7 @@ main(int argc, char **argv) {
     auto end = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<real_t> elapsed_seconds = end - start;
 
-    auto err = sum_and_normalize_conv(Q, data, compute_output_size(length, k));
+    auto err = sum_and_normalize_conv(Q, data, params.n_write);
     std::cout << "Normalized Array after: " << err << std::endl;
     std::cout << std::endl;
 

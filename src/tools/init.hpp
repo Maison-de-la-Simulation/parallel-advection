@@ -3,6 +3,26 @@
 #include <advectors.hpp>
 #include <AdvectionParams.hpp>
 #include <IAdvectorX.hpp>
+#include <sycl/sycl.hpp>
+
+inline sycl::device pick_device(bool run_on_gpu){
+    sycl::device d;
+
+    if (run_on_gpu)
+        try {
+            d = sycl::device{sycl::gpu_selector_v};
+        } catch (const sycl::exception e) {
+            std::cout
+                << "GPU was requested but none is available, running kernels "
+                   "on the CPU\n"
+                << std::endl;
+            d = sycl::device{sycl::cpu_selector_v};
+        }
+    else
+        d = sycl::device{sycl::cpu_selector_v};
+
+    return d;
+}
 
 // To switch case on a str
 [[nodiscard]] constexpr unsigned int
