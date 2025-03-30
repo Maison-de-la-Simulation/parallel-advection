@@ -1,11 +1,15 @@
 #include <AdvectionParams.hpp>
+#include <AdvectionSolver.hpp>
 #include <advectors.hpp>
-#include <sycl/sycl.hpp>
 #include <iostream>
+#include <sycl/sycl.hpp>
+#include <unique_ref.hpp>
+#include <init.hpp>
+#include <validation.hpp>
 
-#include "tools/init.hpp"
-#include "tools/validation.hpp"
-#include "types.hpp"
+#include <bkma.hpp>
+#include <types.hpp>
+
 
 // ==========================================
 // ==========================================

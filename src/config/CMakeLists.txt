@@ -20,4 +20,4 @@ else()
 endif()
 
 #Add an alias so that library can be used inside the build tree
-add_library(adv1d::config ALIAS config)
+add_library(bkma::config ALIAS config)

@@ -2,8 +2,8 @@ add_executable(conv1d-bench conv1d_bench.cpp)
 
 target_link_libraries(conv1d-bench PUBLIC
 benchmark::benchmark
-adv1d::config
-adv1d::core)
+bkma::config
+bkma::core)
 
 target_include_directories(conv1d-bench
   PUBLIC

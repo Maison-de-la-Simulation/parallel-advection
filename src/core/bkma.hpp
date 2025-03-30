@@ -6,6 +6,12 @@
 #include <sycl/sycl.hpp>
 #include "types.hpp"
 
+#ifdef SYCL_IMPLEMENTATION_ONEAPI
+    #define GET_POINTER get_multi_ptr<sycl::access::decorated::no>().get
+#else
+    #define GET_POINTER get_pointer
+#endif
+
 // ==========================================
 // ==========================================
 /* Specifies the number of kernels to run in global/local memory */
@@ -166,7 +172,7 @@ template <> struct MemAllocator<MemorySpace::Local> {
     [[nodiscard]] MemAllocator(sycl::range<3> range, sycl::handler &cgh)
         : acc_(range, cgh), extents_(range.get(0), range.get(1), range.get(2)) {
     }
-    [[nodiscard]] inline auto get_pointer() const { return acc_.get_pointer(); }
+    [[nodiscard]] inline auto get_pointer() const { return acc_.GET_POINTER(); }
 };
 
 template <>

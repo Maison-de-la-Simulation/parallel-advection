@@ -16,7 +16,7 @@ target_include_directories(core
   ${CMAKE_SOURCE_DIR}/src/solvers
 )
 
-target_link_libraries(core PUBLIC adv1d::config mdspan)
+target_link_libraries(core PUBLIC bkma::config mdspan)
 
 if(SYCL_IS_ACPP)
   add_sycl_to_target(TARGET core)
@@ -25,4 +25,4 @@ else()
 endif()
 
 #Add an alias so that library can be used inside the build tree
-add_library(adv1d::core ALIAS core)
+add_library(bkma::core ALIAS core)

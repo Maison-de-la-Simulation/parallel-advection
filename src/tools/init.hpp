@@ -1,6 +1,8 @@
 #pragma once
 #include "unique_ref.hpp"
 #include <advectors.hpp>
+#include <AdvectionParams.hpp>
+#include <IAdvectorX.hpp>
 
 // To switch case on a str
 [[nodiscard]] constexpr unsigned int

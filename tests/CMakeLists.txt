@@ -6,8 +6,8 @@ impl_unittests.cpp
 
 target_link_libraries(advection-tests PUBLIC
     GTest::gtest_main
-    adv1d::config
-    adv1d::core
+    bkma::config
+    bkma::core
 )
 
 target_include_directories(advection-tests
