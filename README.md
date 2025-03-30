@@ -1,5 +1,7 @@
 # Batched Kernels with Memory Allocations (BKMA)
 
+This code implements optimal parallel loops for BKMA-like algorithm. Two use case implementations are available in the code, a **1D semi-lagrangian advection operator** and a **1D Convolution operator**.
+
 ![Advection process](docs/fig/AdvectionProcess.png)
 
 ## 1D Convolution operator
@@ -7,7 +9,7 @@ Implement a [1D convolution operator](https://pytorch.org/docs/stable/generated/
 
 ## Lagrangian Advection
 
-This code implements a 1D advection operator inside a multidimensionnal space. It implements a [semi-Lagrangian scheme](https://en.wikipedia.org/wiki/Semi-Lagrangian_scheme) using the [SYCL 2020](https://registry.khronos.org/SYCL/specs/sycl-2020/html/sycl-2020.html) progamming models.
+Implements a 1D advection operator inside a multidimensionnal space. It implements a [semi-Lagrangian scheme](https://en.wikipedia.org/wiki/Semi-Lagrangian_scheme) using the [SYCL 2020](https://registry.khronos.org/SYCL/specs/sycl-2020/html/sycl-2020.html) progamming models.
 
 To reproduce the benchmark, follow the [benchmark README.md](benchmark/README.md) instructions.
 
