@@ -35,6 +35,43 @@ sum_and_normalize_conv(sycl::queue &Q, span3d_t data, size_t nw) {
     return sum;
 }
 
+void
+validate_conv1d(sycl::queue &Q, span3d_t data, size_t nw) {
+    const auto n0 = data.extent(0);
+    const auto n2 = data.extent(2);
+
+    sycl::range<1> range0(n0);
+    sycl::range<1> range2(n2);
+
+    Q.parallel_for(range0, [=](unsigned i0) {
+        for (auto i1 = 0; i1 < nw; ++i1) {
+            for (auto i2 = 0; i2 < n2 - 1; ++i2) {
+                if(data(i0, i1, i2) != data(i0, i1, i2+1)){
+                    // throw std::runtime_error("nn");
+                    data(0,0,0) = -1000;
+                };
+            }
+        }
+    });
+
+    Q.parallel_for(range2, [=](unsigned i2) {
+        for (auto i1 = 0; i1 < nw; ++i1) {
+            for (auto i0 = 0; i0 < n0 - 1; ++i0) {
+                if(data(i0, i1, i2) != data(i0+1, i1, i2)){
+                    // throw std::runtime_error("nn");
+                    data(0,0,0) = -2000;
+                };
+            }
+        }
+    });
+
+    Q.wait();
+    if (data(0,0,0) == -1000 || data(0,0,0) == -2000)
+        std::cout << "Values at same position i1 are not equivalent throught "
+                     "the batchs"
+                  << std::endl;
+}
+
 
 
 // ==========================================
@@ -70,10 +107,10 @@ main(int argc, char **argv) {
     const auto n2 = params.n2;                    // n
     const auto k = params.k;
 
-    span3d_t data(sycl::malloc_device<real_t>(n0 * n1 * n2, Q), n0,
+    span3d_t data(sycl::malloc_shared<real_t>(n0 * n1 * n2, Q), n0,
                               n1, n2);
     span3d_t warmup_data(
-        sycl::malloc_device<real_t>(n0 * n1 * n2, Q), n0, n1, n2);
+        sycl::malloc_shared<real_t>(n0 * n1 * n2, Q), n0, n1, n2);
     Q.wait();
 
     Q.parallel_for(sycl::range<3>(n0, n1, n2), [=](auto itm) {
@@ -86,8 +123,8 @@ main(int argc, char **argv) {
      }).wait();
 
     real_t *d_weight =
-        sycl::malloc_device<real_t>(k * channel_out * channel_in, Q);
-    real_t *d_bias = sycl::malloc_device<real_t>(channel_out, Q);
+        sycl::malloc_shared<real_t>(k * channel_out * channel_in, Q);
+    real_t *d_bias = sycl::malloc_shared<real_t>(channel_out, Q);
     Q.wait();
     Q.parallel_for(sycl::range<1>(k * channel_out * channel_in), [=](auto itm) {
          d_weight[itm] = 1.5;
@@ -135,6 +172,8 @@ main(int argc, char **argv) {
     auto err = sum_and_normalize_conv(Q, data, params.n_write);
     std::cout << "Normalized Array after: " << err << std::endl;
     std::cout << std::endl;
+
+    validate_conv1d(Q, data, params.n_write);
 
     //==========================================================================
     //==========================================================================
