@@ -17,7 +17,7 @@ struct Conv1dParams {
   short unsigned k = 3;
   size_t total_batch_size = 262144; //512*512
   size_t batch_size_n2 = 512;
-  
+
   size_t n0;
   size_t n1;
   size_t n2;
