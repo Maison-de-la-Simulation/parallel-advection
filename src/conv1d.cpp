@@ -140,15 +140,15 @@ main(int argc, char **argv) {
         span1d_t(d_bias, channel_out), k, channel_in, length};
 
     WorkItemDispatch wi_dispatch;
-    wi_dispatch.set_ideal_sizes(1024, n0, n1, n2);
+    wi_dispatch.set_ideal_sizes(params.pref_wg_size, n0, n1, n2);
     auto max_elem_local_mem =
         Q.get_device().get_info<sycl::info::device::local_mem_size>() /
         sizeof(real_t);
     wi_dispatch.adjust_sizes_mem_limit(max_elem_local_mem, n1);
 
     WorkGroupDispatch wg_dispatch;
-    wg_dispatch.set_num_work_groups(n0, n2, 1, 1, wi_dispatch.w0_,
-                                    wi_dispatch.w2_);
+    wg_dispatch.set_num_work_groups(n0, n2, params.seq_size0, params.seq_size2,
+                                    wi_dispatch.w0_, wi_dispatch.w2_);
 
     BkmaOptimParams optim_params{{1, n0, n0},       // BatchConfig1D dispatch_d0
                                  {1, n2, n2},       // BatchConfig1D dispatch_d2
