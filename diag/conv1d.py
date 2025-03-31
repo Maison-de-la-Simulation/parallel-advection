@@ -10,16 +10,16 @@ print(f"Using device: {device}: {torch.cuda.get_device_name(device)}")
 
 # Parameters
 
-channel_in  = 3
-channel_out = channel_in
+batch_size=16384
 length = 512
+k = 3
+channel_in  = 1
+channel_out = channel_in
 
-n0 = 16384
+n0 = batch_size
 n1 = length*channel_out
 n2 = 1
-k = 2
 
-batch_size=n0*n2
 # i0, i1, i2 = torch.meshgrid(
 #     torch.arange(batch_size, device=device, dtype=real_t),
 #     torch.arange(channel_in, device=device, dtype=real_t),
@@ -61,6 +61,7 @@ start.record()
 output = conv1d_scripted(data)  # Use pre-compiled model
 torch.cuda.synchronize()
 end.record()
+torch.cuda.synchronize()
 elapsed_time = start.elapsed_time(end)/1000
 
 # Compute final sum and normalization
