@@ -169,7 +169,7 @@ main(int argc, char **argv) {
     auto start = std::chrono::high_resolution_clock::now();
     bkma_run(Q, data, solver, optim_params).wait();
     auto end = std::chrono::high_resolution_clock::now();
-    const std::chrono::duration<real_t> elapsed_seconds = end - start;
+    const std::chrono::duration<double> elapsed_seconds = end - start;
 
     auto err = sum_and_normalize_conv(Q, data, params.n_write);
     std::cout << "Normalized Array after: " << err << std::endl;

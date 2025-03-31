@@ -14,7 +14,7 @@
 // ==========================================
 // ==========================================
 // returns duration for maxIter-1 iterations
-std::chrono::duration<real_t>
+std::chrono::duration<double>
 advection(sycl::queue &Q, real_t* fidst_dev,
           sref::unique_ref<IAdvectorX> &advector, const AdvectionSolver &solver) {
 
