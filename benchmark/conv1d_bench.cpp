@@ -21,12 +21,12 @@ struct Conv1DParams {
 };
 
 static std::vector<Conv1DParams> configs = {{16384, 512, 3, 1},
-                                            {1024, 512, 3, 1},
+                                            // {1024, 512, 3, 1},
                                             // {1024, 512, 3, 1},
                                             // {32768, 128, 3, 9},
-                                            {16384, 256, 5, 6},
-                                            {16384, 512, 5, 3},
-                                            {16384, 1024, 11, 1}};
+                                            // {16384, 256, 5, 6},
+                                            // {16384, 512, 5, 3},
+                                            /*{16384, 1024, 11, 1}*/};
 
 // ==========================================
 real_t
@@ -79,9 +79,8 @@ create_bkma_params(sycl::queue &q, const size_t n0, const size_t n1,
     wg_dispatch.set_num_work_groups(n0, n2, 1, 1, wi_dispatch.w0_,
                                     wi_dispatch.w2_);
 
-    return BkmaOptimParams{{1, n0, n0},       {1, n2, n2},     wi_dispatch.w0_,
-                           wi_dispatch.w1_,   wi_dispatch.w2_, wg_dispatch,
-                           MemorySpace::Local};
+    return {{1, n0, n0},     {1, n2, n2}, wi_dispatch.w0_,   wi_dispatch.w1_,
+            wi_dispatch.w2_, wg_dispatch, MemorySpace::Local};
 }
 static void
 BM_Conv1d(benchmark::State &state) {
@@ -162,7 +161,7 @@ BM_Conv1d(benchmark::State &state) {
 BENCHMARK(BM_Conv1d)
     ->Name("main-BKM-bench")
     ->Iterations(1)
-    ->ArgsProduct({benchmark::CreateDenseRange(0, configs.size(), 1)})
+    ->ArgsProduct({benchmark::CreateDenseRange(0, configs.size()-1, 1)})
     ->UseRealTime()
     ->Unit(benchmark::kMillisecond);
 
