@@ -13,20 +13,21 @@ sycl_alloc(size_t size, sycl::queue &q) {
 }
 
 // ==========================================
-struct Conv1DParams {
+struct BenchmarkConv1dParams {
     int batch_size;
     int input_length;
     int kernel_size;
     int channels;
 };
 
-static std::vector<Conv1DParams> configs = {{16384, 512, 3, 1},
-                                            // {1024, 512, 3, 1},
-                                            // {1024, 512, 3, 1},
-                                            // {32768, 128, 3, 9},
-                                            // {16384, 256, 5, 6},
-                                            // {16384, 512, 5, 3},
-                                            /*{16384, 1024, 11, 1}*/};
+static std::vector<BenchmarkConv1dParams> configs ={
+    {16384, 512 , 3 , 1},
+    {1024 , 512 , 3 , 1},
+    {32768, 128 , 3 , 9},
+    {16384, 256 , 5 , 6},
+    {16384, 512 , 5 , 3},
+    {16384, 1024, 11, 1}
+};
 
 // ==========================================
 real_t
@@ -86,7 +87,7 @@ static void
 BM_Conv1d(benchmark::State &state) {
     sycl::queue q;
 
-    Conv1DParams conv_params = configs[state.range(0)];
+    BenchmarkConv1dParams conv_params = configs[state.range(0)];
     const size_t c_out = conv_params.channels;
     const size_t c_in = conv_params.channels;
     const size_t k = conv_params.kernel_size;

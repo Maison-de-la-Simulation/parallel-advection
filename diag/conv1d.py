@@ -17,7 +17,7 @@ length = 512
 n0 = 16384
 n1 = length*channel_out
 n2 = 1
-k = 5
+k = 2
 
 batch_size=n0*n2
 # i0, i1, i2 = torch.meshgrid(
@@ -52,7 +52,8 @@ print(f"Normalized Array before: {error_before:.3f}")
 
 for _ in range(3):
     _ = conv1d_scripted(data)
-    
+torch.cuda.synchronize()
+
 start = torch.cuda.Event(enable_timing=True)
 end = torch.cuda.Event(enable_timing=True)
 # Run convolution
