@@ -48,7 +48,7 @@ validate_conv1d(sycl::queue &Q, span3d_t data, size_t nw) {
             for (auto i2 = 0; i2 < n2 - 1; ++i2) {
                 if(data(i0, i1, i2) != data(i0, i1, i2+1)){
                     // throw std::runtime_error("nn");
-                    data(0,0,0) = -1000;
+                    data(0,0,0) = -12345;
                 };
             }
         }
@@ -59,17 +59,19 @@ validate_conv1d(sycl::queue &Q, span3d_t data, size_t nw) {
             for (auto i0 = 0; i0 < n0 - 1; ++i0) {
                 if(data(i0, i1, i2) != data(i0+1, i1, i2)){
                     // throw std::runtime_error("nn");
-                    data(0,0,0) = -2000;
+                    data(0,0,0) = -45678;
                 };
             }
         }
     });
 
     Q.wait();
-    if (data(0,0,0) == -1000 || data(0,0,0) == -2000)
-        std::cout << "Values at same position i1 are not equivalent throught "
-                     "the batchs"
+    if (data(0,0,0) == -12345 || data(0,0,0) == -45678)
+        std::cout << "WARNING: Values at same position i1 are not equivalent "
+                     "throught the batchs. Check implementation."
                   << std::endl;
+    else
+        std::cout << "All values data[:,i1,:] are equal." << std::endl;
 }
 
 
