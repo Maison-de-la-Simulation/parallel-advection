@@ -104,9 +104,9 @@ main(int argc, char **argv) {
     const auto channel_out = params.channel_out;
     const auto length = params.length;
 
-    const auto n0 = params.n0;                    // n
+    const auto n0 = params.n0;   // n
     const auto n1 = params.n1;   // l*oc
-    const auto n2 = params.n2;                    // n
+    const auto n2 = params.n2;   // n
     const auto k = params.k;
 
     span3d_t data(sycl::malloc_shared<real_t>(n0 * n1 * n2, Q), n0,
@@ -164,10 +164,13 @@ main(int argc, char **argv) {
 
     /* Warmup to JIT model */
     for (int i = 0; i < 3; ++i)
-        bkma_run(Q, warmup_data, solver, optim_params).wait();
+        bkma_run<ConvSolver, BkmaImpl::AdaptiveWg>(Q, warmup_data, solver,
+                                                   optim_params)
+            .wait();
 
     auto start = std::chrono::high_resolution_clock::now();
-    bkma_run(Q, data, solver, optim_params).wait();
+    bkma_run<ConvSolver, BkmaImpl::AdaptiveWg>(Q, data, solver, optim_params)
+        .wait();
     auto end = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<double> elapsed_seconds = end - start;
 

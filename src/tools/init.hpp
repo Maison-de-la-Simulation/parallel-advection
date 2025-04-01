@@ -1,8 +1,7 @@
 #pragma once
 #include "unique_ref.hpp"
-#include <advectors.hpp>
 #include <AdvectionParams.hpp>
-#include <IAdvectorX.hpp>
+#include <cmath>
 #include <sycl/sycl.hpp>
 
 inline sycl::device pick_device(bool run_on_gpu){
@@ -35,23 +34,23 @@ static constexpr auto error_str =
 
 // // ==========================================
 // // ==========================================
-sref::unique_ref<IAdvectorX>
-kernel_impl_factory(const sycl::queue &q, const ADVParamsNonCopyable &params,
-                    AdvectionSolver &s) {
-    std::string kernel_name(params.kernelImpl.begin(), params.kernelImpl.end());
+// sref::unique_ref<IAdvectorX>
+// kernel_impl_factory(const sycl::queue &q, const ADVParamsNonCopyable &params,
+//                     AdvectionSolver &s) {
+//     std::string kernel_name(params.kernelImpl.begin(), params.kernelImpl.end());
 
-    switch (str2int(kernel_name.data())) {
-    case str2int("BasicRange"):
-        return sref::make_unique<AdvX::BasicRange>(s, q);
-    case str2int("NDRange"):
-        return sref::make_unique<AdvX::NDRange>();
-    case str2int("AdaptiveWg"):
-        return sref::make_unique<AdvX::AdaptiveWg>(s, q);
-    default:
-        auto str = kernel_name + " is not a valid kernel name.\n" + error_str;
-        throw std::runtime_error(str);
-    }
-}
+//     switch (str2int(kernel_name.data())) {
+//     case str2int("BasicRange"):
+//         return sref::make_unique<AdvX::BasicRange>(s, q);
+//     case str2int("NDRange"):
+//         return sref::make_unique<AdvX::NDRange>();
+//     case str2int("AdaptiveWg"):
+//         return sref::make_unique<AdvX::AdaptiveWg>(s, q);
+//     default:
+//         auto str = kernel_name + " is not a valid kernel name.\n" + error_str;
+//         throw std::runtime_error(str);
+//     }
+// }
 
 // ==========================================
 // ==========================================
