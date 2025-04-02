@@ -6,8 +6,8 @@
 // ==========================================
 // ==========================================
 real_t
-validate_result(sycl::queue &Q, real_t *fdist_dev, const ADVParams &params,
-                bool do_print = true) {
+validate_result_adv(sycl::queue &Q, real_t *fdist_dev, const ADVParams &params,
+                    bool do_print = true) {
     auto const dx = params.dx;
     auto const dvx = params.dvx;
     auto const dt = params.dt;
@@ -75,4 +75,75 @@ validate_result(sycl::queue &Q, real_t *fdist_dev, const ADVParams &params,
     }
 
     return highest_l1;
-}
+}   // end validate_result
+
+// ==========================================
+// ==========================================
+real_t
+sum_and_normalize_conv1d(sycl::queue &Q, span3d_t data, size_t nw) {
+    auto n0 = data.extent(0);
+    auto n2 = data.extent(2);
+    sycl::range<3> r3d(n0, nw, n2);
+
+    real_t sum = 0;
+    {
+        sycl::buffer<real_t> buff_sum(&sum, 1);
+
+        Q.submit([&](sycl::handler &cgh) {
+             auto reduc_sum = sycl::reduction(buff_sum, cgh, sycl::plus<>());
+
+             cgh.parallel_for(r3d, reduc_sum, [=](auto itm, auto &reduc_sum) {
+                 auto i0 = itm[0];
+                 auto i1 = itm[1];
+                 auto i2 = itm[2];
+                 auto f = data(i0, i1, i2);
+
+                 reduc_sum += f;
+             });
+         }).wait();
+    }
+    sum /= (n0 * nw * n2);
+
+    return sum;
+}   // end sum_and_normalize_conv
+
+// ==========================================
+// ==========================================
+void
+validate_conv1d(sycl::queue &Q, span3d_t &data, size_t nw) {
+    const auto n0 = data.extent(0);
+    const auto n2 = data.extent(2);
+
+    sycl::range<1> range0(n0);
+    sycl::range<1> range2(n2);
+
+    Q.parallel_for(range0, [=](unsigned i0) {
+        for (auto i1 = 0; i1 < nw; ++i1) {
+            for (auto i2 = 0; i2 < n2 - 1; ++i2) {
+                if (data(i0, i1, i2) != data(i0, i1, i2 + 1)) {
+                    // throw std::runtime_error("nn");
+                    data(0, 0, 0) = -12345;
+                };
+            }
+        }
+    });
+
+    Q.parallel_for(range2, [=](unsigned i2) {
+        for (auto i1 = 0; i1 < nw; ++i1) {
+            for (auto i0 = 0; i0 < n0 - 1; ++i0) {
+                if (data(i0, i1, i2) != data(i0 + 1, i1, i2)) {
+                    // throw std::runtime_error("nn");
+                    data(0, 0, 0) = -45678;
+                };
+            }
+        }
+    });
+
+    Q.wait();
+    if (data(0, 0, 0) == -12345 || data(0, 0, 0) == -45678)
+        std::cout << "WARNING: Values at same position i1 are not equivalent "
+                     "throught the batchs. Check implementation."
+                  << std::endl;
+    else
+        std::cout << "All values data[:,i1,:] are equal." << std::endl;
+}   // end validate_conv1d
