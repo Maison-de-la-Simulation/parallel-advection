@@ -2,6 +2,9 @@
 #include <algorithm>
 #include <string>
 #include <cctype>
+#include <types.hpp>
+#include <sycl/sycl.hpp>
+#include <bkma.hpp>
 
 static constexpr auto error_str =
     "Should be: {BasicRange, NDRange, AdaptiveWg}";
@@ -25,21 +28,25 @@ to_lowercase(const std::string &input) {
 
 // ==========================================
 // ==========================================
-// auto inline impl_selector(const std::string &impl_name) {
-//     auto impl = to_lowercase(impl_name);
-//     switch (str2int(impl.data())) {
-//     case str2int("basicrange"):
-//         return BkmaImpl::BasicRange;
-//     case str2int("ndrange"):
-//         return BkmaImpl::NDRange;
-//     case str2int("adaptivewg"):
-//         return BkmaImpl::AdaptiveWg;
-//     default:
-//         auto str =
-//             impl_name + " is not a valid implementation name.\n" + error_str;
-//         throw std::runtime_error(str);
-//     }
-// }
+template <typename Solver>
+std::function<
+    sycl::event(sycl::queue &, span3d_t, const Solver &, BkmaOptimParams,
+                span3d_t)> inline impl_selector(const std::string &impl_name) {
+
+    auto impl = to_lowercase(impl_name);
+    switch (str2int(impl.data())) {
+    // case str2int("basicrange"):
+    //     return &bkma_run<Solver, BkmaImpl::BasicRange>;
+    // case str2int("ndrange"):
+    //     return &bkma_run<Solver, BkmaImpl::NDRange>;
+    case str2int("adaptivewg"):
+        return &bkma_run<Solver, BkmaImpl::AdaptiveWg>;
+    default:
+        auto str =
+            impl_name + " is not a valid implementation name.\n" + error_str;
+        throw std::runtime_error(str);
+    }
+}
 
 // bkma_run<ConvSolver, BkmaImpl::AdaptiveWg>(Q, warmup_data, solver,
 //     optim_params)

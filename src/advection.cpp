@@ -8,29 +8,7 @@
 
 #include <bkma.hpp>
 #include <types.hpp>
-
-
-// ==========================================
-// ==========================================
-// returns duration for maxIter-1 iterations
-std::chrono::duration<double>
-advection(sycl::queue &Q, span3d_t data, const AdvectionSolver &solver,
-          BkmaOptimParams &optim_params) {
-
-    auto static const maxIter = solver.params.maxIter;
-
-    auto start = std::chrono::high_resolution_clock::now();
-    // Time loop
-    for (size_t t = 0; t < maxIter; ++t) {
-        bkma_run<AdvectionSolver, BkmaImpl::AdaptiveWg>(Q, data, solver,
-                                                        optim_params);
-        Q.wait();
-
-    }   // end for t < T
-    auto end = std::chrono::high_resolution_clock::now();
-
-    return (end - start);
-}   // end advection
+#include <impl_selector.hpp>
 
 // ==========================================
 // ==========================================
@@ -71,7 +49,17 @@ main(int argc, char **argv) {
     AdvectionSolver solver(params);
     auto optim_params = create_optim_params<ADVParams>(Q, params);
 
-    auto elapsed_seconds = advection(Q, data, solver, optim_params);
+    auto bkma_run_function = impl_selector<AdvectionSolver>(strParams.kernelImpl);
+
+    auto start = std::chrono::high_resolution_clock::now();
+    // Time loop
+    for (size_t t = 0; t < maxIter; ++t) {
+        bkma_run_function(Q, data, solver, optim_params, span3d_t{});
+        Q.wait();
+
+    }   // end for t < T
+    auto end = std::chrono::high_resolution_clock::now();
+    const std::chrono::duration<double> elapsed_seconds = end - start;
 
     validate_result_adv(Q, data, params);
 

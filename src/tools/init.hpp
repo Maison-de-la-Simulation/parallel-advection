@@ -91,11 +91,12 @@ BkmaOptimParams create_optim_params(sycl::queue &q, const Params &params) {
                                     wi_dispatch.w0_, wi_dispatch.w2_);
 
     /* TODO : here compute the number of batchs */
-    return BkmaOptimParams{{1, n0, n0},        // BatchConfig1D dispatch_d0
-                           {1, n2, n2},        // BatchConfig1D dispatch_d2
-                           wi_dispatch.w0_,    // size_t w0
-                           wi_dispatch.w1_,    // size_t w1
-                           wi_dispatch.w2_,    // size_t w2
-                           wg_dispatch,        // WorkGroupDispatch wg_disp
-                           MemorySpace::Local};
+    return BkmaOptimParams{
+        {1, n0, n0},         // BatchConfig1D dispatch_d0
+        {1, n2, n2},         // BatchConfig1D dispatch_d2
+        wi_dispatch.w0_,     // size_t w0
+        wi_dispatch.w1_,     // size_t w1
+        wi_dispatch.w2_,     // size_t w2
+        wg_dispatch,         // WorkGroupDispatch wg_disp
+        MemorySpace::Local}; /* TODO : change this depending on params*/
 } //end create_optim_params
