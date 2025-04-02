@@ -4,6 +4,11 @@
 
 using real_t = double;
 
+[[nodiscard]] inline auto
+sycl_alloc(size_t size, sycl::queue &q) {
+    return sycl::malloc_shared<real_t>(size, q);
+}
+
 using span0d_t =
     std::experimental::mdspan<real_t, std::experimental::dextents<size_t, 0>,
                               std::experimental::layout_right>;

@@ -7,11 +7,6 @@
 static constexpr auto __WG_SIZE = 1024;
 static constexpr real_t __INIT_VALUE = 7.3;
 
-auto
-sycl_alloc(size_t size, sycl::queue &q) {
-    return sycl::malloc_device<real_t>(size, q);
-}
-
 // ==========================================
 struct BenchmarkConv1dParams {
     int batch_size;

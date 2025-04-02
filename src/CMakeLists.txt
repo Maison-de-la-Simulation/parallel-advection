@@ -1,5 +1,4 @@
 add_subdirectory(config)
-# add_subdirectory(core)
 
 function(add_bkma_executable name)
   add_executable(${name} ${name}.cpp)
@@ -7,7 +6,6 @@ function(add_bkma_executable name)
   target_link_libraries(${name}
   PUBLIC
   bkma::config)
-  # bkma::core)
 
   target_include_directories(${name}
     PUBLIC
@@ -27,5 +25,5 @@ function(add_bkma_executable name)
 endfunction()
 
 # Add executables
-# add_bkma_executable(advection)
+add_bkma_executable(advection)
 add_bkma_executable(conv1d)

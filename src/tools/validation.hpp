@@ -6,8 +6,10 @@
 // ==========================================
 // ==========================================
 real_t
-validate_result_adv(sycl::queue &Q, real_t *fdist_dev, const ADVParams &params,
+validate_result_adv(sycl::queue &Q, span3d_t &data, const ADVParams &params,
                     bool do_print = true) {
+    std::cout << "\nRESULTS_VALIDATION:" << std::endl;
+
     auto const dx = params.dx;
     auto const dvx = params.dvx;
     auto const dt = params.dt;
@@ -41,11 +43,9 @@ validate_result_adv(sycl::queue &Q, real_t *fdist_dev, const ADVParams &params,
 
                  cgh.parallel_for(
                      r2d, errorl1_reduc, [=](auto itm, auto &errorl1_reduc) {
-                         span3d_t fdist(fdist_dev, params.n0, params.n1,
-                                        params.n2);
                          auto i1 = itm[1];
                          auto i0 = itm[0];
-                         auto f = fdist(i0, i1, i2);
+                         auto f = data(i0, i1, i2);
 
                          real_t const x = minRealX + i1 * dx;
                          real_t const v = minRealVx + i0 * dvx;
@@ -147,3 +147,16 @@ validate_conv1d(sycl::queue &Q, span3d_t &data, size_t nw) {
     else
         std::cout << "All values data[:,i1,:] are equal." << std::endl;
 }   // end validate_conv1d
+
+// ==========================================
+// ==========================================
+void print_perf(const double elapsed_seconds, const size_t n_cells){
+
+    std::cout << "PERF_DIAGS:" << std::endl;
+    std::cout << "elapsed_time: " << elapsed_seconds << " s\n";
+
+    auto gcells = (n_cells / elapsed_seconds) / 1e9;
+    std::cout << "upd_cells_per_sec: " << gcells << " Gcell/sec\n";
+    std::cout << "estimated_throughput: " << gcells * sizeof(real_t) * 2
+              << " GB/s" << std::endl;
+}

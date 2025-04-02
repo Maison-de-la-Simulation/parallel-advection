@@ -11,6 +11,7 @@ target_sources(config
 target_include_directories(config
   PUBLIC
   ${CMAKE_SOURCE_DIR}/src/config
+  ${CMAKE_SOURCE_DIR}/src/tools
   ${CMAKE_SOURCE_DIR}/src)
 
 target_link_libraries(config PUBLIC mdspan)

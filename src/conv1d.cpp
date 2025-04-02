@@ -8,11 +8,6 @@
 #include <init.hpp>
 #include <validation.hpp>
 
-auto
-sycl_alloc(size_t size, sycl::queue &q) {
-    return sycl::malloc_shared<real_t>(size, q);
-}
-
 // ==========================================
 // ==========================================
 int
@@ -110,5 +105,7 @@ main(int argc, char **argv) {
     sycl::free(weight.data_handle(), Q);
     sycl::free(bias.data_handle(), Q);
     sycl::free(data.data_handle(), Q);
+    Q.wait();
+
     return 0;
 }
