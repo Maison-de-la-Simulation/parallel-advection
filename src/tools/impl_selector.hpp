@@ -37,8 +37,8 @@ std::function<
     switch (str2int(impl.data())) {
     // case str2int("basicrange"):
     //     return &bkma_run<Solver, BkmaImpl::BasicRange>;
-    // case str2int("ndrange"):
-    //     return &bkma_run<Solver, BkmaImpl::NDRange>;
+    case str2int("ndrange"):
+        return &bkma_run<Solver, BkmaImpl::NDRange>;
     case str2int("adaptivewg"):
         return &bkma_run<Solver, BkmaImpl::AdaptiveWg>;
     default:
