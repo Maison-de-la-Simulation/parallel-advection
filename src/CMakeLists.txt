@@ -12,7 +12,7 @@ function(add_bkma_executable name)
   target_include_directories(${name}
     PUBLIC
     ${CMAKE_SOURCE_DIR}/src/tools
-    ${CMAKE_SOURCE_DIR}/src/core/bkma
+    ${CMAKE_SOURCE_DIR}/src/core
     ${CMAKE_SOURCE_DIR}/src/solvers
     ${CMAKE_SOURCE_DIR}/src
   )
