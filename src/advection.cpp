@@ -51,10 +51,14 @@ main(int argc, char **argv) {
 
     auto bkma_run_function = impl_selector<AdvectionSolver>(strParams.kernelImpl);
 
+    span3d_t global_scratch(sycl_alloc(n0 * n1 * n2, Q), n0, n1,
+                            n2);   // TODO: don't allocate that much
+    Q.wait();
+
     auto start = std::chrono::high_resolution_clock::now();
     // Time loop
     for (size_t t = 0; t < maxIter; ++t) {
-        bkma_run_function(Q, data, solver, optim_params, span3d_t{});
+        bkma_run_function(Q, data, solver, optim_params, global_scratch);
         Q.wait();
 
     }   // end for t < T
@@ -66,6 +70,7 @@ main(int argc, char **argv) {
     auto const n_cells = n0 * n1 * n2 * (maxIter);
     print_perf(elapsed_seconds.count(), n_cells);
 
+    sycl::free(global_scratch.data_handle(), Q);
     sycl::free(data.data_handle(), Q);
     Q.wait();
     return 0;

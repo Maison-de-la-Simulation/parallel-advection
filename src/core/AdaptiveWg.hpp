@@ -88,7 +88,7 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
                 sycl::range<3> acc_range(w0, w2, nw);
                 return MemAllocator<MemType>(acc_range, cgh);
             } else {
-                extents_t ext(b0_size, n2, n1);
+                extents_t ext(b0_size, n2, nw);
                 return MemAllocator<MemType>(global_scratch);
             }
         }();
@@ -96,15 +96,29 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
         cgh.parallel_for(
             sycl::nd_range<3>{global_size, local_size},
             [=](auto itm) {
-                span3d_t scr(mallocator.get_pointer(),
-                             mallocator.get_extents());
-
                 const auto i1 = itm.get_local_id(1);
-                const auto local_i0 = compute_index<MemType>(itm, 0);
+                auto local_i0 = compute_index<MemType>(itm, 0);
                 const auto local_i2 = compute_index<MemType>(itm, 2);
 
+                const auto p_loc = 0.8;
+                const auto idx_p = sycl::floor(p_loc*g0*w0);
+
+                span3d_t local_scr(mallocator.get_pointer(), mallocator.get_extents());
+
+                // auto scratch_offset = 0;
+                span3d_t& scratch=local_scr;
+                if(local_i0 < idx_p){
+                    scratch = local_scr;
+                }
+                else{
+                    scratch = global_scratch;
+                    local_i0 = local_i0 + itm.get_group().get_group_id(0) *
+                                               local_size.get(0)-1; //TODO: this is the size if we fully allocate
+                    // scratch = global_scratch;
+                }
+
                 auto scratch_slice = std::experimental::submdspan(
-                    scr, local_i0, local_i2, std::experimental::full_extent);
+                    scratch, local_i0, local_i2, std::experimental::full_extent);
 
                 const auto start_idx0 = b0_offset + itm.get_global_id(0);
                 const auto stop_idx0 = sycl::min(n0, start_idx0 + b0_size);
@@ -127,7 +141,8 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
                                     data_slice, global_i0, ii1, global_i2);
                         }
 
-                        sycl::group_barrier(itm.get_group());
+                        sycl::group_barrier(itm.get_sub_group()); // is a __syncwarp();
+                        // sycl::group_barrier(itm.get_group());
 
                         for (int iw = i1; iw < nw; iw += w1) {
                             data_slice(iw) = scratch_slice(iw);
