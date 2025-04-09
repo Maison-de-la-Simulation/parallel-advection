@@ -83,10 +83,15 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
     const auto nw = n1 - (window-1);
 
     //==========================================
-    auto const SEQ_SIZE_SUBGROUPS = 4;
-    size_t simd_size =
-        Q.get_device().get_info<sycl::info::device::preferred_vector_width_int>();
-    constexpr auto N_SUBGROUPS = 2; 
+
+    auto sg_sizes = Q.get_device().get_info<sycl::info::device::sub_group_sizes>();
+    if(sg_sizes.size() > 1){
+        std::cout << "WARNING, MORE THAN ONE SUBGROUP SIZE AVAILABLE" << std::endl;
+    }
+
+    const int simd_size = sg_sizes[0];
+    const auto SEQ_SIZE_SUBGROUPS = 1;
+    constexpr auto N_SUBGROUPS = 1;
     
     sycl::range<1> global_size(
         n0*
@@ -94,57 +99,65 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
         (n2/SEQ_SIZE_SUBGROUPS/N_SUBGROUPS)
     );
 
+    sycl::range<1> local_size(
+        N_SUBGROUPS*simd_size
+    );
+
     //w0 = 1
     //w1 = simd_size
     //w2 = 1
 
-    auto const ndra = sycl::nd_range<1>{global_size, {N_SUBGROUPS*simd_size}};
+    std::cout << "SIMD Size: " << simd_size << std::endl;
+    std::cout << "N_SUBGROUPS: " << N_SUBGROUPS << std::endl;
+    std::cout << "SEQ_SIZE_SUBGROUPS: " << SEQ_SIZE_SUBGROUPS << std::endl;
 
+    auto const ndra = sycl::nd_range<1>{global_size, local_size};
     return Q.submit([&](sycl::handler &cgh) {
-        sycl::local_accessor<real_t, 1> local_scratch(nw*N_SUBGROUPS, cgh);
-
+        sycl::local_accessor<real_t, 2> local_scratch({N_SUBGROUPS, nw}, cgh);
+    
         cgh.parallel_for(
             ndra,
-            [=](auto itm) {
+            [=](auto itm){
+                span2d_t scratch_slice(local_scratch.GET_POINTER(), N_SUBGROUPS, nw);
+                
                 size_t subgroup_id = itm.get_sub_group().get_group_id();
-                span1d_t scratch_slice(local_scratch.GET_POINTER(), nw*N_SUBGROUPS);
+                // auto const itm_local_id=itm.get_local_id(0);
+                // size_t subgroup_id = itm.get_local_id(0) / simd_size;
 
+                static const __attribute__((opencl_constant)) char FMT[] = "inside kernel: %d \n" ;
                 const auto linear_id = itm.get_global_id(0);
 
-                size_t n2_local = n2 / SEQ_SIZE_SUBGROUPS / N_SUBGROUPS;
-                // size_t n1 = simd_size;
-                
+                size_t n2_local = n2 / (SEQ_SIZE_SUBGROUPS * N_SUBGROUPS);
+
+                // Compute i0, i1, and i2
                 size_t i0 = linear_id / (simd_size * n2_local);
                 size_t res = linear_id % (simd_size * n2_local);
                 size_t i1 = res % simd_size;
-
+    
                 size_t block_id = res / simd_size;
                 size_t i2 = (block_id * N_SUBGROUPS + subgroup_id) * SEQ_SIZE_SUBGROUPS;
+    
+                // sycl::ext::oneapi::experimental::printf(FMT, itm_local_id);
 
-                for (int s = 0; s < SEQ_SIZE_SUBGROUPS; ++s) {
-                    size_t global_i2 = i2 + s;
-                    
+                // for (int s = 0; s < SEQ_SIZE_SUBGROUPS; ++s) {
+                    size_t global_i2 = i2;// + s;
+    
                     auto data_slice = std::experimental::submdspan(
-                        data, i0, std::experimental::full_extent,
-                        global_i2);
-
+                        data, i0, std::experimental::full_extent, global_i2);
+    
                     for (int ii1 = i1; ii1 < n1; ii1 += simd_size) {
                         auto const iw = ii1 - (window - 1);
-                        if(iw >= 0)
-                            scratch_slice(subgroup_id * nw + iw) = solver(
-                                data_slice, i0, ii1, global_i2);
+                        if (iw >= 0)
+                            scratch_slice(subgroup_id, iw) = solver(data_slice, i0, ii1, global_i2);
                     }
-
-                    sycl::group_barrier(itm.get_sub_group()); // is a __syncwarp();
-
-                    // sycl::group_barrier(itm.get_group());
-
+    
+                    sycl::group_barrier(itm.get_sub_group());
+    
                     for (int iw = i1; iw < nw; iw += simd_size) {
-                        data_slice(subgroup_id * nw + iw) = scratch_slice(subgroup_id * nw + iw);
+                        data_slice(subgroup_id * nw + iw) = scratch_slice(subgroup_id, iw);
                     }
-                }
-
-            }       // end lambda in parallel_for
-        );          // end parallel_for nd_range
-    });      // end Q.submit
+                // }
+            } // end lambda in parallel_for
+        );    // end parallel_for nd_range
+    });        // end Q.submit
 }   // end submit_kernels
