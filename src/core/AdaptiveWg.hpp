@@ -72,8 +72,8 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
     auto const g0 = wg_dispatch.g0_;
     auto const g2 = wg_dispatch.g2_;
 
-    const sycl::range<3> global_size(g0 * w0, w1, g2 * w2);
-    const sycl::range<3> local_size(w0, w1, w2);
+    // const sycl::range<3> global_size(g0 * w0, w1, g2 * w2);
+    // const sycl::range<3> local_size(w0, w1, w2);
 
     auto n0 = data.extent(0);
     auto n1 = data.extent(1);
@@ -82,73 +82,68 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
     const auto window = solver.window();
     const auto nw = n1 - (window-1);
 
+    //==========================================
+    auto const SEQ_SIZE_SUBGROUPS = 4;
+    size_t simd_size =
+        Q.get_device().get_info<sycl::info::device::preferred_vector_width_int>();
+    constexpr auto N_SUBGROUPS = 2; 
+    
+    sycl::range<1> global_size(
+        n0*
+        simd_size* //n1
+        (n2/SEQ_SIZE_SUBGROUPS/N_SUBGROUPS)
+    );
+
+    //w0 = 1
+    //w1 = simd_size
+    //w2 = 1
+
+    auto const ndra = sycl::nd_range<1>{global_size, {N_SUBGROUPS*simd_size}};
+
     return Q.submit([&](sycl::handler &cgh) {
-        auto mallocator = [&]() {
-            if constexpr (MemType == MemorySpace::Local) {
-                sycl::range<3> acc_range(w0, w2, nw);
-                return MemAllocator<MemType>(acc_range, cgh);
-            } else {
-                extents_t ext(b0_size, n2, nw);
-                return MemAllocator<MemType>(global_scratch);
-            }
-        }();
+        sycl::local_accessor<real_t, 1> local_scratch(nw*N_SUBGROUPS, cgh);
 
         cgh.parallel_for(
-            sycl::nd_range<3>{global_size, local_size},
+            ndra,
             [=](auto itm) {
-                const auto i1 = itm.get_local_id(1);
-                auto local_i0 = compute_index<MemType>(itm, 0);
-                const auto local_i2 = compute_index<MemType>(itm, 2);
+                size_t subgroup_id = itm.get_sub_group().get_group_id();
+                span1d_t scratch_slice(local_scratch.GET_POINTER(), nw*N_SUBGROUPS);
 
-                const auto p_loc = 0.8;
-                const auto idx_p = sycl::floor(p_loc*g0*w0);
+                const auto linear_id = itm.get_global_id(0);
 
-                span3d_t local_scr(mallocator.get_pointer(), mallocator.get_extents());
+                size_t n2_local = n2 / SEQ_SIZE_SUBGROUPS / N_SUBGROUPS;
+                // size_t n1 = simd_size;
+                
+                size_t i0 = linear_id / (simd_size * n2_local);
+                size_t res = linear_id % (simd_size * n2_local);
+                size_t i1 = res % simd_size;
 
-                // auto scratch_offset = 0;
-                span3d_t& scratch=local_scr;
-                if(local_i0 < idx_p){
-                    scratch = local_scr;
+                size_t block_id = res / simd_size;
+                size_t i2 = (block_id * N_SUBGROUPS + subgroup_id) * SEQ_SIZE_SUBGROUPS;
+
+                for (int s = 0; s < SEQ_SIZE_SUBGROUPS; ++s) {
+                    size_t global_i2 = i2 + s;
+                    
+                    auto data_slice = std::experimental::submdspan(
+                        data, i0, std::experimental::full_extent,
+                        global_i2);
+
+                    for (int ii1 = i1; ii1 < n1; ii1 += simd_size) {
+                        auto const iw = ii1 - (window - 1);
+                        if(iw >= 0)
+                            scratch_slice(subgroup_id * nw + iw) = solver(
+                                data_slice, i0, ii1, global_i2);
+                    }
+
+                    sycl::group_barrier(itm.get_sub_group()); // is a __syncwarp();
+
+                    // sycl::group_barrier(itm.get_group());
+
+                    for (int iw = i1; iw < nw; iw += simd_size) {
+                        data_slice(subgroup_id * nw + iw) = scratch_slice(subgroup_id * nw + iw);
+                    }
                 }
-                else{
-                    scratch = global_scratch;
-                    local_i0 = local_i0 + itm.get_group().get_group_id(0) *
-                                               local_size.get(0)-1; //TODO: this is the size if we fully allocate
-                    // scratch = global_scratch;
-                }
 
-                auto scratch_slice = std::experimental::submdspan(
-                    scratch, local_i0, local_i2, std::experimental::full_extent);
-
-                const auto start_idx0 = b0_offset + itm.get_global_id(0);
-                const auto stop_idx0 = sycl::min(n0, start_idx0 + b0_size);
-                for (size_t global_i0 = start_idx0; global_i0 < stop_idx0;
-                     global_i0 += g0 * w0) {
-
-                    const auto start_idx2 = b2_offset + itm.get_global_id(2);
-                    const auto stop_idx2 = sycl::min(n2, start_idx2 + b2_size);
-                    for (size_t global_i2 = start_idx2; global_i2 < stop_idx2;
-                         global_i2 += g2 * w2) {
-
-                        auto data_slice = std::experimental::submdspan(
-                            data, global_i0, std::experimental::full_extent,
-                            global_i2);
-
-                        for (int ii1 = i1; ii1 < n1; ii1 += w1) {
-                            auto const iw = ii1 - (window - 1);
-                            if(iw >= 0)
-                                scratch_slice(iw) = solver(
-                                    data_slice, global_i0, ii1, global_i2);
-                        }
-
-                        sycl::group_barrier(itm.get_sub_group()); // is a __syncwarp();
-                        // sycl::group_barrier(itm.get_group());
-
-                        for (int iw = i1; iw < nw; iw += w1) {
-                            data_slice(iw) = scratch_slice(iw);
-                        }
-                    }   // end for ii2
-                }   // end for ii0
             }       // end lambda in parallel_for
         );          // end parallel_for nd_range
     });      // end Q.submit
