@@ -121,16 +121,15 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
                             global_i2);
 
                         for (int ii1 = i1; ii1 < n1; ii1 += w1) {
-                            auto const iw = ii1 - (window - 1);
-                            if(iw >= 0)
-                                scratch_slice(iw) = solver(
-                                    data_slice, global_i0, ii1, global_i2);
+                            scratch_slice(ii1) = data_slice(ii1);
                         }
 
                         sycl::group_barrier(itm.get_group());
-
+                        
                         for (int iw = i1; iw < nw; iw += w1) {
-                            data_slice(iw) = scratch_slice(iw);
+                            auto const ii1 = iw + window - 1;
+                            data_slice(iw) = solver(scratch_slice, global_i0,
+                                                    ii1, global_i2);
                         }
                     }   // end for ii2
                 }   // end for ii0
