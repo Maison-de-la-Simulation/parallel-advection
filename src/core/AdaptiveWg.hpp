@@ -80,7 +80,7 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
     auto n2 = data.extent(2);
 
     const auto window = solver.window();
-    const auto nw = n1 - (window-1);
+    const auto nw = n1;// - (window-1);
 
     //==========================================
 
@@ -119,23 +119,53 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
     
         cgh.parallel_for(
             ndra,
-            [=](auto itm){
+            [=](auto itm) [[sycl::reqd_sub_group_size(16)]] {
                 span2d_t scratch_slice(local_scratch.GET_POINTER(), N_SUBGROUPS, nw);
                 
-                const size_t linear_id = itm.get_global_id(0);
-                const size_t itm_local_id = itm.get_local_id(0);
-                size_t subgroup_id = itm_local_id / simd_size;
+                const size_t group_d_size_0 = 1;
+                const size_t group_d_size_1 = n1;
+                const size_t group_d_size_2 = N_SUBGROUPS*SEQ_SIZE_SUBGROUPS;
 
-                size_t n2_local = (n2/SEQ_SIZE_SUBGROUPS);
+                const size_t group_i_size_0 = 1;
+                const size_t group_i_size_1 = simd_size;
+                const size_t group_i_size_2 = N_SUBGROUPS;
 
-                size_t i0 = linear_id / (simd_size * n2_local);
-                size_t i1 = itm_local_id;
+                const size_t group_sg_size_0 = 1;
+                const size_t group_sg_size_1 = 1;
+                const size_t group_sg_size_2 = N_SUBGROUPS;
 
-                // size_t res = linear_id % (simd_size * n2_local);
-                // size_t block_id = res / simd_size;
-                size_t block_id = itm.get_group().get_group_id(0) % (n2/N_SUBGROUPS);
+                const size_t subgroup_d_size_0 = 1;
+                const size_t subgroup_d_size_1 = n1;
+                const size_t subgroup_d_size_2 = SEQ_SIZE_SUBGROUPS;
 
-                size_t i2 = block_id*N_SUBGROUPS + subgroup_id;
+                const size_t subgroup_i_size_0 = 1;
+                const size_t subgroup_i_size_1 = simd_size;
+                const size_t subgroup_i_size_2 = 1;
+
+                //pour chaque item, combien de données (data) process
+                const size_t item_d_size_0 = 1;
+                const size_t item_d_size_1 = n1/simd_size;
+                const size_t item_d_size_2 = SEQ_SIZE_SUBGROUPS;
+
+                const size_t group_d_i0 =//TODO itm.get_global_id(0) / (simd_size * (n2 / SEQ_SIZE_SUBGROUPS));
+                const size_t group_d_i1 = 0;
+                const size_t group_d_i2 =//TODO itm.get_group().get_group_id(0) % (n2/N_SUBGROUPS);
+                
+
+                // const size_t linear_id = itm.get_global_id(0);
+                // const size_t itm_local_id = itm.get_local_id(0);
+
+                // size_t subgroup_id = itm.get_sub_group().get_group_id();
+                // // size_t kernel_simd_size = itm.get_sub_group().get_local_size();
+
+                // size_t n2_local = (n2/SEQ_SIZE_SUBGROUPS);
+
+                // size_t i0 = linear_id / (simd_size * n2_local);
+
+                // size_t i1 = itm_local_id % simd_size;
+
+                // size_t block_id = itm.get_group().get_group_id(0) % (n2/N_SUBGROUPS);
+                // size_t i2 = block_id*N_SUBGROUPS + subgroup_id;
 
                 for (int s = 0; s < SEQ_SIZE_SUBGROUPS; ++s) {
                     sycl::group_barrier(itm.get_sub_group());
