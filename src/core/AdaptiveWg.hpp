@@ -90,8 +90,8 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
     }
 
     const int simd_size = sg_sizes[0];
-    const auto SEQ_SIZE_SUBGROUPS = 4;
-    constexpr auto N_SUBGROUPS = 1;
+    const auto SEQ_SIZE_SUBGROUPS = 1;
+    constexpr auto N_SUBGROUPS = 2;
     
     sycl::range<1> global_size(
         n0*
@@ -105,13 +105,13 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
         N_SUBGROUPS
     );
 
-    // std::cout << "SIMD Size: " << simd_size << std::endl;
-    // std::cout << "N_SUBGROUPS: " << N_SUBGROUPS << std::endl;
-    // std::cout << "SEQ_SIZE_SUBGROUPS: " << SEQ_SIZE_SUBGROUPS << std::endl;
-    // std::cout << "global_size: (" << n0 << ", " << simd_size
-    //           << ", " << n2/SEQ_SIZE_SUBGROUPS << ")" << std::endl;
-    // std::cout << "local_size: (" << 1 << ", " << simd_size
-    //           << ", " << N_SUBGROUPS << ")" << std::endl;
+    std::cout << "SIMD Size: " << simd_size << std::endl;
+    std::cout << "N_SUBGROUPS: " << N_SUBGROUPS << std::endl;
+    std::cout << "SEQ_SIZE_SUBGROUPS: " << SEQ_SIZE_SUBGROUPS << std::endl;
+    std::cout << "global_size: (" << n0 << ", " << simd_size
+              << ", " << n2/SEQ_SIZE_SUBGROUPS << ")" << std::endl;
+    std::cout << "local_size: (" << 1 << ", " << simd_size
+              << ", " << N_SUBGROUPS << ")" << std::endl;
 
     auto const ndra = sycl::nd_range<1>{global_size, local_size};
     return Q.submit([&](sycl::handler &cgh) {
@@ -131,10 +131,11 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
                 size_t i0 = linear_id / (simd_size * n2_local);
                 size_t i1 = itm_local_id;
 
-                size_t res = linear_id % (simd_size * n2_local);
-                size_t block_id = res / simd_size;
+                // size_t res = linear_id % (simd_size * n2_local);
+                // size_t block_id = res / simd_size;
+                size_t block_id = itm.get_group().get_group_id(0) % (n2/N_SUBGROUPS);
 
-                size_t i2 = block_id + subgroup_id;
+                size_t i2 = block_id*N_SUBGROUPS + subgroup_id;
 
                 for (int s = 0; s < SEQ_SIZE_SUBGROUPS; ++s) {
                     sycl::group_barrier(itm.get_sub_group());
@@ -157,11 +158,11 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
                             data_slice(iw) =
                                 scratch_slice(subgroup_id, iw);
 
-                    //     static const __attribute__((opencl_constant)) char FMT[] =
-                    //     "linear: %d, local: %d, i0: %d, iw: %d, i2: %d, "
-                    //     "subgroup_id: %d, block_id: %d\n";
-                    // sycl::ext::oneapi::experimental::printf(
-                    //     FMT, linear_id, itm_local_id, i0, iw, global_i2, subgroup_id, block_id);
+                        static const __attribute__((opencl_constant)) char FMT[] =
+                        "linear: %d, local: %d, i0: %d, iw: %d, i2: %d, "
+                        "subgroup_id: %d, block_id: %d, group_id: %d\n";
+                    sycl::ext::oneapi::experimental::printf(
+                        FMT, linear_id, itm_local_id, i0, iw, global_i2, subgroup_id, block_id, itm.get_group().get_group_id(0));
                     }
                 }
             } // end lambda in parallel_for
