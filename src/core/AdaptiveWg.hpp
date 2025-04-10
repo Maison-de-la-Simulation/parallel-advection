@@ -89,7 +89,7 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
         std::cout << "WARNING, MORE THAN ONE SUBGROUP SIZE AVAILABLE" << std::endl;
     }
 
-    const int simd_size = sg_sizes[0];
+    const int simd_size = sg_sizes.size() > 1 ? sg_sizes[1] : sg_sizes[0];
     const auto SEQ_SIZE_SUBGROUPS = 1;
     constexpr auto N_SUBGROUPS = 2;
     
@@ -105,21 +105,22 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
         N_SUBGROUPS
     );
 
-    std::cout << "SIMD Size: " << simd_size << std::endl;
-    std::cout << "N_SUBGROUPS: " << N_SUBGROUPS << std::endl;
-    std::cout << "SEQ_SIZE_SUBGROUPS: " << SEQ_SIZE_SUBGROUPS << std::endl;
-    std::cout << "global_size: (" << n0 << ", " << simd_size
-              << ", " << n2/SEQ_SIZE_SUBGROUPS << ")" << std::endl;
-    std::cout << "local_size: (" << 1 << ", " << simd_size
-              << ", " << N_SUBGROUPS << ")" << std::endl;
+    // std::cout << "SIMD Size: " << simd_size << std::endl;
+    // std::cout << "N_SUBGROUPS: " << N_SUBGROUPS << std::endl;
+    // std::cout << "SEQ_SIZE_SUBGROUPS: " << SEQ_SIZE_SUBGROUPS << std::endl;
+    // std::cout << "global_size: (" << n0 << ", " << simd_size
+    //           << ", " << n2/SEQ_SIZE_SUBGROUPS << ")" << std::endl;
+    // std::cout << "local_size: (" << 1 << ", " << simd_size
+    //           << ", " << N_SUBGROUPS << ")" << std::endl;
 
     auto const ndra = sycl::nd_range<1>{global_size, local_size};
     return Q.submit([&](sycl::handler &cgh) {
         sycl::local_accessor<real_t, 2> local_scratch({nw, N_SUBGROUPS}, cgh);
     
+        // [[sycl::reqd_sub_group_size(16)]]
         cgh.parallel_for(
             ndra,
-            [=](auto itm) [[sycl::reqd_sub_group_size(16)]] {
+            [=](auto itm) {
                 span2d_t scratch_slice(local_scratch.GET_POINTER(), nw, N_SUBGROUPS);
 
                 //  === sizes ===
@@ -174,37 +175,40 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
 
                 const size_t group_i0 = 0;
                 const size_t group_i1 = sg_i1;
-                const size_t group_i2 = group_sg2;
+                const size_t group_i2 = group_sg2; 
 
                 const size_t global_g0 = itm.get_group().get_group_id(0) / (global_g_size_2*global_g_size_1);
                 const size_t global_g1 = 0;
                 const size_t global_g2 = itm.get_group().get_group_id(0) % global_g_size_2;
 
-                const size_t global_i0 = itm.get_global_id(0) / (global_i_size_1*global_i_size_2);
-                const size_t global_i1 = itm.get_local_id(0) % simd_size;
-                const size_t global_i2 = global_g2 * global_g_size_2 + group_sg2;
+                const size_t global_i0 = global_g0 + group_i0;
+                const size_t global_i1 = global_g1 + group_i1;
+                const size_t global_i2 = global_g2 + group_i2;
 
 
                 // size_t block_id = itm.get_group().get_group_id(0) % (n2/N_SUBGROUPS);
                 // size_t i2 = block_id*N_SUBGROUPS + subgroup_id;
 
-                // size_t kernel_simd_size = itm.get_sub_group().get_local_size();
+                // auto kernel_simd_size = itm.get_sub_group().get_local_range();
+                // // auto n_subgroups_in_wg = itm.get_sub_group().get_group_range();
+                //     static const __attribute__((opencl_constant)) char FMT[] =
+                //     "kernel_simd_size: %d\n";
+                // sycl::ext::oneapi::experimental::printf(FMT, kernel_simd_size[0]);
                 
                 size_t i0 = global_i0;
                 size_t i1 = global_i1;
-                size_t i2 = global_i2;
+                // size_t i2 = global_i2;
 
                 for (int s = 0; s < SEQ_SIZE_SUBGROUPS; ++s) {
-                    sycl::group_barrier(itm.get_sub_group());
-                    size_t ii2 = i2 + s;// * n2_local;
+                    size_t i2 = global_i2 + s;
     
                     auto data_slice = std::experimental::submdspan(
-                        data, i0, std::experimental::full_extent, ii2);
+                        data, i0, std::experimental::full_extent, i2);
     
                     for (int ii1 = i1; ii1 < n1; ii1 += simd_size) {
                         auto const iw = ii1 - (window - 1);
                         if (iw >= 0)
-                            scratch_slice(iw, group_sg2) = solver(data_slice, i0, ii1, ii2);
+                            scratch_slice(iw, group_sg2) = solver(data_slice, i0, ii1, i2);
                     }
     
                     sycl::group_barrier(itm.get_sub_group());
@@ -215,11 +219,11 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
                             data_slice(iw) =
                                 scratch_slice(iw, group_sg2);
 
-                        static const __attribute__((opencl_constant)) char FMT[] =
-                        "linear: %d, local: %d, i0: %d, iw: %d, i2: %d, "
-                        "subgroup_id: %d, block_id: %d, group_id: %d\n";
-                    sycl::ext::oneapi::experimental::printf(
-                        FMT, itm.get_global_id(0), itm.get_local_id(0), i0, iw, ii2, group_sg2, global_g2, itm.get_group().get_group_id(0));
+                    //     static const __attribute__((opencl_constant)) char FMT[] =
+                    //     "linear: %d, local: %d, i0: %d, iw: %d, i2: %d, "
+                    //     "subgroup_id: %d, block_id: %d, group_id: %d\n";
+                    // sycl::ext::oneapi::experimental::printf(
+                    //     FMT, itm.get_global_id(0), itm.get_local_id(0), i0, iw, global_i2, group_sg2, global_g2, itm.get_group().get_group_id(0));
                     }
                 }
             } // end lambda in parallel_for
