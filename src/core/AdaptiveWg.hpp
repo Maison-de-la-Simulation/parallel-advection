@@ -90,13 +90,13 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
     }
 
     const int simd_size = sg_sizes[0];
-    const auto SEQ_SIZE_SUBGROUPS = 1;
-    constexpr auto N_SUBGROUPS = 2;
+    const auto SEQ_SIZE_SUBGROUPS = 4;
+    constexpr auto N_SUBGROUPS = 1;
     
     sycl::range<1> global_size(
         n0*
         simd_size* //n1
-        (n2/SEQ_SIZE_SUBGROUPS)*N_SUBGROUPS
+        (n2/SEQ_SIZE_SUBGROUPS)//*N_SUBGROUPS
     );
 
     sycl::range<1> local_size(
@@ -105,13 +105,13 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
         N_SUBGROUPS
     );
 
-    std::cout << "SIMD Size: " << simd_size << std::endl;
-    std::cout << "N_SUBGROUPS: " << N_SUBGROUPS << std::endl;
-    std::cout << "SEQ_SIZE_SUBGROUPS: " << SEQ_SIZE_SUBGROUPS << std::endl;
-    std::cout << "global_size: (" << n0 << ", " << simd_size
-              << ", " << n2/SEQ_SIZE_SUBGROUPS << ")" << std::endl;
-    std::cout << "local_size: (" << 1 << ", " << simd_size
-              << ", " << N_SUBGROUPS << ")" << std::endl;
+    // std::cout << "SIMD Size: " << simd_size << std::endl;
+    // std::cout << "N_SUBGROUPS: " << N_SUBGROUPS << std::endl;
+    // std::cout << "SEQ_SIZE_SUBGROUPS: " << SEQ_SIZE_SUBGROUPS << std::endl;
+    // std::cout << "global_size: (" << n0 << ", " << simd_size
+    //           << ", " << n2/SEQ_SIZE_SUBGROUPS << ")" << std::endl;
+    // std::cout << "local_size: (" << 1 << ", " << simd_size
+    //           << ", " << N_SUBGROUPS << ")" << std::endl;
 
     auto const ndra = sycl::nd_range<1>{global_size, local_size};
     return Q.submit([&](sycl::handler &cgh) {
@@ -126,7 +126,7 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
                 const size_t itm_local_id = itm.get_local_id(0);
                 size_t subgroup_id = itm_local_id / simd_size;
 
-                size_t n2_local =(n2/SEQ_SIZE_SUBGROUPS)*N_SUBGROUPS;
+                size_t n2_local = (n2/SEQ_SIZE_SUBGROUPS);
 
                 size_t i0 = linear_id / (simd_size * n2_local);
                 size_t i1 = itm_local_id;
@@ -138,7 +138,7 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
 
                 for (int s = 0; s < SEQ_SIZE_SUBGROUPS; ++s) {
                     sycl::group_barrier(itm.get_sub_group());
-                    size_t global_i2 = i2 + s;
+                    size_t global_i2 = i2 + s * n2_local;
     
                     auto data_slice = std::experimental::submdspan(
                         data, i0, std::experimental::full_extent, global_i2);
