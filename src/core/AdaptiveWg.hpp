@@ -115,13 +115,28 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
 
     auto const ndra = sycl::nd_range<1>{global_size, local_size};
     return Q.submit([&](sycl::handler &cgh) {
-        sycl::local_accessor<real_t, 2> local_scratch({N_SUBGROUPS, nw}, cgh);
+        sycl::local_accessor<real_t, 2> local_scratch({nw, N_SUBGROUPS}, cgh);
     
         cgh.parallel_for(
             ndra,
             [=](auto itm) [[sycl::reqd_sub_group_size(16)]] {
-                span2d_t scratch_slice(local_scratch.GET_POINTER(), N_SUBGROUPS, nw);
-                
+                span2d_t scratch_slice(local_scratch.GET_POINTER(), nw, N_SUBGROUPS);
+
+                //  === sizes ===
+                // global
+                const size_t global_d_size_0 = n0;
+                const size_t global_d_size_1 = n1;
+                const size_t global_d_size_2 = n2;
+
+                const size_t global_g_size_0 = n0;
+                const size_t global_g_size_1 = 1;
+                const size_t global_g_size_2 = n2/(N_SUBGROUPS*SEQ_SIZE_SUBGROUPS);
+
+                const size_t global_i_size_0 = n0;
+                const size_t global_i_size_1 = simd_size;
+                const size_t global_i_size_2 = n2/SEQ_SIZE_SUBGROUPS;
+
+                //group
                 const size_t group_d_size_0 = 1;
                 const size_t group_d_size_1 = n1;
                 const size_t group_d_size_2 = N_SUBGROUPS*SEQ_SIZE_SUBGROUPS;
@@ -134,6 +149,7 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
                 const size_t group_sg_size_1 = 1;
                 const size_t group_sg_size_2 = N_SUBGROUPS;
 
+                //subgroup
                 const size_t subgroup_d_size_0 = 1;
                 const size_t subgroup_d_size_1 = n1;
                 const size_t subgroup_d_size_2 = SEQ_SIZE_SUBGROUPS;
@@ -142,42 +158,53 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
                 const size_t subgroup_i_size_1 = simd_size;
                 const size_t subgroup_i_size_2 = 1;
 
-                //pour chaque item, combien de données (data) process
+                //item
                 const size_t item_d_size_0 = 1;
                 const size_t item_d_size_1 = n1/simd_size;
                 const size_t item_d_size_2 = SEQ_SIZE_SUBGROUPS;
 
-                const size_t group_d_i0 =//TODO itm.get_global_id(0) / (simd_size * (n2 / SEQ_SIZE_SUBGROUPS));
-                const size_t group_d_i1 = 0;
-                const size_t group_d_i2 =//TODO itm.get_group().get_group_id(0) % (n2/N_SUBGROUPS);
+                // === indexes ===
+                const size_t sg_i0 = 0;
+                const size_t sg_i1 = itm.get_local_id(0) % simd_size;
+                const size_t sg_i2 = 0;
                 
+                const size_t group_sg0 = 0;
+                const size_t group_sg1 = 0;
+                const size_t group_sg2 = itm.get_sub_group().get_group_id();
 
-                // const size_t linear_id = itm.get_global_id(0);
-                // const size_t itm_local_id = itm.get_local_id(0);
+                const size_t group_i0 = 0;
+                const size_t group_i1 = sg_i1;
+                const size_t group_i2 = group_sg2;
 
-                // size_t subgroup_id = itm.get_sub_group().get_group_id();
-                // // size_t kernel_simd_size = itm.get_sub_group().get_local_size();
+                const size_t global_g0 = itm.get_group().get_group_id(0) / (global_g_size_2*global_g_size_1);
+                const size_t global_g1 = 0;
+                const size_t global_g2 = itm.get_group().get_group_id(0) % global_g_size_2;
 
-                // size_t n2_local = (n2/SEQ_SIZE_SUBGROUPS);
+                const size_t global_i0 = itm.get_global_id(0) / (global_i_size_1*global_i_size_2);
+                const size_t global_i1 = itm.get_local_id(0) % simd_size;
+                const size_t global_i2 = global_g2 * global_g_size_2 + group_sg2;
 
-                // size_t i0 = linear_id / (simd_size * n2_local);
-
-                // size_t i1 = itm_local_id % simd_size;
 
                 // size_t block_id = itm.get_group().get_group_id(0) % (n2/N_SUBGROUPS);
                 // size_t i2 = block_id*N_SUBGROUPS + subgroup_id;
 
+                // size_t kernel_simd_size = itm.get_sub_group().get_local_size();
+                
+                size_t i0 = global_i0;
+                size_t i1 = global_i1;
+                size_t i2 = global_i2;
+
                 for (int s = 0; s < SEQ_SIZE_SUBGROUPS; ++s) {
                     sycl::group_barrier(itm.get_sub_group());
-                    size_t global_i2 = i2 + s * n2_local;
+                    size_t ii2 = i2 + s;// * n2_local;
     
                     auto data_slice = std::experimental::submdspan(
-                        data, i0, std::experimental::full_extent, global_i2);
+                        data, i0, std::experimental::full_extent, ii2);
     
                     for (int ii1 = i1; ii1 < n1; ii1 += simd_size) {
                         auto const iw = ii1 - (window - 1);
                         if (iw >= 0)
-                            scratch_slice(subgroup_id, iw) = solver(data_slice, i0, ii1, global_i2);
+                            scratch_slice(iw, group_sg2) = solver(data_slice, i0, ii1, ii2);
                     }
     
                     sycl::group_barrier(itm.get_sub_group());
@@ -186,13 +213,13 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
                         auto const iw = ii1 - (window - 1);
                         if (iw >= 0)
                             data_slice(iw) =
-                                scratch_slice(subgroup_id, iw);
+                                scratch_slice(iw, group_sg2);
 
                         static const __attribute__((opencl_constant)) char FMT[] =
                         "linear: %d, local: %d, i0: %d, iw: %d, i2: %d, "
                         "subgroup_id: %d, block_id: %d, group_id: %d\n";
                     sycl::ext::oneapi::experimental::printf(
-                        FMT, linear_id, itm_local_id, i0, iw, global_i2, subgroup_id, block_id, itm.get_group().get_group_id(0));
+                        FMT, itm.get_global_id(0), itm.get_local_id(0), i0, iw, ii2, group_sg2, global_g2, itm.get_group().get_group_id(0));
                     }
                 }
             } // end lambda in parallel_for
