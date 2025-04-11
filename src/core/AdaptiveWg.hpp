@@ -89,7 +89,7 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
         std::cout << "WARNING, MORE THAN ONE SUBGROUP SIZE AVAILABLE" << std::endl;
     }
 
-    const int simd_size = sg_sizes.size() > 1 ? sg_sizes[1] : sg_sizes[0];
+    const int simd_size = sg_sizes.size() > 1 ? sg_sizes[1] : sg_sizes[0];//TODO: clean this
     const auto SEQ_SIZE_SUBGROUPS = 1;
     constexpr auto N_SUBGROUPS = 2;
     
@@ -122,6 +122,7 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
             ndra,
             [=](auto itm) {
                 span2d_t scratch_slice(local_scratch.GET_POINTER(), nw, N_SUBGROUPS);
+                //TODO assert simd_size == kernel_simd_size
 
                 //  === sizes ===
                 // global
@@ -175,7 +176,7 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
 
                 const size_t group_i0 = 0;
                 const size_t group_i1 = sg_i1;
-                const size_t group_i2 = group_sg2; 
+                const size_t group_i2 = group_sg2;
 
                 const size_t global_g0 = itm.get_group().get_group_id(0) / (global_g_size_2*global_g_size_1);
                 const size_t global_g1 = 0;
@@ -183,7 +184,7 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
 
                 const size_t global_i0 = global_g0 + group_i0;
                 const size_t global_i1 = global_g1 + group_i1;
-                const size_t global_i2 = global_g2 + group_i2;
+                const size_t global_i2 = global_g2*group_d_size_2 + group_i2;
 
 
                 // size_t block_id = itm.get_group().get_group_id(0) % (n2/N_SUBGROUPS);
@@ -195,26 +196,33 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
                 //     "kernel_simd_size: %d\n";
                 // sycl::ext::oneapi::experimental::printf(FMT, kernel_simd_size[0]);
                 
-                size_t i0 = global_i0;
-                size_t i1 = global_i1;
+                size_t global_d0 = global_i0;
+                // size_t global_d1 = global_i1;
                 // size_t i2 = global_i2;
 
-                for (int s = 0; s < SEQ_SIZE_SUBGROUPS; ++s) {
-                    size_t i2 = global_i2 + s;
-    
+                for (int item_d2 = 0; item_d2 < item_d_size_2; ++item_d2) {
+                    // size_t global_d2 = global_i2 + item_d2 * global_i_size_2;
+                    
+                    size_t global_d2 = global_g2*group_d_size_2 + item_d2*item_d_size_2 + group_i2;
+
                     auto data_slice = std::experimental::submdspan(
-                        data, i0, std::experimental::full_extent, i2);
+                        data, global_d0, std::experimental::full_extent, global_d2);
     
-                    for (int ii1 = i1; ii1 < n1; ii1 += simd_size) {
-                        auto const iw = ii1 - (window - 1);
+                    // for (int seq_iterator_1 = global_i1; seq_iterator_1 < n1; seq_iterator_1 += simd_size) {
+                    for (int item_d1 = 0; item_d1 < item_d_size_1; ++item_d1) {
+                        size_t global_d1 = item_d1*subgroup_i_size_1+sg_i1;
+                        // size_t global_d1 = global_i1 +item_d1 * global_i_size_1;
+
+                        auto const iw = global_d1 - (window - 1);
                         if (iw >= 0)
-                            scratch_slice(iw, group_sg2) = solver(data_slice, i0, ii1, i2);
+                            scratch_slice(iw, group_sg2) = solver(data_slice, global_d0, global_d1, global_d2);
                     }
     
                     sycl::group_barrier(itm.get_sub_group());
     
-                    for (int ii1 = i1; ii1 < n1; ii1 += simd_size) {
-                        auto const iw = ii1 - (window - 1);
+                    for (int item_d1 = 0; item_d1 < item_d_size_1; ++item_d1) {
+                        size_t global_d1 = item_d1*subgroup_i_size_1+sg_i1;
+                        auto const iw = global_d1 - (window - 1);
                         if (iw >= 0)
                             data_slice(iw) =
                                 scratch_slice(iw, group_sg2);
