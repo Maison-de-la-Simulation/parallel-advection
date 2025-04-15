@@ -126,15 +126,17 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
 
     auto const ndra = sycl::nd_range<1>{global_size, local_size};
     return Q.submit([&](sycl::handler &cgh) {
-        sycl::local_accessor<real_t, 2> local_scratch({nw, N_Subgroups}, cgh);
+        sycl::local_accessor<real_t, 3> local_scratch({1, N_Subgroups, nw}, cgh);
 
         cgh.parallel_for(
             ndra,
             [=](auto itm) [[sycl::reqd_sub_group_size(32)]] {
-                span2d_t scratch_slice(local_scratch.GET_POINTER(), nw, N_Subgroups);
+                span3d_t scratch_slice(local_scratch.GET_POINTER(), 1, N_Subgroups, nw);
 
                 // TODO assert simd_size == kernel_simd_size
                 const bool is_local = itm.get_sub_group().get_group_id() >= LimitIndex ? true : false;
+
+                // auto ptr = is_local ? local_scratch.GET_POINTER() : global
 
                 //  === sizes ===
                 // global
@@ -223,7 +225,7 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
                     for (int item_d1 = 0; item_d1 < item_d_size_1; ++item_d1) {
                         size_t global_d1 = global_i1+item_d1 * group_i_size_1;
 
-                        scratch_slice(global_d1, group_sg2) =
+                        scratch_slice(0, group_sg2, global_d1) =
                             solver(data_slice, global_d0, global_d1, global_d2);
                     }
 
@@ -232,7 +234,7 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
                     for (int item_d1 = 0; item_d1 < item_d_size_1; ++item_d1) {
                         size_t global_d1 = global_i1+item_d1 * group_i_size_1;
                         data_slice(global_d1) =
-                            scratch_slice(global_d1, group_sg2);
+                            scratch_slice(0, group_sg2, global_d1);
                     }
 
                     sycl::group_barrier(itm.get_sub_group());
