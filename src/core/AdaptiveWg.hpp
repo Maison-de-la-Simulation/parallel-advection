@@ -93,39 +93,48 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
                   << std::endl;
     }
 
-    //TODO: assert (n2/n_subgroups) <= SEQ_SIZE_SUBGROUPS*N_SUBGROUPS
+    //TODO: assert (n2/n_subgroups) <= Total_SeqSize*N_SUBGROUPS
 
     const int simd_size =
         sg_sizes.size() > 1 ? sg_sizes[1] : sg_sizes[0]; // TODO: clean this
-    const auto SEQ_SIZE_SUBGROUPS = 2;
-    constexpr auto N_SUBGROUPS = 2;
-        
-    // constexpr auto Local_SeqSize  = 3;
-    // constexpr auto Global_SeqSize = 1;
-    // constexpr auto Total_SeqSize = Local_SeqSize + Global_SeqSize;
+    // const auto Total_SeqSize = 2;
+    // constexpr auto N_SUBGROUPS = 2;
+
+    constexpr auto N_Local_Sg = 4;
+    constexpr auto N_Global_Sg = 4;
+    constexpr auto N_Subgroups = N_Local_Sg + N_Global_Sg;
+
+    constexpr auto Local_SeqSize  = 3;
+    constexpr auto Global_SeqSize = 1;
+    constexpr auto Total_SeqSize =
+        (N_Local_Sg * Local_SeqSize + N_Global_Sg * Global_SeqSize)/N_Subgroups;
+
+    constexpr auto LimitIndex = N_Global_Sg;
+
 
     sycl::range<1> global_size(
         n0*
         simd_size*
-        (n2 / SEQ_SIZE_SUBGROUPS)
+        (n2 / Total_SeqSize)
     );
 
     sycl::range<1> local_size(
         1*
         simd_size*
-        N_SUBGROUPS
+        N_Subgroups
     );
 
     auto const ndra = sycl::nd_range<1>{global_size, local_size};
     return Q.submit([&](sycl::handler &cgh) {
-        sycl::local_accessor<real_t, 2> local_scratch({nw, N_SUBGROUPS}, cgh);
+        sycl::local_accessor<real_t, 2> local_scratch({nw, N_Subgroups}, cgh);
 
         cgh.parallel_for(
             ndra,
             [=](auto itm) [[sycl::reqd_sub_group_size(32)]] {
-                span2d_t scratch_slice(local_scratch.GET_POINTER(), nw, N_SUBGROUPS);
+                span2d_t scratch_slice(local_scratch.GET_POINTER(), nw, N_Subgroups);
 
                 // TODO assert simd_size == kernel_simd_size
+                const bool is_local = itm.get_sub_group().get_group_id() >= LimitIndex ? true : false;
 
                 //  === sizes ===
                 // global
@@ -135,29 +144,29 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
 
                 const size_t global_g_size_0 = n0;
                 const size_t global_g_size_1 = 1;
-                const size_t global_g_size_2 = (n2 / SEQ_SIZE_SUBGROUPS)/N_SUBGROUPS; //ndrage.get_group_range
+                const size_t global_g_size_2 = (n2 / Total_SeqSize)/N_Subgroups; //ndrage.get_group_range
 
                 // const size_t global_i_size_0 = n0;
                 // const size_t global_i_size_1 = simd_size;
-                // const size_t global_i_size_2 = (n2 / SEQ_SIZE_SUBGROUPS)/N_SUBGROUPS;
+                // const size_t global_i_size_2 = (n2 / Total_SeqSize)/N_Subgroups;
 
                 // group
                 const size_t group_d_size_0 = 1;
                 const size_t group_d_size_1 = nw;
-                const size_t group_d_size_2 = N_SUBGROUPS * SEQ_SIZE_SUBGROUPS;
+                const size_t group_d_size_2 = N_Subgroups * Total_SeqSize;
 
                 const size_t group_i_size_0 = 1;
                 const size_t group_i_size_1 = simd_size;
-                const size_t group_i_size_2 = N_SUBGROUPS;
+                const size_t group_i_size_2 = N_Subgroups;
 
                 const size_t group_sg_size_0 = 1;
                 const size_t group_sg_size_1 = 1;
-                const size_t group_sg_size_2 = N_SUBGROUPS;
+                const size_t group_sg_size_2 = N_Subgroups;
 
                 // subgroup
                 const size_t subgroup_d_size_0 = 1;
                 const size_t subgroup_d_size_1 = nw;
-                const size_t subgroup_d_size_2 = SEQ_SIZE_SUBGROUPS;
+                const size_t subgroup_d_size_2 = Total_SeqSize;
 
                 const size_t subgroup_i_size_0 = 1;
                 const size_t subgroup_i_size_1 = simd_size;
@@ -166,7 +175,7 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
                 // item
                 const size_t item_d_size_0 = 1;
                 const size_t item_d_size_1 = nw / simd_size;
-                const size_t item_d_size_2 = SEQ_SIZE_SUBGROUPS;
+                const size_t item_d_size_2 = is_local ? Local_SeqSize : Global_SeqSize;
 
                 // === indexes ===
                 const size_t sg_i0 = 0;
@@ -178,9 +187,9 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
                 const size_t group_sg1 = 0;
                 const size_t group_sg2 = itm.get_sub_group().get_group_id();
 
-                const size_t group_i0 = 0;
-                const size_t group_i1 = itm.get_local_id(0) % simd_size;
-                const size_t group_i2 = itm.get_sub_group().get_group_id();
+                const size_t group_i0 = sg_i0 + group_sg0;
+                const size_t group_i1 = sg_i1 + group_sg1;
+                const size_t group_i2 = sg_i2 + group_sg2;
 
                 const size_t global_g0 = itm.get_group().get_group_id(0) / (global_g_size_2*global_g_size_1);
                 const size_t global_g1 = 0;
@@ -198,7 +207,8 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
             //     FMT, global_g0, global_d0, global_g_size_2, global_g_size_1, group_i0, itm.get_group().get_group_id(0), group_sg0);
 
                 for (int item_d2 = 0; item_d2 < item_d_size_2; ++item_d2) {
-                    size_t global_d2 = global_i2 + item_d2*group_i_size_2;
+                    // size_t global_d2 = global_i2 + item_d2*group_i_size_2;
+                    size_t global_d2 = global_i2 + item_d2 * N_Local_Sg;
 
 
                     // static const __attribute__((opencl_constant)) char FMT1[] =
@@ -211,7 +221,7 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
                         global_d2);
 
                     for (int item_d1 = 0; item_d1 < item_d_size_1; ++item_d1) {
-                        size_t global_d1 = global_i1+item_d1 * subgroup_i_size_1;
+                        size_t global_d1 = global_i1+item_d1 * group_i_size_1;
 
                         scratch_slice(global_d1, group_sg2) =
                             solver(data_slice, global_d0, global_d1, global_d2);
@@ -220,7 +230,7 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
                     sycl::group_barrier(itm.get_sub_group());
 
                     for (int item_d1 = 0; item_d1 < item_d_size_1; ++item_d1) {
-                        size_t global_d1 = global_i1+item_d1 * subgroup_i_size_1;
+                        size_t global_d1 = global_i1+item_d1 * group_i_size_1;
                         data_slice(global_d1) =
                             scratch_slice(global_d1, group_sg2);
                     }
@@ -235,9 +245,9 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
 
     // std::cout << "SIMD Size: " << simd_size << std::endl;
     // std::cout << "N_SUBGROUPS: " << N_SUBGROUPS << std::endl;
-    // std::cout << "SEQ_SIZE_SUBGROUPS: " << SEQ_SIZE_SUBGROUPS << std::endl;
+    // std::cout << "Total_SeqSize: " << Total_SeqSize << std::endl;
     // std::cout << "global_size: (" << n0 << ", " << simd_size
-    //           << ", " << n2/SEQ_SIZE_SUBGROUPS << ")" << std::endl;
+    //           << ", " << n2/Total_SeqSize << ")" << std::endl;
     // std::cout << "local_size: (" << 1 << ", " << simd_size
     //           << ", " << N_SUBGROUPS << ")" << std::endl;
 //===========================
