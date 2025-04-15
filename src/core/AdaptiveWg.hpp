@@ -97,10 +97,12 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
 
     const int simd_size =
         sg_sizes.size() > 1 ? sg_sizes[1] : sg_sizes[0]; // TODO: clean this
-    const auto SEQ_SIZE_SUBGROUPS = 4;
+    const auto SEQ_SIZE_SUBGROUPS = 2;
     constexpr auto N_SUBGROUPS = 2;
-
-    // std::cout << "SIMD Size: " << simd_size << std::endl;
+        
+    // constexpr auto Local_SeqSize  = 3;
+    // constexpr auto Global_SeqSize = 1;
+    // constexpr auto Total_SeqSize = Local_SeqSize + Global_SeqSize;
 
     sycl::range<1> global_size(
         n0*
@@ -121,8 +123,7 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
         cgh.parallel_for(
             ndra,
             [=](auto itm) [[sycl::reqd_sub_group_size(32)]] {
-                span2d_t scratch_slice(local_scratch.GET_POINTER(), nw,
-                                       N_SUBGROUPS);
+                span2d_t scratch_slice(local_scratch.GET_POINTER(), nw, N_SUBGROUPS);
 
                 // TODO assert simd_size == kernel_simd_size
 
@@ -134,11 +135,11 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
 
                 const size_t global_g_size_0 = n0;
                 const size_t global_g_size_1 = 1;
-                const size_t global_g_size_2 = (n2 / SEQ_SIZE_SUBGROUPS);
+                const size_t global_g_size_2 = (n2 / SEQ_SIZE_SUBGROUPS)/N_SUBGROUPS; //ndrage.get_group_range
 
-                const size_t global_i_size_0 = n0;
-                const size_t global_i_size_1 = simd_size;
-                const size_t global_i_size_2 = (n2 / SEQ_SIZE_SUBGROUPS)/N_SUBGROUPS;
+                // const size_t global_i_size_0 = n0;
+                // const size_t global_i_size_1 = simd_size;
+                // const size_t global_i_size_2 = (n2 / SEQ_SIZE_SUBGROUPS)/N_SUBGROUPS;
 
                 // group
                 const size_t group_d_size_0 = 1;
@@ -169,8 +170,9 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
 
                 // === indexes ===
                 const size_t sg_i0 = 0;
-                const size_t sg_i1 = itm.get_local_id(0) % simd_size;
+                const size_t sg_i1 = itm.get_sub_group().get_local_id();//itm.get_local_id(0) % simd_size;
                 const size_t sg_i2 = 0;
+                
 
                 const size_t group_sg0 = 0;
                 const size_t group_sg1 = 0;
@@ -188,24 +190,21 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
                 const size_t global_i1 = global_g1 * group_d_size_1 + group_i1;
                 const size_t global_i2 = global_g2 * group_d_size_2 + group_i2;
 
-                // const size_t global_i0 = global_g0*group_d_size_0 + group_i0;
-                // const size_t global_i1 = global_g1 + group_i1;
-                // const size_t global_i2 = (global_g2*group_d_size_2 + group_sg2)%global_d_size_2;
-
                 size_t global_d0 = global_i0;
+
+            //     static const __attribute__((opencl_constant)) char FMT[] =
+            //     "global_g0: %d, global_d0: %d, global_g_size_2: %d, global_g_size_1: %d, group_i0: %d, group_id: %d, s: %d\n";
+            // sycl::ext::oneapi::experimental::printf(
+            //     FMT, global_g0, global_d0, global_g_size_2, global_g_size_1, group_i0, itm.get_group().get_group_id(0), group_sg0);
 
                 for (int item_d2 = 0; item_d2 < item_d_size_2; ++item_d2) {
                     size_t global_d2 = global_i2 + item_d2*group_i_size_2;
 
-                    // static const __attribute__((opencl_constant)) char FMT[] =
-                    //     "global_g0: %d, global_d0: %d, global_i0: %d, group_i0: %d, group_id: %d, group_sg0: %d\n";
-                    // sycl::ext::oneapi::experimental::printf(
-                    //     FMT, global_g0, global_d0, global_i0, group_i0, itm.get_group().get_group_id(0), group_sg0);
 
-                    // static const __attribute__((opencl_constant)) char FMT[] =
+                    // static const __attribute__((opencl_constant)) char FMT1[] =
                     //     "global_d2: %d, global_i2: %d, item_d2: %d, group_i2: %d, group_id: %d, group_sg2: %d\n";
                     // sycl::ext::oneapi::experimental::printf(
-                    //     FMT, global_d2, global_i2, item_d2, group_i2, itm.get_group().get_group_id(0), group_sg2);
+                    //     FMT1, global_d2, global_i2, item_d2, group_i2, itm.get_group().get_group_id(0), group_sg2);
 
                     auto data_slice = std::experimental::submdspan(
                         data, global_d0, std::experimental::full_extent,
