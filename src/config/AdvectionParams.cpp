@@ -28,6 +28,11 @@ ADVParams::ADVParams(ADVParamsNonCopyable &other) {
     dvx = other.dvx;
 
     inv_dx = other.inv_dx;
+
+    nSubgroups_Local = other.nSubgroups_Local;
+    nSubgroups_Global = other.nSubgroups_Global;
+    seqSize_Global = other.seqSize_Global;
+    seqSize_Local = other.seqSize_Local;
 };
 
 ADVParamsNonCopyable::ADVParamsNonCopyable(ADVParams &other) {
@@ -57,6 +62,11 @@ ADVParamsNonCopyable::ADVParamsNonCopyable(ADVParams &other) {
     dvx = other.dvx;
 
     inv_dx = other.inv_dx;
+
+    nSubgroups_Local = other.nSubgroups_Local;
+    nSubgroups_Global = other.nSubgroups_Global;
+    seqSize_Global = other.seqSize_Global;
+    seqSize_Local = other.seqSize_Local;
 };
 
 // ======================================================
@@ -84,6 +94,12 @@ ADVParamsNonCopyable::setup(const ConfigMap &configMap) {
     pref_wg_size = configMap.getInteger("optimization", "pref_wg_size", 512);
     seq_size0 = configMap.getInteger("optimization", "seq_size0", 1);
     seq_size2 = configMap.getInteger("optimization", "seq_size2", 1);
+    nSubgroups_Local =
+        configMap.getInteger("optimization", "nSubgroups_Local", 1);
+    nSubgroups_Global =
+        configMap.getInteger("optimization", "nSubgroups_Global", 1);
+    seqSize_Global = configMap.getInteger("optimization", "seqSize_Global", 1);
+    seqSize_Local = configMap.getInteger("optimization", "seqSize_Local", 3);
 
     // io
     outputSolution = configMap.getBool("io", "outputSolution", false);
@@ -116,6 +132,10 @@ ADVParamsNonCopyable::print() {
     std::cout << "n0 (nvx)    : " << n0 << std::endl;
     std::cout << "n1 (nx)     : " << n1 << std::endl;
     std::cout << "n2          : " << n2 << std::endl;
+    std::cout << "local_sg    : " << nSubgroups_Local << std::endl;
+    std::cout << "global_sg   : " << nSubgroups_Global << std::endl;
+    std::cout << "seq_size_L  : " << seqSize_Local << std::endl;
+    std::cout << "seq_size_G  : " << seqSize_Global << std::endl;
     std::cout << "pref_wg_size: " << pref_wg_size << std::endl;
     std::cout << "seq_size0   : " << seq_size0 << std::endl;
     std::cout << "seq_size2   : " << seq_size2 << std::endl;

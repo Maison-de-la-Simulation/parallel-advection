@@ -36,18 +36,13 @@ bkma_run(sycl::queue &Q, span3d_t data, const MySolver &solver,
             switch (optim_params.mem_space) {
             case MemorySpace::Local: {
                 last_event = submit_kernels<MemorySpace::Local, MySolver, Impl>(
-                    Q, data, solver, batch_size_d0, offset_d0,
-                    batch_size_d2, offset_d2, optim_params.w0, optim_params.w1,
-                    optim_params.w2, optim_params.wg_dispatch);
+                    Q, data, solver, optim_params);
             } break;
 
             case MemorySpace::Global: {
                 last_event =
                     submit_kernels<MemorySpace::Global, MySolver, Impl>(
-                        Q, data, solver, batch_size_d0, offset_d0,
-                        batch_size_d2, offset_d2, optim_params.w0,
-                        optim_params.w1, optim_params.w2,
-                        optim_params.wg_dispatch, global_scratch);
+                        Q, data, solver, optim_params, global_scratch);
             } break;
 
             default: {

@@ -4,11 +4,11 @@
 template <MemorySpace MemType, class MySolver, BkmaImpl Impl>
 inline std::enable_if_t<Impl == BkmaImpl::NDRange, sycl::event>
 submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
-               const size_t b0_size, const size_t b0_offset,
-               const size_t b2_size, const size_t b2_offset,
-               const size_t orig_w0, const size_t w1, const size_t orig_w2,
-               WorkGroupDispatch wg_dispatch,
+               BkmaOptimParams optim_params,
                span3d_t global_scratch = span3d_t{}) {
+    static_assert(
+        !(MemType == MemorySpace::Global && BkmaImpl::NDRange == Impl),
+        "NDRange is not supported with MemorySpace::Global");
 
     const auto n0 = data.extent(0);
     const auto n1 = data.extent(1);

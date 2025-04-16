@@ -64,15 +64,31 @@ validate_result_adv(sycl::queue &Q, span3d_t &data, const ADVParams &params,
 
     auto highest_l1 =
         *std::max_element(all_l1_errors.begin(), all_l1_errors.end());
-
     auto lowest_l1 =
         *std::min_element(all_l1_errors.begin(), all_l1_errors.end());
+    const double epsilon = 1e-10;
+    int high_error_count = 0;
+    int low_error_count = 0;
+    
+    for (const auto& error : all_l1_errors) {
+        if (std::abs(error - highest_l1) < epsilon) {
+            high_error_count++;
+        }
+        if (std::abs(error - lowest_l1) < epsilon) {
+            low_error_count++;
+        }
+    }
 
     if (do_print) {
         std::cout << "Highest L1 error found: " << highest_l1 << " (lowest is "
-                  << lowest_l1 << ")\n"
-                  << std::endl;
+                << lowest_l1 << ")\n"
+                << "Number of high errors: " << high_error_count << "\n"
+                << "Number of low errors: " << low_error_count << "\n"
+                << "Number of zeroes errors: " << std::count(all_l1_errors.begin(), all_l1_errors.end(), 0) << "\n"
+                << "Total errors: " << all_l1_errors.size() << "\n"
+                << std::endl;
     }
+
 
     return highest_l1;
 }   // end validate_result

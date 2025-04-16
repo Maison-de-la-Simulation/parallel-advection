@@ -1,10 +1,10 @@
 #pragma once
+#include <MemorySpace.hpp>
 #include <cstdlib>
 #include <iostream>
-#include <MemorySpace.hpp>
 #include <stdexcept>
-#include <types.hpp>
 #include <sycl/sycl.hpp>
+#include <types.hpp>
 
 enum class BkmaImpl {
     BasicRange,
@@ -36,18 +36,21 @@ struct WorkGroupDispatch {
                                     const size_t &n_batchs2, const size_t &w0,
                                     const size_t &w2) {
         if (s0_ > n0 || s2_ > n2) {
-            throw std::invalid_argument(
-                "s0_ > n0 || s2_ > n2. Sequential size "
-                "cannot be larger than dimension size.");
+            std::cout << "WARNING: s0_ > n0 || s2_ > n2. Sequential size "
+                         "cannot be larger than dimension size.Kernel will "
+                         "probably crash "
+                      << std::endl;
         }
         if (s0_ * w0 > n0 || s2_ * w2 > n2) {
             std::cout << "s0 = " << s0_ << std::endl;
             std::cout << "w0 = " << w0 << std::endl;
             std::cout << "s2 = " << s2_ << std::endl;
             std::cout << "w2 = " << w2 << std::endl;
-            throw std::invalid_argument(
-                "s0_*w0 > n0 || s2_*w2 > n2. A single work-group cannot "
-                "process more than dimension size.");
+            std::cout << "WARNING: s0_*w0 > n0 || s2_*w2 > n2. A single "
+                         "work-group cannot "
+                         "process more than dimension size. Kernel will "
+                         "probably crash"
+                      << std::endl;
         }
 
         g0_ = n0 / n_batchs0 / s0_ / w0;
@@ -60,13 +63,9 @@ struct WorkGroupDispatch {
 struct WorkItemDispatch {
     size_t w0_, w1_, w2_;
 
-    [[nodiscard]]
-    inline size_t size() const {
-        return w0_ * w1_ * w2_;
-    };
+    [[nodiscard]] inline size_t size() const { return w0_ * w1_ * w2_; };
 
-    [[nodiscard]]
-    sycl::range<3> range() const {
+    [[nodiscard]] sycl::range<3> range() const {
         return sycl::range(w0_, w1_, w2_);
     }
 
@@ -115,8 +114,7 @@ struct BatchConfig1D {
     size_t batch_size_;
     size_t last_batch_size_;
 
-    [[nodiscard]]
-    inline size_t offset(const size_t &ibatch) const {
+    [[nodiscard]] inline size_t offset(const size_t &ibatch) const {
         return batch_size_ * ibatch;
     }
 };
@@ -130,6 +128,11 @@ struct BkmaOptimParams {
     size_t w1;
     size_t w2;
     WorkGroupDispatch wg_dispatch;
+    size_t nSubgroups_Local;
+    size_t nSubgroups_Global;
+    size_t seqSize_Global;
+    size_t seqSize_Local;
+    int simd_size;
     MemorySpace mem_space;
 };
 

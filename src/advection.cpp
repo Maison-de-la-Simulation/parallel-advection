@@ -48,11 +48,20 @@ main(int argc, char **argv) {
     
     AdvectionSolver solver(params);
     auto optim_params = create_optim_params<ADVParams>(Q, params);
-
     auto bkma_run_function = impl_selector<AdvectionSolver>(strParams.kernelImpl);
 
-    span3d_t global_scratch(sycl_alloc(n0 * n1 * n2, Q), n0, n1,
-                            n2);   // TODO: don't allocate that much
+    // ==== Setup subgroups params =====
+    const auto N_Subgroups = params.nSubgroups_Local + params.nSubgroups_Global;
+    const auto Total_SeqSize =
+        (params.nSubgroups_Local * params.seqSize_Local +
+         params.nSubgroups_Global * params.seqSize_Global) /
+        N_Subgroups;
+    const auto N_groups_in_dim2 = (n2 / Total_SeqSize) / N_Subgroups;
+
+    // ==== global scratch alloc ==== (contiguous in n1)
+    span3d_t global_scratch(
+        sycl_alloc(n0 * n1 * params.nSubgroups_Global * N_groups_in_dim2, Q),
+        n0, params.nSubgroups_Global * N_groups_in_dim2, n1);
     Q.wait();
 
     auto start = std::chrono::high_resolution_clock::now();

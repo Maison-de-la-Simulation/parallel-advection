@@ -59,59 +59,41 @@
 template <MemorySpace MemType, class MySolver, BkmaImpl Impl>
 inline std::enable_if_t<Impl == BkmaImpl::AdaptiveWg, sycl::event>
 submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
-               const size_t b0_size, const size_t b0_offset,
-               const size_t b2_size, const size_t b2_offset,
-               const size_t orig_w0, const size_t w1, const size_t orig_w2,
-               WorkGroupDispatch wg_dispatch,
+               BkmaOptimParams &optim_params,
                span3d_t global_scratch = span3d_t{}) {
+    // // Aliases
+    // const auto& orig_w0 = optim_params.w0;
+    // const auto& orig_w2 = optim_params.w2;
+    // const auto& b0_size = optim_params.dispatch_d0.batch_size_; //TODO: this is wrong, depends on which batch we are in
+    // const auto& b2_size = optim_params.dispatch_d2.batch_size_; //TODO: clear this as well, this should be computed in calling function
 
-    const auto w0 = sycl::min(orig_w0, b0_size);
-    const auto w2 = sycl::min(orig_w2, b2_size);
+    // const auto w0 = sycl::min(orig_w0, b0_size);
+    // const auto w2 = sycl::min(orig_w2, b2_size);
 
-    wg_dispatch.set_num_work_groups(b0_size, b2_size, 1, 1, w0, w2);
-    auto const seq_size0 = wg_dispatch.s0_;
-    auto const seq_size2 = wg_dispatch.s2_;
-    auto const g0 = wg_dispatch.g0_;
-    auto const g2 = wg_dispatch.g2_;
-
+    // optim_params.wg_dispatch.set_num_work_groups(b0_size, b2_size, 1, 1, w0, w2);
+    // auto const seq_size0 = optim_params.wg_dispatch.s0_;
+    // auto const seq_size2 = optim_params.wg_dispatch.s2_;
+    // auto const g0 = optim_params.wg_dispatch.g0_;
+    // auto const g2 = optim_params.wg_dispatch.g2_;
     // const sycl::range<3> global_size(g0 * w0, w1, g2 * w2);
     // const sycl::range<3> local_size(w0, w1, w2);
 
-    auto n0 = data.extent(0);
-    auto n1 = data.extent(1);
-    auto n2 = data.extent(2);
+    const auto &n0 = data.extent(0);
+    const auto &nw = data.extent(1); //advection: nw = n1
+    const auto &n2 = data.extent(2);
+ 
+    const auto& simd_size         = optim_params.simd_size;
+    const auto& nSubgroups_Local  = optim_params.nSubgroups_Local;
+    const auto& nSubgroups_Global = optim_params.nSubgroups_Global;
+    const auto& seqSize_Local     = optim_params.seqSize_Local;
+    const auto& seqSize_Global    = optim_params.seqSize_Global;
 
-    const auto window = solver.window();
-    const auto nw = n1;   // - (window-1);
+    const auto N_Subgroups = nSubgroups_Local + nSubgroups_Global;
+    const auto Total_SeqSize = (nSubgroups_Local * seqSize_Local +
+                                nSubgroups_Global * seqSize_Global) /
+                               N_Subgroups;
 
     //==========================================
-
-    auto sg_sizes =
-        Q.get_device().get_info<sycl::info::device::sub_group_sizes>();
-    if (sg_sizes.size() > 1) {
-        std::cout << "WARNING, MORE THAN ONE SUBGROUP SIZE AVAILABLE"
-                  << std::endl;
-    }
-
-    //TODO: assert (n2/n_subgroups) <= Total_SeqSize*N_SUBGROUPS
-
-    const int simd_size =
-        sg_sizes.size() > 1 ? sg_sizes[1] : sg_sizes[0]; // TODO: clean this
-    // const auto Total_SeqSize = 2;
-    // constexpr auto N_SUBGROUPS = 2;
-
-    constexpr auto N_Local_Sg = 4;
-    constexpr auto N_Global_Sg = 4;
-    constexpr auto N_Subgroups = N_Local_Sg + N_Global_Sg;
-
-    constexpr auto Local_SeqSize  = 3;
-    constexpr auto Global_SeqSize = 1;
-    constexpr auto Total_SeqSize =
-        (N_Local_Sg * Local_SeqSize + N_Global_Sg * Global_SeqSize)/N_Subgroups;
-
-    constexpr auto LimitIndex = N_Global_Sg;
-
-
     sycl::range<1> global_size(
         n0*
         simd_size*
@@ -124,108 +106,88 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
         N_Subgroups
     );
 
+    //  === sizes ===
+    // global group size (how many groups in the global grid)
+    const size_t global_g_size_0 = n0;
+    const size_t global_g_size_1 = 1;
+    const size_t global_g_size_2 = (n2 / Total_SeqSize)/N_Subgroups; //ndrage.get_group_range
+
+    // group data size (how many data elements in a group)
+    const size_t group_d_size_0 = 1;
+    const size_t group_d_size_1 = nw;
+    const size_t group_d_size_2 = N_Subgroups * Total_SeqSize;
+
+    // group item size (how many work-items in a work-group)
+    const size_t group_i_size_0 = 1;
+    const size_t group_i_size_1 = simd_size;
+    const size_t group_i_size_2 = N_Subgroups;
+
+    // item data size (how many data elements processed per item)
+    const size_t item_d_size_0 = 1;
+    const size_t item_d_size_1 = nw / simd_size;
+
     auto const ndra = sycl::nd_range<1>{global_size, local_size};
     return Q.submit([&](sycl::handler &cgh) {
-        sycl::local_accessor<real_t, 3> local_scratch({1, N_Subgroups, nw}, cgh);
+        sycl::local_accessor<real_t, 3> local_scratch({1, nSubgroups_Local, nw}, cgh);
 
+        // [[sycl::reqd_sub_group_size(32)]]
         cgh.parallel_for(
             ndra,
-            [=](auto itm) [[sycl::reqd_sub_group_size(32)]] {
-                span3d_t scratch_slice(local_scratch.GET_POINTER(), 1, N_Subgroups, nw);
+            [=](auto itm) {
+                const span3d_t local_span(local_scratch.GET_POINTER(), 1, nSubgroups_Local, nw);
+                const bool is_local = itm.get_sub_group().get_group_id() >= nSubgroups_Global;
 
-                // TODO assert simd_size == kernel_simd_size
-                const bool is_local = itm.get_sub_group().get_group_id() >= LimitIndex ? true : false;
-
-                // auto ptr = is_local ? local_scratch.GET_POINTER() : global
-
-                //  === sizes ===
-                // global
-                const size_t global_d_size_0 = n0;
-                const size_t global_d_size_1 = nw;
-                const size_t global_d_size_2 = n2;
-
-                const size_t global_g_size_0 = n0;
-                const size_t global_g_size_1 = 1;
-                const size_t global_g_size_2 = (n2 / Total_SeqSize)/N_Subgroups; //ndrage.get_group_range
-
-                // const size_t global_i_size_0 = n0;
-                // const size_t global_i_size_1 = simd_size;
-                // const size_t global_i_size_2 = (n2 / Total_SeqSize)/N_Subgroups;
-
-                // group
-                const size_t group_d_size_0 = 1;
-                const size_t group_d_size_1 = nw;
-                const size_t group_d_size_2 = N_Subgroups * Total_SeqSize;
-
-                const size_t group_i_size_0 = 1;
-                const size_t group_i_size_1 = simd_size;
-                const size_t group_i_size_2 = N_Subgroups;
-
-                const size_t group_sg_size_0 = 1;
-                const size_t group_sg_size_1 = 1;
-                const size_t group_sg_size_2 = N_Subgroups;
-
-                // subgroup
-                const size_t subgroup_d_size_0 = 1;
-                const size_t subgroup_d_size_1 = nw;
-                const size_t subgroup_d_size_2 = Total_SeqSize;
-
-                const size_t subgroup_i_size_0 = 1;
-                const size_t subgroup_i_size_1 = simd_size;
-                const size_t subgroup_i_size_2 = 1;
-
-                // item
-                const size_t item_d_size_0 = 1;
-                const size_t item_d_size_1 = nw / simd_size;
-                const size_t item_d_size_2 = is_local ? Local_SeqSize : Global_SeqSize;
+                const span3d_t& scratch_slice = is_local ? local_span : global_scratch;
 
                 // === indexes ===
+                // within the sub-group, the index of the work-item
                 const size_t sg_i0 = 0;
                 const size_t sg_i1 = itm.get_sub_group().get_local_id();//itm.get_local_id(0) % simd_size;
                 const size_t sg_i2 = 0;
-                
 
+                // within the group, the index of the sub-group
                 const size_t group_sg0 = 0;
                 const size_t group_sg1 = 0;
                 const size_t group_sg2 = itm.get_sub_group().get_group_id();
 
+                // within the group, the index of the item
                 const size_t group_i0 = sg_i0 + group_sg0;
                 const size_t group_i1 = sg_i1 + group_sg1;
                 const size_t group_i2 = sg_i2 + group_sg2;
 
+                // within the global group grid, the index of the group
                 const size_t global_g0 = itm.get_group().get_group_id(0) / (global_g_size_2*global_g_size_1);
                 const size_t global_g1 = 0;
                 const size_t global_g2 = itm.get_group().get_group_id(0) % global_g_size_2;
 
+                // within the global grid, the index of the work-item
                 const size_t global_i0 = global_g0 * group_d_size_0 + group_i0;
                 const size_t global_i1 = global_g1 * group_d_size_1 + group_i1;
                 const size_t global_i2 = global_g2 * group_d_size_2 + group_i2;
 
+                // corresponding index of the data element
                 size_t global_d0 = global_i0;
 
-            //     static const __attribute__((opencl_constant)) char FMT[] =
-            //     "global_g0: %d, global_d0: %d, global_g_size_2: %d, global_g_size_1: %d, group_i0: %d, group_id: %d, s: %d\n";
-            // sycl::ext::oneapi::experimental::printf(
-            //     FMT, global_g0, global_d0, global_g_size_2, global_g_size_1, group_i0, itm.get_group().get_group_id(0), group_sg0);
+                // correponding index in the scratch slice (local or global)
+                const size_t scratch_i0 = is_local ? 0 : global_d0;
+                const size_t item_d_size_2 = is_local ? seqSize_Local : seqSize_Global;
 
                 for (int item_d2 = 0; item_d2 < item_d_size_2; ++item_d2) {
                     // size_t global_d2 = global_i2 + item_d2*group_i_size_2;
-                    size_t global_d2 = global_i2 + item_d2 * N_Local_Sg;
-
-
-                    // static const __attribute__((opencl_constant)) char FMT1[] =
-                    //     "global_d2: %d, global_i2: %d, item_d2: %d, group_i2: %d, group_id: %d, group_sg2: %d\n";
-                    // sycl::ext::oneapi::experimental::printf(
-                    //     FMT1, global_d2, global_i2, item_d2, group_i2, itm.get_group().get_group_id(0), group_sg2);
+                    size_t global_d2 = global_i2 + item_d2 * nSubgroups_Local; //TODO!! attention ça ça ne marche que si nSubgroups_Global=1
+ 
+                    const size_t scratch_i2 = is_local ? group_sg2 - nSubgroups_Global : global_g2 + group_sg2;
 
                     auto data_slice = std::experimental::submdspan(
                         data, global_d0, std::experimental::full_extent,
                         global_d2);
 
+                    
+
                     for (int item_d1 = 0; item_d1 < item_d_size_1; ++item_d1) {
                         size_t global_d1 = global_i1+item_d1 * group_i_size_1;
 
-                        scratch_slice(0, group_sg2, global_d1) =
+                        scratch_slice(scratch_i0, scratch_i2, global_d1) =
                             solver(data_slice, global_d0, global_d1, global_d2);
                     }
 
@@ -234,7 +196,7 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
                     for (int item_d1 = 0; item_d1 < item_d_size_1; ++item_d1) {
                         size_t global_d1 = global_i1+item_d1 * group_i_size_1;
                         data_slice(global_d1) =
-                            scratch_slice(0, group_sg2, global_d1);
+                            scratch_slice(scratch_i0, scratch_i2, global_d1);
                     }
 
                     sycl::group_barrier(itm.get_sub_group());
@@ -243,7 +205,6 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
         );      // end parallel_for nd_range
     });         // end Q.submit
 }   // end submit_kernels
-
 
     // std::cout << "SIMD Size: " << simd_size << std::endl;
     // std::cout << "N_SUBGROUPS: " << N_SUBGROUPS << std::endl;

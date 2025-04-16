@@ -90,13 +90,27 @@ BkmaOptimParams create_optim_params(sycl::queue &q, const Params &params) {
     wg_dispatch.set_num_work_groups(n0, n2, params.seq_size0, params.seq_size2,
                                     wi_dispatch.w0_, wi_dispatch.w2_);
 
+    auto sg_sizes =
+        q.get_device().get_info<sycl::info::device::sub_group_sizes>();
+    if (sg_sizes.size() > 1) {
+        std::cout << "More than one sub-group size is supported. Using "
+                  << sg_sizes[1] << std::endl;
+    }
+    const int simd_size =
+        sg_sizes.size() > 1 ? sg_sizes[1] : sg_sizes[0];   // TODO: clean this
+
     /* TODO : here compute the number of batchs */
     return BkmaOptimParams{
-        {1, n0, n0},         // BatchConfig1D dispatch_d0
-        {1, n2, n2},         // BatchConfig1D dispatch_d2
-        wi_dispatch.w0_,     // size_t w0
-        wi_dispatch.w1_,     // size_t w1
-        wi_dispatch.w2_,     // size_t w2
-        wg_dispatch,         // WorkGroupDispatch wg_disp
-        MemorySpace::Local}; /* TODO : change this depending on params*/
+        {1, n0, n0},                 // BatchConfig1D dispatch_d0
+        {1, n2, n2},                 // BatchConfig1D dispatch_d2
+        wi_dispatch.w0_,             // size_t w0
+        wi_dispatch.w1_,             // size_t w1
+        wi_dispatch.w2_,             // size_t w2
+        wg_dispatch,                 // WorkGroupDispatch wg_disp
+        params.nSubgroups_Local,     // nSubgroups_Local;
+        params.nSubgroups_Global,    // nSubgroups_Global;
+        params.seqSize_Global,       // seqSize_Global;
+        params.seqSize_Local,        // seqSize_Local;
+        simd_size,
+        MemorySpace::Global}; /* TODO : change this depending on params*/
 } //end create_optim_params

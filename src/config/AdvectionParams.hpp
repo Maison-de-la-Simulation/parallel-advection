@@ -52,6 +52,12 @@ struct ADVParams {
   real_t minRealVx = 0;
   real_t maxRealVx = 1;
 
+  //opt params
+  size_t nSubgroups_Local;
+  size_t nSubgroups_Global;
+  size_t seqSize_Global;
+  size_t seqSize_Local;
+
   //! update physical values
   void update_deltas();
 }; // struct ADVParams

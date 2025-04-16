@@ -68,6 +68,8 @@ main(int argc, char **argv) {
                                  wi_dispatch.w1_,   // size_t w1
                                  wi_dispatch.w2_,   // size_t w2
                                  wg_dispatch,       // WorkGroupDispatch wg_disp
+                                 1,1,1,1, //subgroups stuff. TODO: update for conv1d
+                                 32, //simd_size
                                  MemorySpace::Local};
 
     auto error = sum_and_normalize_conv1d(Q, data, n1);
