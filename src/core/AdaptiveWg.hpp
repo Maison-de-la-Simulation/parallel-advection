@@ -95,46 +95,46 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
 
     //==========================================
     sycl::range<1> global_size(
-        n0*
+        (n0 / Total_SeqSize)*
         simd_size*
-        (n2 / Total_SeqSize)
+        n2
     );
 
     sycl::range<1> local_size(
-        1*
+        N_Subgroups*
         simd_size*
-        N_Subgroups
+        1
     );
 
     //  === sizes ===
     // global group size (how many groups in the global grid)
-    const size_t global_g_size_0 = n0;
+    const size_t global_g_size_0 = (n0 / Total_SeqSize)/N_Subgroups;
     const size_t global_g_size_1 = 1;
-    const size_t global_g_size_2 = (n2 / Total_SeqSize)/N_Subgroups; //ndrage.get_group_range
+    const size_t global_g_size_2 = n2; //ndrage.get_group_range
 
     // group data size (how many data elements in a group)
-    const size_t group_d_size_0 = 1;
+    const size_t group_d_size_0 = N_Subgroups * Total_SeqSize;
     const size_t group_d_size_1 = nw;
-    const size_t group_d_size_2 = N_Subgroups * Total_SeqSize;
+    const size_t group_d_size_2 = 1;
 
     // group item size (how many work-items in a work-group)
-    const size_t group_i_size_0 = 1;
+    const size_t group_i_size_0 = N_Subgroups;
     const size_t group_i_size_1 = simd_size;
-    const size_t group_i_size_2 = N_Subgroups;
+    const size_t group_i_size_2 = 1;
 
     // item data size (how many data elements processed per item)
-    const size_t item_d_size_0 = 1;
     const size_t item_d_size_1 = nw / simd_size;
+    const size_t item_d_size_2 = 1;
 
     auto const ndra = sycl::nd_range<1>{global_size, local_size};
     return Q.submit([&](sycl::handler &cgh) {
-        sycl::local_accessor<real_t, 3> local_scratch({1, nSubgroups_Local, nw}, cgh);
+        sycl::local_accessor<real_t, 3> local_scratch({nSubgroups_Local, 1, nw}, cgh);
 
         // [[sycl::reqd_sub_group_size(32)]]
         cgh.parallel_for(
             ndra,
             [=](auto itm) {
-                const span3d_t local_span(local_scratch.GET_POINTER(), 1, nSubgroups_Local, nw);
+                const span3d_t local_span(local_scratch.GET_POINTER(), nSubgroups_Local, 1, nw);
                 const bool is_local = itm.get_sub_group().get_group_id() >= nSubgroups_Global;
 
                 const span3d_t& scratch_slice = is_local ? local_span : global_scratch;
@@ -146,9 +146,9 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
                 const size_t sg_i2 = 0;
 
                 // within the group, the index of the sub-group
-                const size_t group_sg0 = 0;
+                const size_t group_sg0 = itm.get_sub_group().get_group_id();
                 const size_t group_sg1 = 0;
-                const size_t group_sg2 = itm.get_sub_group().get_group_id();
+                const size_t group_sg2 = 0;
 
                 // within the group, the index of the item
                 const size_t group_i0 = sg_i0 + group_sg0;
@@ -156,8 +156,10 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
                 const size_t group_i2 = sg_i2 + group_sg2;
 
                 // within the global group grid, the index of the group
+                // const size_t global_g0 = itm.get_group().get_group_id(0) % global_g_size_0;
                 const size_t global_g0 = itm.get_group().get_group_id(0) / (global_g_size_2*global_g_size_1);
                 const size_t global_g1 = 0;
+                // const size_t global_g2 = itm.get_group().get_group_id(0) / (global_g_size_0*global_g_size_1);
                 const size_t global_g2 = itm.get_group().get_group_id(0) % global_g_size_2;
 
                 // within the global grid, the index of the work-item
@@ -166,23 +168,20 @@ submit_kernels(sycl::queue &Q, span3d_t data, const MySolver &solver,
                 const size_t global_i2 = global_g2 * group_d_size_2 + group_i2;
 
                 // corresponding index of the data element
-                size_t global_d0 = global_i0;
+                size_t global_d2 = global_i2;
 
                 // correponding index in the scratch slice (local or global)
-                const size_t scratch_i0 = is_local ? 0 : global_d0;
-                const size_t item_d_size_2 = is_local ? seqSize_Local : seqSize_Global;
+                const size_t scratch_i2 = is_local ? 0 : global_d2;
+                const size_t item_d_size_0 = is_local ? seqSize_Local : seqSize_Global;
 
-                for (int item_d2 = 0; item_d2 < item_d_size_2; ++item_d2) {
-                    // size_t global_d2 = global_i2 + item_d2*group_i_size_2;
-                    size_t global_d2 = global_i2 + item_d2 * nSubgroups_Local; //TODO!! attention ça ça ne marche que si nSubgroups_Global=1
+                for (int item_d0 = 0; item_d0 < item_d_size_0; ++item_d0) {
+                    size_t global_d0 = global_i0 + item_d0 * nSubgroups_Local; //TODO!! attention ça ça ne marche que si nSubgroups_Global=1
  
-                    const size_t scratch_i2 = is_local ? group_sg2 - nSubgroups_Global : global_g2 + group_sg2;
+                    const size_t scratch_i0 = is_local ? group_sg0 - nSubgroups_Global : global_g0 + group_sg0;
 
                     auto data_slice = std::experimental::submdspan(
                         data, global_d0, std::experimental::full_extent,
                         global_d2);
-
-                    
 
                     for (int item_d1 = 0; item_d1 < item_d_size_1; ++item_d1) {
                         size_t global_d1 = global_i1+item_d1 * group_i_size_1;

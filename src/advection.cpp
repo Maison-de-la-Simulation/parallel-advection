@@ -56,12 +56,12 @@ main(int argc, char **argv) {
         (params.nSubgroups_Local * params.seqSize_Local +
          params.nSubgroups_Global * params.seqSize_Global) /
         N_Subgroups;
-    const auto N_groups_in_dim2 = (n2 / Total_SeqSize) / N_Subgroups;
+    const auto N_groups_in_dim0 = (n0 / Total_SeqSize) / N_Subgroups;
 
     // ==== global scratch alloc ==== (contiguous in n1)
     span3d_t global_scratch(
-        sycl_alloc(n0 * n1 * params.nSubgroups_Global * N_groups_in_dim2, Q),
-        n0, params.nSubgroups_Global * N_groups_in_dim2, n1);
+        sycl_alloc(params.nSubgroups_Global*N_groups_in_dim0 * n1 * n2, Q),
+        params.nSubgroups_Global*N_groups_in_dim0, n2, n1);
     Q.wait();
 
     auto start = std::chrono::high_resolution_clock::now();
