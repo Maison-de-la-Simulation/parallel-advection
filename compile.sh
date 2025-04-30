@@ -170,6 +170,9 @@ else
 fi
 
 if [ -n "$BENCHMARK_DIR" ]; then 
+    if [ "$BENCHMARK_DIR" = "default" ]; then
+    BENCHMARK_DIR="`pwd`/thirdparty/benchmark/build"
+    fi
     CMAKE_OPTIONS+=" -Dbenchmark_DIR=${BENCHMARK_DIR}" 
 fi
 
