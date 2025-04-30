@@ -1,8 +1,15 @@
 #include "bench_config.hpp"
 #include "bench_utils.hpp"
-#include <benchmark/benchmark.h>
+#include <AdvectionParams.hpp>
+#include <AdvectionSolver.hpp>
+#include <sycl/sycl.hpp>
+#include <init.hpp>
 #include <validation.hpp>
+
+#include <bkma.hpp>
 #include <types.hpp>
+#include <impl_selector.hpp>
+
 
 
 // ==========================================
@@ -16,37 +23,27 @@ BM_Advection(benchmark::State &state) {
     params.n0 = EXP_SIZES[state.range(2)].n0_;
     params.n1 = EXP_SIZES[state.range(2)].n1_;
     params.n2 = EXP_SIZES[state.range(2)].n2_;
+    auto const &n0 = params.n0;
+    auto const &n1 = params.n1;
+    auto const &n2 = params.n2;
 
     /* SYCL setup */
     auto Q = createSyclQueue(params.gpu, state);
-    auto data =
-        sycl::malloc_device<real_t>(params.n0 * params.n1 * params.n2, Q);
-
-    /* Advector setup */
-    Solver solver(params);
-    const auto kernel_id = static_cast<AdvImpl>(state.range(1));
-    const auto advector = advectorFactory(Q, params, solver, kernel_id, state);
-
-    /* Benchmark infos */
-    state.counters.insert({
-        {"gpu", params.gpu},
-        {"n0", params.n0},
-        {"n1", params.n1},
-        {"n2", params.n2},
-        {"kernel_id", kernel_id},
-        {"pref_wg_size", params.pref_wg_size},
-        {"seq_size0", params.seq_size0},
-        {"seq_size2", params.seq_size2},
-    });
-
-    /* Physics setup */
-    fill_buffer(Q, data, params);
+    span3d_t data(sycl_alloc(n0*n1*n2, Q), n0, n1, n2);
     Q.wait();
+    fill_buffer_adv(Q, data, params);
+    Q.wait();
+    
+    /* Advector setup */
+    AdvectionSolver solver(params);
+    auto optim_params = create_optim_params<ADVParams>(Q, params);
+    auto impl_str = state.range(1) == 0 ? "ndrange" : "adaptivewg";
+    auto bkma_run_function = impl_selector<AdvectionSolver>(impl_str);
 
     /* Benchmark */
     for (auto _ : state) {
         try {
-            advector(Q, data, solver);
+            bkma_run_function(Q, data, solver, optim_params, span3d_t{});
             Q.wait();
         } catch (const sycl::exception &e) {
             state.SkipWithError(e.what());
@@ -58,18 +55,29 @@ BM_Advection(benchmark::State &state) {
 
     params.maxIter = state.iterations();
 
-    state.SetItemsProcessed(params.maxIter * params.n0 * params.n1 * params.n2);
-    state.SetBytesProcessed(params.maxIter * params.n0 * params.n1 * params.n2 *
-                            sizeof(real_t));
-    auto err = validate_result(Q, data, params, false);
+    state.SetItemsProcessed(params.maxIter * n0 * n1 * n2);
+    state.SetBytesProcessed(params.maxIter * n0 * n1 * n2 *
+                            sizeof(real_t)*2);
+    auto err = validate_result_adv(Q, data, params, false);
 
     // if (err > 10e-6) {
     //     state.SkipWithError("Validation failed with numerical error > 10e-6.");
     // }
 
-    state.counters.insert({{"err", err}});
+        /* Benchmark infos */
+        state.counters.insert({
+            {"gpu", params.gpu},
+            {"n0", n0},
+            {"n1", n1},
+            {"n2", n2},
+            {"kernel_id", state.range(1)},
+            {"pref_wg_size", params.pref_wg_size},
+            {"seq_size0", params.seq_size0},
+            {"seq_size2", params.seq_size2},
+            {"err", err}
+        });
 
-    sycl::free(data, Q);
+    sycl::free(data.data_handle(), Q);
     Q.wait();
 }
 

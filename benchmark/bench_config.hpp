@@ -5,11 +5,11 @@
 #include <vector>
 
 enum AdvImpl : int {
-    BR3D,           // 0
-    HIER,           // 1
+    // BR3D,           // 0
+    // HIER,           // 1
     NDRA,           // 2
     ADAPTWG,        // 3
-    HYBRID          // 4
+    // HYBRID          // 4
 };
 
 using bm_vec_t = std::vector<int64_t>;

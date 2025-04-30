@@ -3,12 +3,8 @@
 #include <AdvectionParams.hpp>
 #include <benchmark/benchmark.h>
 #include <cstdint>
-#include <init.hpp>
 #include <sycl/sycl.hpp>
-#include <types.hpp>
 #include "bench_config.hpp"
-#include <impl_selector.hpp>
-
 
 // =============================================
 // =============================================
@@ -72,34 +68,3 @@ createSyclQueue(const bool run_on_gpu, benchmark::State &state) {
     return sycl::queue{d};
 }   // end createSyclQueue
 
-// =============================================
-// =============================================
-[[nodiscard]] inline sref::unique_ref<IAdvectorX>
-advectorFactory(const sycl::queue &q, ADVParams &p, AdvectionSolver &s,
-                const AdvImpl kernel_id, benchmark::State &state) {
-    ADVParamsNonCopyable params(p);
-
-    switch (kernel_id) {
-    case AdvImpl::BR3D:
-        params.kernelImpl = "BasicRange";
-        break;
-    case AdvImpl::HIER:
-        params.kernelImpl = "Hierarchical";
-        break;
-    case AdvImpl::NDRA:
-        params.kernelImpl = "NDRange";
-        break;
-    case AdvImpl::ADAPTWG:
-        params.kernelImpl = "AdaptiveWg";
-        break;
-    case AdvImpl::HYBRID:
-        params.kernelImpl = "HybridMem";
-        break;
-    default:
-        auto str = "Error: wrong kernel_id.\n";
-        throw std::runtime_error(str);
-        break;
-    }
-
-    return kernel_impl_factory(q, params, s);
-}   // end advectorFactory
