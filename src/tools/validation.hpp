@@ -2,6 +2,7 @@
 #include "types.hpp"
 #include <AdvectionParams.hpp>
 #include <sycl/sycl.hpp>
+#include <math.h>
 
 // ==========================================
 // ==========================================

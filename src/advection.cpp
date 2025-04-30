@@ -2,7 +2,6 @@
 #include <AdvectionSolver.hpp>
 #include <iostream>
 #include <sycl/sycl.hpp>
-#include <unique_ref.hpp>
 #include <init.hpp>
 #include <validation.hpp>
 
