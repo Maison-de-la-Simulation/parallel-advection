@@ -1,10 +1,10 @@
 #include <ConvSolver.hpp>
 #include <bkma.hpp>
-#include "bench_utils.hpp"
+// #include "bench_utils.hpp"
 #include <benchmark/benchmark.h>
 #include <types.hpp>
 
-static constexpr auto __WG_SIZE = 1024;
+static constexpr auto __WG_SIZE = 512;
 static constexpr real_t __INIT_VALUE = 7.3;
 
 // ==========================================
@@ -78,6 +78,7 @@ create_bkma_params(sycl::queue &q, const size_t n0, const size_t n1,
     return {{1, n0, n0},     {1, n2, n2}, wi_dispatch.w0_,   wi_dispatch.w1_,
             wi_dispatch.w2_, wg_dispatch, MemorySpace::Local};
 }
+
 static void
 BM_Conv1d(benchmark::State &state) {
     sycl::queue q;
@@ -88,34 +89,42 @@ BM_Conv1d(benchmark::State &state) {
     const size_t k = conv_params.kernel_size;
     const size_t length = conv_params.input_length;
 
-    const size_t n0 = conv_params.batch_size/1024;
+    const size_t n0 = conv_params.batch_size;
     const size_t n1 = length * c_in;
-    const size_t n2 = 1024;   // TODO: try to split batch_size into n0 and n1
+    const size_t n2 = 1;   // TODO: try to split batch_size into n0 and n1
     /* App setup */
     span3d_t data(sycl_alloc(n0 * n1 * n2, q), n0, n1, n2);
+    span3d_t warmup_data(sycl_alloc(n0 * n1 * n2, q), n0, n1, n2);
     span3d_t weights(sycl_alloc(k * c_out * c_in, q), k, c_in, c_out);
     span1d_t bias(sycl_alloc(c_out, q), c_out);
     q.wait();
 
     q.parallel_for(sycl::range<1>(bias.size()), [=](auto itm) {
          bias.data_handle()[itm] = 1.0;
-     }).wait();
+     });
     q.parallel_for(sycl::range<1>(weights.size()), [=](auto itm) {
          weights.data_handle()[itm] = 1.5;
-     }).wait();
+     });
     q.parallel_for(sycl::range<3>(n0, n1, n2), [=](auto itm) {
          data(itm[0], itm[1], itm[2]) = __INIT_VALUE;
-     }).wait();
-
-    q.wait();
+         warmup_data(itm[0], itm[1], itm[2]) = __INIT_VALUE;
+     });
+     q.wait();
 
     ConvSolver solver{weights, bias, k, c_in, length};
     auto bkma_params = create_bkma_params(q, n0, n1, n2, __WG_SIZE);
 
+    /* Warmup to JIT model */
+    for (int i = 0; i < 3; ++i)
+        bkma_run<ConvSolver, BkmaImpl::AdaptiveWg>(q, warmup_data, solver,
+            bkma_params).wait();
+
     /* Benchmark */
     for (auto _ : state) {
         try {
-            bkma_run(q, data, solver, bkma_params).wait();
+            bkma_run<ConvSolver, BkmaImpl::AdaptiveWg>(q, data, solver,
+                                                       bkma_params)
+                .wait();
         } catch (const sycl::exception &e) {
             state.SkipWithError(e.what());
         } catch (const std::exception &e) {
@@ -124,10 +133,10 @@ BM_Conv1d(benchmark::State &state) {
         }
     }
 
-    auto n_iters = state.iterations();
+    auto const n_iters = state.iterations();
 
     state.SetItemsProcessed(n_iters * n0 * n1 * n2);
-    state.SetBytesProcessed(n_iters * n0 * n1 * n2 * sizeof(real_t));
+    state.SetBytesProcessed(n_iters * n0 * n1 * n2 * sizeof(real_t) * 2);
 
     auto result =
         sum_and_normalize_conv(q, data, compute_output_size(length, k));
@@ -146,11 +155,6 @@ BM_Conv1d(benchmark::State &state) {
         {"channels", conv_params.channels},
         {"result", result},
     });
-
-    sycl::free(data.data_handle(), q);
-    sycl::free(weights.data_handle(), q);
-    sycl::free(bias.data_handle(), q);
-    q.wait();
 }
 
 // ==========================================

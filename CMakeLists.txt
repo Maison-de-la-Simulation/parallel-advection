@@ -8,6 +8,7 @@ list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(preventBuildInSource) # Prevent from build-in source tree
 include(initBuildType) # Init build type: Release, Debug, ...
 include(print_target_properties) # useful for debugging cmake
+include(add_executable)
 
 if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "IntelLLVM") OR (NOT ${DPCPP_FSYCL_TARGETS} STREQUAL "") OR (NOT ${BUILD_WITH_INTEL_LLVM} STREQUAL ""))
     set(SYCL_IS_ACPP OFF)
