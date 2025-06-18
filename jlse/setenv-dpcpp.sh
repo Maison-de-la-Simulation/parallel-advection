@@ -1,6 +1,6 @@
 module purge
 
-module load gcc/12.2.0
+#module load gcc/12.2.0
 module load cmake/3.23.2
 module load rocm/6.3.2
 module load cuda/12.3.0
