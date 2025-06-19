@@ -9,7 +9,8 @@
 real_t
 validate_result_adv(sycl::queue &Q, span3d_t &data, const ADVParams &params,
                     bool do_print = true) {
-    std::cout << "\nRESULTS_VALIDATION:" << std::endl;
+    if(do_print)
+        std::cout << "\nRESULTS_VALIDATION:" << std::endl;
 
     auto const dx = params.dx;
     auto const dvx = params.dvx;
@@ -118,35 +119,40 @@ validate_conv1d(sycl::queue &Q, span3d_t &data, size_t nw) {
     sycl::range<1> range0(n0);
     sycl::range<1> range2(n2);
 
+    auto flag = sycl::malloc_shared<int>(1, Q);
+    Q.wait();
+    *flag = false;
+
     Q.parallel_for(range0, [=](unsigned i0) {
         for (auto i1 = 0; i1 < nw; ++i1) {
             for (auto i2 = 0; i2 < n2 - 1; ++i2) {
                 if (data(i0, i1, i2) != data(i0, i1, i2 + 1)) {
                     // throw std::runtime_error("nn");
-                    data(0, 0, 0) = -12345;
+                    *flag = true;
                 };
             }
         }
-    });
+    }).wait();
 
     Q.parallel_for(range2, [=](unsigned i2) {
         for (auto i1 = 0; i1 < nw; ++i1) {
             for (auto i0 = 0; i0 < n0 - 1; ++i0) {
                 if (data(i0, i1, i2) != data(i0 + 1, i1, i2)) {
                     // throw std::runtime_error("nn");
-                    data(0, 0, 0) = -45678;
+                    *flag = true;
                 };
             }
         }
-    });
+    }).wait();
 
-    Q.wait();
-    if (data(0, 0, 0) == -12345 || data(0, 0, 0) == -45678)
+    if (*flag)
         std::cout << "WARNING: Values at same position i1 are not equivalent "
                      "throught the batchs. Check implementation."
                   << std::endl;
     else
         std::cout << "All values data[:,i1,:] are equal." << std::endl;
+
+    sycl::free(flag, Q);
 }   // end validate_conv1d
 
 // ==========================================
