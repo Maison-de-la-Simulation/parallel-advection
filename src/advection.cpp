@@ -43,25 +43,32 @@ main(int argc, char **argv) {
     having a particle at a particular speed and position, plus a fictive dim */
     span3d_t data(sycl_alloc(n0*n1*n2, Q), n0, n1, n2);
     Q.wait();
+
+    std::cout << "Filling" << std::endl;
     fill_buffer_adv(Q, data, params);
     
+    std::cout << "Creating params" << std::endl;
     AdvectionSolver solver(params);
     auto optim_params = create_optim_params<ADVParams>(Q, params);
-
+    
+    std::cout << "Selecting impl" << std::endl;
     auto bkma_run_function = impl_selector<AdvectionSolver>(strParams.kernelImpl);
-
+    
+    std::cout << "Time loop" << std::endl;
     auto start = std::chrono::high_resolution_clock::now();
     // Time loop
     for (size_t t = 0; t < maxIter; ++t) {
         bkma_run_function(Q, data, solver, optim_params, span3d_t{});
         Q.wait();
-
+        
     }   // end for t < T
     auto end = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<double> elapsed_seconds = end - start;
-
+    
+    std::cout << "Validating" << std::endl;
     validate_result_adv(Q, data, params);
-
+    
+    std::cout << "End" << std::endl;
     auto const n_cells = n0 * n1 * n2 * (maxIter);
     print_perf(elapsed_seconds.count(), n_cells);
 
