@@ -1,6 +1,6 @@
 #pragma once
 
-#include <4DAdvectionParams.hpp>
+#include <Adv4dParams.hpp>
 #include <sycl/sycl.hpp>
 
 /* Lagrange variables, order, number of points, offset from the current point */
@@ -11,11 +11,12 @@ real_t static constexpr loc[] = {-1. / 24, 1. / 24.,  -1. / 12.,
                                  1. / 12., -1. / 24., 1. / 24.};
 
 struct VxSolver {
-    4DADVParams params_;
+    Adv4dParams params_;
     span2d_t efield_;
 
-    AdvectionSolver() = delete;
-    AdvectionSolver(const ADVParams &p) : params(p){};
+    VxSolver() = delete;
+    VxSolver(const Adv4dParams &p, span2d_t &efield) :
+        params_(p), efield_(efield){};
 
     auto inline constexpr window() const {return 1;}
     // ==========================================
@@ -59,15 +60,19 @@ struct VxSolver {
     real_t operator()(const ArrayLike1D data, const size_t &i0,
                       const size_t &i1, const size_t &i2) const {
 
-        auto ix = i0/params_.ny;
-        auto iy = i0 - ix*params_.ny;
-        auto &ivx = i1;
-        auto &ivy = i2;
+        auto const ix = i0/params_.ny;
+        auto const iy = i0 - ix*params_.ny;
+        auto const &ivx = i1;
+        auto const &ivy = i2;
 
-        const auto vx = coord(ivx, params_.minVx, params_.dvx)
+        // auto const &n0 = 
+        auto const &n1 = params_.nvx;
+        // auto const &n2 = 
+
+        const auto vx = coord(ivx, params_.minVx, params_.dvx);
         const auto speed_x = params_.dt * efield_(ix, iy);
 
-        real_t vxFootCoord = max(minVx, vx - speed_x);
+        real_t vxFootCoord = sycl::max(params_.minVx, vx - speed_x);
 
         const int leftNode =
             sycl::floor((vxFootCoord - params_.minVx) * params_.inv_dvx);
@@ -82,10 +87,12 @@ struct VxSolver {
         const int ipos1 = leftNode - LAG_OFFSET;
         real_t value = 0.;
         for (int k = 0; k <= LAG_ORDER; k++) {
-            int id1_ipos = (params_.n1 + ipos1 + k) % params_.n1;
+            int id1_ipos = (n1 + ipos1 + k) % n1;
 
             value += coef[k] * data(id1_ipos);
         }
+
+        //Segfault par ici
 
         return value;
     }
