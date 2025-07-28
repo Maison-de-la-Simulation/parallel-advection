@@ -47,7 +47,7 @@ main(int argc, char **argv) {
     std::cout << "Creating params" << std::endl;
     // AdvectionSolver solver(params);
     VxSolver solverVx(params);
-    
+
     // auto optim_params = create_optim_params<ADVParams>(Q, params);
     
     std::cout << "Selecting impl" << std::endl;
