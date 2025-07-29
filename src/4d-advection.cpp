@@ -1,5 +1,5 @@
 #include <Adv4dParams.hpp>
-#include <VxSolver.hpp>
+#include <Advectors4d.hpp>
 #include <iostream>
 #include <sycl/sycl.hpp>
 #include <init.hpp>
@@ -43,11 +43,61 @@ BkmaOptimParams create_params_adv4d(sycl::queue &q, const Adv4dParams &params){
         MemorySpace::Local};
 }
 
-// ==========================================
-// ==========================================
-int
-main(int argc, char **argv) {
-    /* Read input parameters */
+void transpose_for_x(sycl::queue &Q, const span3d_t &input, span3d_t &output, const Adv4dParams &params) {
+    const int nx  = params.nx;
+    const int ny  = params.ny;
+    const int nvx = params.nvx;
+    const int nvy = params.nvy;
+
+    Q.submit([&](sycl::handler &h) {
+        h.parallel_for(sycl::range<3>(nvx * nvy, nx, ny), [=](sycl::id<3> idx) {
+            int iv_flat = idx[0];     // [0, nvx*nvy)
+            int x       = idx[1];     // [0, nx)
+            int y       = idx[2];     // [0, ny)
+
+            int vx = iv_flat / nvy;
+            int vy = iv_flat % nvy;
+
+            int input_n0 = (x * ny + y) * nvx + vx;
+            int input_n1 = vy;
+            int input_n2 = 0;
+
+            real_t val = input(input_n0, input_n1, input_n2);
+
+            int output_n0 = vx * nvy + vy;
+            int output_n1 = x;
+            int output_n2 = y;
+
+            output(output_n0, output_n1, output_n2) = val;
+        });
+    }).wait();
+}
+
+inline void setup_params_vx(Adv4dParams &params){
+    params.n0 = params.nx * params.ny;
+    params.n1 = params.nvx;
+    params.n2 = params.nvy;
+}
+
+inline void setup_params_vy(Adv4dParams &params){
+    params.n0 = params.nx * params.ny * params.nvx;
+    params.n1 = params.nvy;
+    params.n2 = 1;
+}
+
+inline void setup_params_x(Adv4dParams &params){
+    params.n0 = params.nvx * params.nvy;
+    params.n1 = params.nx;
+    params.n2 = params.ny;
+}
+
+inline void setup_params_y(Adv4dParams &params){
+    params.n0 = params.nvx * params.nvy * params.nx;
+    params.n1 = params.ny;
+    params.n2 = 1;
+}
+
+int main(int argc, char **argv) {
     std::string input_file = argc > 1 ? std::string(argv[1]) : "4d-advection.ini";
     ConfigMap configMap(input_file);
 
@@ -56,62 +106,93 @@ main(int argc, char **argv) {
     params.print();
 
     sycl::queue Q{};
-    /* Display infos on current device */
     std::cout << "Using device: "
               << Q.get_device().get_info<sycl::info::device::name>() << "\n";
 
-
-    params.n0 = params.nx * params.ny;
-    params.n1 = params.nvx;
-    params.n2 = params.nvy;
-
-    const auto &n0=params.n0, n1=params.n1, n2=params.n2;
-
-    span3d_t data(sycl_alloc(n0*n1*n2, Q), n0, n1, n2);
-    span2d_t efield(sycl_alloc(params.nx*params.ny, Q), params.nx, params.ny);
-    Q.wait();
-
-    std::cout << "Filling" << std::endl;
-    // fill_buffer_4d_adv(Q, data, params);
-    
-    std::cout << "Creating params" << std::endl;
-    // AdvectionSolver solver(params);
-    VxSolver solverVx(params, efield);
-
+    setup_params_vx(params);
     auto optim_params = create_params_adv4d(Q, params);
+
+    const auto& nx  = params.nx;
+    const auto& ny  = params.ny;
+    const auto& nvx = params.nvx;
+    const auto& nvy = params.nvy;
+
+    const auto N = params.n0 * params.n1 * params.n2;
+    auto ptr = sycl_alloc(N, Q);
+    auto ptr2 = sycl_alloc(N, Q);
+    span3d_t data_vx(ptr, nx * ny      , nvx, nvy);
+    span3d_t data_vy(ptr, nx * ny * nvx, nvy, 1);
+
+    span3d_t data_x(ptr2, nvx * nvy     , nx , ny);
+    span3d_t data_y(ptr2, nvx * nvy * nx, ny , 1);
     
-    std::cout << "Selecting impl" << std::endl;
-    auto bkma_vx = bkma_run<VxSolver, BkmaImpl::AdaptiveWg>;
-    
-    std::cout << "Time loop" << std::endl;
+    // span3d_t scratch(sycl_alloc(N, Q), params.n0, params.n1, params.n2);
+    span2d_t efield(sycl_alloc(params.nx * params.ny, Q), params.nx, params.ny);
+    Q.wait();
+
+    std::cout << "Filling initial data..." << std::endl;
+    // fill_buffer_4d_adv(Q, data, params);
+
     auto start = std::chrono::high_resolution_clock::now();
-    bkma_vx(Q, data, solverVx, optim_params, span3d_t{});
+
+    // === Vx Advection ===
+    std::cout << "Running Vx solver..." << std::endl;
+    VxSolver solverVx(params, efield);
+    bkma_run<VxSolver, BkmaImpl::AdaptiveWg>(Q, data_vx, solverVx, optim_params, span3d_t{});
     Q.wait();
-    
-    //n0 = ...
-    // bkma_run_function(Q, data, solverVy, optim_params, span3d_t{});
-    // Q.wait();
 
-    //Transpose data
+    // === Vy Advection ===
+    std::cout << "Running Vy solver..." << std::endl;
+    setup_params_vy(params);
+    optim_params = create_params_adv4d(Q, params); //updating params
 
-    // bkma_run_function(Q, data, solverX, optim_params, span3d_t{});
-    // Q.wait();
+    VySolver solverVy(params, efield);
+    bkma_run<VySolver, BkmaImpl::AdaptiveWg>(Q, data_vy, solverVy, optim_params, span3d_t{});
+    Q.wait();
 
-    //n0 = ...
-    // bkma_run_function(Q, data, solverY, optim_params, span3d_t{});
-    // Q.wait();
-        
     auto end = std::chrono::high_resolution_clock::now();
-    const std::chrono::duration<double> elapsed_seconds = end - start;
-    
-    // std::cout << "Validating" << std::endl;
-    // validate_result_adv(Q, data, params);
-    
-    std::cout << "End" << std::endl;
-    auto const n_cells = n0 * n1 * n2;
-    print_perf(elapsed_seconds.count(), n_cells);
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    std::cout << "==== Speed advections time: " << elapsed_seconds.count() << " seconds\n";
 
-    sycl::free(data.data_handle(), Q);
+    // === Transpose for space advections ===
+    std::cout << "Transposing for X/Y solvers..." << std::endl;
+
+    start = std::chrono::high_resolution_clock::now();
+    transpose_for_x(Q, data_vy, data_x, params);
+    end = std::chrono::high_resolution_clock::now();
+    elapsed_seconds = end - start;
+    std::cout << "==== Transpose time: " << elapsed_seconds.count() << " seconds\n";
+    
+
+    start = std::chrono::high_resolution_clock::now();
+    // === X Advection ===
+    std::cout << "Running X solver..." << std::endl;
+    setup_params_x(params);
+    optim_params = create_params_adv4d(Q, params); //updating params
+    XSolver solverX(params, efield);
+    bkma_run<XSolver, BkmaImpl::AdaptiveWg>(Q, data_x, solverX, optim_params, span3d_t{});
     Q.wait();
+
+    // === Y Advection: notranspose ===
+    std::cout << "Running Y solver..." << std::endl;
+    setup_params_y(params);
+    optim_params = create_params_adv4d(Q, params); //updating params
+    YSolver solverY(params, efield);
+    bkma_run<YSolver, BkmaImpl::AdaptiveWg>(Q, data_y, solverY, optim_params, span3d_t{});
+    Q.wait();
+
+    end = std::chrono::high_resolution_clock::now();
+    elapsed_seconds = end - start;
+    std::cout << "==== Spatial advections time: " << elapsed_seconds.count() << " seconds\n";
+//     auto const n_cells = n0 * n1 * n2;
+//     print_perf(elapsed_seconds.count(), n_cells);
+
+
+    sycl::free(efield.data_handle(), Q);
+    // sycl::free(scratch.data_handle(), Q);
+    sycl::free(ptr, Q);
+    sycl::free(ptr2, Q);
+    Q.wait();
+
     return 0;
 }
