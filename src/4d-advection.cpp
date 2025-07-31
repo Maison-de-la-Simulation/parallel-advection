@@ -97,6 +97,15 @@ inline void setup_params_y(Adv4dParams &params){
     params.n2 = 1;
 }
 
+template <typename TimePoint>
+inline void print_runtime(std::string_view name,
+                          TimePoint start,
+                          TimePoint end){
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    std::cout << name << " ==== Kernel time: "<< elapsed_seconds.count() << " seconds\n";
+}
+
+
 int main(int argc, char **argv) {
     std::string input_file = argc > 1 ? std::string(argv[1]) : "4d-advection.ini";
     ConfigMap configMap(input_file);
@@ -126,6 +135,12 @@ int main(int argc, char **argv) {
     span3d_t data_x(ptr2, nvx * nvy     , nx , ny);
     span3d_t data_y(ptr2, nvx * nvy * nx, ny , 1);
     
+    // auto oop_ptr = sycl_alloc(N,Q);
+    // span3d_t scratch_vx(oop_ptr, nx * ny      , nvx, nvy);
+    // span3d_t scratch_vy(oop_ptr, nx * ny * nvx, nvy, 1);
+    // span3d_t scratch_x(oop_ptr, nvx * nvy     , nx , ny);
+    // span3d_t scratch_y(oop_ptr, nvx * nvy * nx, ny , 1);
+    
     // span3d_t scratch(sycl_alloc(N, Q), params.n0, params.n1, params.n2);
     span2d_t efield(sycl_alloc(params.nx * params.ny, Q), params.nx, params.ny);
     Q.wait();
@@ -133,63 +148,56 @@ int main(int argc, char **argv) {
     std::cout << "Filling initial data..." << std::endl;
     // fill_buffer_4d_adv(Q, data, params);
 
-    auto start = std::chrono::high_resolution_clock::now();
 
     // === Vx Advection ===
-    std::cout << "Running Vx solver..." << std::endl;
     VxSolver solverVx(params, efield);
-    bkma_run<VxSolver, BkmaImpl::AdaptiveWg>(Q, data_vx, solverVx, optim_params, span3d_t{});
+
+    auto start = std::chrono::high_resolution_clock::now();
+    bkma_run<VxSolver, BkmaImpl::AdaptiveWg>(Q, data_vx, solverVx, optim_params, span3d_t{}/*scratch_vx*/);
     Q.wait();
+    auto end = std::chrono::high_resolution_clock::now();
+    print_runtime("GridVx", start, end);
 
     // === Vy Advection ===
-    std::cout << "Running Vy solver..." << std::endl;
     setup_params_vy(params);
     optim_params = create_params_adv4d(Q, params); //updating params
-
     VySolver solverVy(params, efield);
-    bkma_run<VySolver, BkmaImpl::AdaptiveWg>(Q, data_vy, solverVy, optim_params, span3d_t{});
-    Q.wait();
 
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_seconds = end - start;
-    std::cout << "==== Speed advections time: " << elapsed_seconds.count() << " seconds\n";
+    start = std::chrono::high_resolution_clock::now();
+    bkma_run<VySolver, BkmaImpl::AdaptiveWg>(Q, data_vy, solverVy, optim_params, span3d_t{}/*scratch_vy*/);
+    Q.wait();
+    end = std::chrono::high_resolution_clock::now();
+    print_runtime("GridVy", start, end);
 
     // === Transpose for space advections ===
     std::cout << "Transposing for X/Y solvers..." << std::endl;
-
-    start = std::chrono::high_resolution_clock::now();
     transpose_for_x(Q, data_vy, data_x, params);
-    end = std::chrono::high_resolution_clock::now();
-    elapsed_seconds = end - start;
-    std::cout << "==== Transpose time: " << elapsed_seconds.count() << " seconds\n";
     
 
-    start = std::chrono::high_resolution_clock::now();
     // === X Advection ===
-    std::cout << "Running X solver..." << std::endl;
     setup_params_x(params);
     optim_params = create_params_adv4d(Q, params); //updating params
     XSolver solverX(params, efield);
+
+    start = std::chrono::high_resolution_clock::now();
     bkma_run<XSolver, BkmaImpl::AdaptiveWg>(Q, data_x, solverX, optim_params, span3d_t{});
     Q.wait();
+    end = std::chrono::high_resolution_clock::now();
+    print_runtime("GridX", start, end);
 
     // === Y Advection: notranspose ===
-    std::cout << "Running Y solver..." << std::endl;
     setup_params_y(params);
     optim_params = create_params_adv4d(Q, params); //updating params
     YSolver solverY(params, efield);
+
+    start = std::chrono::high_resolution_clock::now();
     bkma_run<YSolver, BkmaImpl::AdaptiveWg>(Q, data_y, solverY, optim_params, span3d_t{});
     Q.wait();
-
     end = std::chrono::high_resolution_clock::now();
-    elapsed_seconds = end - start;
-    std::cout << "==== Spatial advections time: " << elapsed_seconds.count() << " seconds\n";
-//     auto const n_cells = n0 * n1 * n2;
-//     print_perf(elapsed_seconds.count(), n_cells);
-
+    print_runtime("GridX", start, end);
 
     sycl::free(efield.data_handle(), Q);
-    // sycl::free(scratch.data_handle(), Q);
+    // sycl::free(oop_ptr, Q);
     sycl::free(ptr, Q);
     sycl::free(ptr2, Q);
     Q.wait();
